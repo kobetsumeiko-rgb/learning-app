@@ -186,6 +186,12 @@ function answer(btn, idx) {
   });
 
   const msg = document.getElementById('resultMsg');
+  const correctChoice = currentQ._shuffled.find(c => c.en === currentSpeakEN);
+  const rev = document.getElementById('answerReveal');
+  rev.innerHTML = `<div style="margin-bottom:5px;">🔊 <span>${currentSpeakEN}</span></div>`
+                + `<div>📝 <span>${correctChoice ? correctChoice.ja : ''}</span></div>`;
+  rev.style.display = 'block';
+
   if (isCorrect) {
     score++;
     btn.className = 'choice correct';
@@ -195,9 +201,6 @@ function answer(btn, idx) {
     btn.className = 'choice wrong';
     msg.textContent = '❌ 不正解';
     msg.className = 'result-msg ng';
-    const rev = document.getElementById('answerReveal');
-    rev.innerHTML = `正解の英文: <span>${currentSpeakEN}</span>`;
-    rev.style.display = 'block';
   }
   updateScore();
 }
