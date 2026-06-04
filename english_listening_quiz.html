@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中学英語リスニング</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.1);
+    --text: #1a1a1a;
+    --text-sub: #666;
+    --text-hint: #999;
+    --blue: #185FA5;
+    --blue-light: #E6F1FB;
+    --blue-mid: #378ADD;
+    --green: #3B6D11;
+    --green-light: #EAF3DE;
+    --red: #A32D2D;
+    --red-light: #FCEBEB;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  .container {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  header h1 {
+    font-family: 'Inter', 'Noto Sans JP', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--text);
+  }
+  header p {
+    font-size: 13px;
+    color: var(--text-hint);
+    margin-top: 4px;
+  }
+
+  .grade-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .grade-tab {
+    flex: 1;
+    padding: 10px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text-sub);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .grade-tab:hover { border-color: var(--blue-mid); color: var(--blue); }
+  .grade-tab.active {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: #fff;
+  }
+
+  .cat-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .cat-tab {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text-sub);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .cat-tab:hover { border-color: var(--blue-mid); color: var(--blue); }
+  .cat-tab.active {
+    background: var(--blue-light);
+    border-color: var(--blue-mid);
+    color: var(--blue);
+    font-weight: 500;
+  }
+
+  .score-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--text-sub);
+  }
+  .score-val {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .reset-btn {
+    font-size: 12px;
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: none;
+    color: var(--text-sub);
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+  }
+  .reset-btn:hover { background: var(--bg); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 20px 20px;
+    margin-bottom: 14px;
+  }
+
+  .q-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .q-cat {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--blue);
+    background: var(--blue-light);
+    padding: 3px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.5px;
+  }
+  .q-num {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--text-hint);
+  }
+
+  .listen-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 16px 18px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: all 0.2s;
+    text-align: left;
+  }
+  .listen-btn:hover { border-color: var(--blue-mid); background: var(--blue-light); color: var(--blue); }
+  .listen-btn.playing {
+    border-color: var(--blue-mid);
+    background: var(--blue-light);
+    color: var(--blue);
+  }
+  .listen-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .listen-btn.playing .listen-icon { background: var(--blue-mid); }
+  .listen-icon svg { fill: #fff; width: 18px; height: 18px; }
+  .listen-txt { font-size: 14px; }
+
+  .choices { display: grid; gap: 8px; }
+  .choice {
+    padding: 13px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1.5;
+  }
+  .choice:hover:not(:disabled) {
+    border-color: var(--blue-mid);
+    background: var(--blue-light);
+    color: var(--blue);
+  }
+  .choice.correct {
+    background: var(--green-light);
+    border-color: #639922;
+    color: var(--green);
+    font-weight: 500;
+  }
+  .choice.wrong {
+    background: var(--red-light);
+    border-color: #E24B4A;
+    color: var(--red);
+  }
+  .choice:disabled { cursor: default; }
+
+  .result-area { margin-top: 16px; min-height: 32px; }
+  .result-msg {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 8px;
+  }
+  .result-msg.ok { color: var(--green); }
+  .result-msg.ng { color: var(--red); }
+
+  .answer-reveal {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--text-sub);
+    border-left: 3px solid var(--blue-mid);
+  }
+  .answer-reveal span {
+    color: var(--text);
+    font-family: 'Inter', 'Noto Sans JP', sans-serif;
+    font-weight: 500;
+  }
+
+  .nav-row {
+    display: flex;
+    gap: 8px;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .nav-btn:hover { background: var(--bg); }
+  .nav-btn.primary {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: #fff;
+  }
+  .nav-btn.primary:hover { background: #0C447C; border-color: #0C447C; }
+
+  @media (max-width: 480px) {
+    body { padding: 16px 12px 40px; }
+    .card { padding: 20px 16px 16px; }
+    header h1 { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🎧 中学英語リスニング</h1>
+    <p>音声を聞いて正しい日本語訳を選ぼう</p>
+  </header>
+
+  <div class="grade-tabs">
+    <button class="grade-tab active" onclick="setGrade(1)">中学1年</button>
+    <button class="grade-tab" onclick="setGrade(2)">中学2年</button>
+    <button class="grade-tab" onclick="setGrade(3)">中学3年</button>
+  </div>
+
+  <div class="cat-tabs" id="catTabs"></div>
+
+  <div class="score-bar">
+    <span>正解数</span>
+    <span class="score-val" id="scoreDisp">0 / 0</span>
+    <button class="reset-btn" onclick="resetScore()">リセット</button>
+  </div>
+
+  <div class="card">
+    <div class="q-meta">
+      <span class="q-cat" id="qLabel">単語</span>
+      <span class="q-num" id="qNum">問題 1 / 10</span>
+    </div>
+    <button class="listen-btn" id="listenBtn" onclick="speak()">
+      <span class="listen-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+      </span>
+      <span class="listen-txt" id="listenTxt">タップして音声を再生</span>
+    </button>
+    <div class="choices" id="choices"></div>
+    <div class="result-area">
+      <div class="result-msg" id="resultMsg"></div>
+      <div class="answer-reveal" id="answerReveal" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="prevQ()">← 前へ</button>
+    <button class="nav-btn primary" onclick="nextQ()">次へ →</button>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  1: {
+    単語: [
+      {en:"I like soccer.",ja:"私はサッカーが好きです。",choices:["私はサッカーが好きです。","私は野球が好きです。","私はテニスが嫌いです。","私はサッカーをします。"]},
+      {en:"She is my sister.",ja:"彼女は私の姉です。",choices:["彼女は私の友達です。","彼女は私の姉です。","彼女は私の先生です。","彼は私の兄です。"]},
+      {en:"I have a dog.",ja:"私は犬を飼っています。",choices:["私は猫を飼っています。","私は犬が好きです。","私は犬を飼っています。","私は犬を見ました。"]},
+      {en:"This is my pen.",ja:"これは私のペンです。",choices:["これは私のノートです。","これはあなたのペンです。","これは私のペンです。","それは私のペンです。"]},
+      {en:"I eat breakfast every day.",ja:"私は毎日朝食を食べます。",choices:["私は毎日昼食を食べます。","私は朝食が好きです。","私は毎日朝食を食べます。","私は時々朝食を食べます。"]},
+      {en:"He plays the guitar.",ja:"彼はギターを弾きます。",choices:["彼はギターを買います。","彼女はギターを弾きます。","彼はギターを弾きます。","彼はピアノを弾きます。"]},
+      {en:"We go to school by bus.",ja:"私たちはバスで学校に行きます。",choices:["私たちは電車で学校に行きます。","私たちはバスで学校に行きます。","私たちは自転車で学校に行きます。","私たちはバスで図書館に行きます。"]},
+      {en:"I can swim fast.",ja:"私は速く泳ぐことができます。",choices:["私は泳ぐことが好きです。","私は速く走ることができます。","私は速く泳ぐことができます。","私は上手に泳ぎます。"]},
+      {en:"She likes music.",ja:"彼女は音楽が好きです。",choices:["彼女は音楽を聞きます。","彼女は音楽が好きです。","彼は音楽が好きです。","彼女はダンスが好きです。"]},
+      {en:"This cat is very cute.",ja:"このネコはとてもかわいいです。",choices:["このネコはとてもかわいいです。","この犬はとてもかわいいです。","このネコはかわいくないです。","そのネコはとてもかわいいです。"]}
+    ],
+    熟語: [
+      {en:"Let's go to the park.",ja:"公園に行きましょう。",choices:["公園から帰りましょう。","公園に行きましょう。","公園で遊びましょう。","図書館に行きましょう。"]},
+      {en:"How about some tea?",ja:"お茶はいかがですか？",choices:["お茶が好きですか？","お茶を飲みましょう。","お茶はいかがですか？","コーヒーはいかがですか？"]},
+      {en:"I get up at six.",ja:"私は6時に起きます。",choices:["私は6時に寝ます。","私は6時に起きます。","私は7時に起きます。","私は6時に出かけます。"]},
+      {en:"Look at that bird.",ja:"あの鳥を見てください。",choices:["あの鳥を見てください。","この鳥を見てください。","あの鳥を捕まえてください。","その猫を見てください。"]},
+      {en:"I am good at cooking.",ja:"私は料理が得意です。",choices:["私は料理が好きです。","私は料理が苦手です。","私は料理が得意です。","私は料理をします。"]},
+      {en:"Thank you for your help.",ja:"助けてくれてありがとう。",choices:["よろしくお願いします。","助けてくれてありがとう。","ご迷惑をおかけしました。","よく頑張りました。"]},
+      {en:"I'm looking for my bag.",ja:"私はバッグを探しています。",choices:["私はバッグを持っています。","私はバッグを探しています。","私はバッグをなくしました。","私はバッグを買います。"]},
+      {en:"Turn off the light, please.",ja:"電気を消してください。",choices:["電気をつけてください。","電気を消してください。","電気が消えています。","ドアを閉めてください。"]},
+      {en:"I'm interested in art.",ja:"私は美術に興味があります。",choices:["私は美術が得意です。","私は美術が好きです。","私は美術に興味があります。","私は美術を勉強します。"]},
+      {en:"Have a good time!",ja:"楽しんでね！",choices:["気をつけてね！","楽しんでね！","またね！","よく頑張ったね！"]}
+    ],
+    会話表現: [
+      {en:"Nice to meet you.",ja:"はじめまして。",choices:["ありがとう。","はじめまして。","さようなら。","どういたしまして。"]},
+      {en:"How are you?",ja:"お元気ですか？",choices:["何時ですか？","お元気ですか？","お名前は？","何をしていますか？"]},
+      {en:"I'm fine, thank you.",ja:"元気です、ありがとう。",choices:["ありがとう。","元気です、ありがとう。","私は疲れています。","どういたしまして。"]},
+      {en:"What's your name?",ja:"お名前は何ですか？",choices:["どこに住んでいますか？","何歳ですか？","お名前は何ですか？","趣味は何ですか？"]},
+      {en:"See you tomorrow.",ja:"また明日。",choices:["おはようございます。","また明日。","昨日会いましたね。","今日は会えません。"]},
+      {en:"Excuse me.",ja:"すみません。",choices:["ごめんなさい。","すみません。","ありがとう。","どういたしまして。"]},
+      {en:"Can you help me?",ja:"手伝ってもらえますか？",choices:["一緒に行きませんか？","手伝ってもらえますか？","待ってもらえますか？","教えてもらえますか？"]},
+      {en:"What time is it?",ja:"何時ですか？",choices:["何日ですか？","どこですか？","何時ですか？","何曜日ですか？"]},
+      {en:"I don't understand.",ja:"わかりません。",choices:["わかりません。","知っています。","聞こえません。","覚えていません。"]},
+      {en:"Please say that again.",ja:"もう一度言ってください。",choices:["ゆっくり言ってください。","大きな声で言ってください。","もう一度言ってください。","英語で言ってください。"]}
+    ],
+    文法: [
+      {en:"I am a student.",ja:"私は学生です。",choices:["私は先生です。","私は学生です。","彼は学生です。","私は生徒ではありません。"]},
+      {en:"Are you from Japan?",ja:"あなたは日本出身ですか？",choices:["あなたは日本語を話しますか？","あなたは日本出身ですか？","あなたは日本に行きますか？","あなたは日本が好きですか？"]},
+      {en:"I don't play tennis.",ja:"私はテニスをしません。",choices:["私はテニスをします。","私はテニスが好きではありません。","私はテニスをしません。","私はテニスをしますか？"]},
+      {en:"Does she speak English?",ja:"彼女は英語を話しますか？",choices:["彼女は英語を話します。","彼女は英語を話しますか？","彼女は英語が好きですか？","彼女は英語を話しません。"]},
+      {en:"We are playing soccer now.",ja:"私たちは今サッカーをしています。",choices:["私たちは今サッカーを見ています。","私たちは昨日サッカーをしました。","私たちは今サッカーをしています。","私たちはよくサッカーをします。"]},
+      {en:"I can speak a little French.",ja:"私は少しフランス語が話せます。",choices:["私はフランス語が話せません。","私は少しフランス語が話せます。","私はフランス語を勉強しています。","私はフランス語が得意です。"]},
+      {en:"This is my favorite book.",ja:"これは私のお気に入りの本です。",choices:["これは私の本です。","これは私のお気に入りの本です。","これはあなたのお気に入りの本です。","これは私の新しい本です。"]},
+      {en:"I like cats better than dogs.",ja:"私は犬よりも猫が好きです。",choices:["私は犬も猫も好きです。","私は猫よりも犬が好きです。","私は犬よりも猫が好きです。","私は犬も猫も嫌いです。"]},
+      {en:"He runs faster than me.",ja:"彼は私より速く走ります。",choices:["彼は私より速く走ります。","私は彼より速く走ります。","彼は私と同じ速さで走ります。","彼は速く走ることができます。"]},
+      {en:"I have never been to America.",ja:"私はアメリカに行ったことがありません。",choices:["私はアメリカに住んでいません。","私はアメリカが好きではありません。","私はアメリカに行ったことがありません。","私はアメリカに行きたくありません。"]}
+    ]
+  },
+  2: {
+    単語: [
+      {en:"I visited Kyoto last summer.",ja:"私は去年の夏に京都を訪れました。",choices:["私は去年の夏に大阪を訪れました。","私は去年の冬に京都を訪れました。","私は去年の夏に京都を訪れました。","私は今年の夏に京都を訪れます。"]},
+      {en:"She finished her homework early.",ja:"彼女は早く宿題を終えました。",choices:["彼女は遅く宿題を終えました。","彼女は早く宿題を終えました。","彼女はまだ宿題を終えていません。","彼女は宿題を忘れました。"]},
+      {en:"We enjoyed the festival.",ja:"私たちはお祭りを楽しみました。",choices:["私たちはお祭りを見ました。","私たちはお祭りを楽しみました。","私たちはお祭りに行きませんでした。","私たちはお祭りを計画しました。"]},
+      {en:"He received a letter yesterday.",ja:"彼は昨日手紙を受け取りました。",choices:["彼は昨日手紙を送りました。","彼は明日手紙を受け取ります。","彼は昨日手紙を受け取りました。","彼は手紙を読みました。"]},
+      {en:"I found my key under the desk.",ja:"私は机の下で鍵を見つけました。",choices:["私は机の上で鍵を見つけました。","私は椅子の下で鍵を見つけました。","私は机の下で鍵を見つけました。","私は鍵をなくしました。"]},
+      {en:"She bought a new bag.",ja:"彼女は新しいバッグを買いました。",choices:["彼女はバッグを作りました。","彼女は古いバッグを買いました。","彼女は新しいバッグを買いました。","彼女はバッグをもらいました。"]},
+      {en:"I read a lot of books last year.",ja:"私は去年たくさんの本を読みました。",choices:["私は去年少しの本を読みました。","私は今年たくさんの本を読みます。","私は去年たくさんの本を読みました。","私は去年本を一冊読みました。"]},
+      {en:"The game started at seven.",ja:"試合は7時に始まりました。",choices:["試合は7時に終わりました。","試合は8時に始まりました。","試合は7時に始まりました。","試合は7時に中止になりました。"]},
+      {en:"They lived in this town.",ja:"彼らはこの町に住んでいました。",choices:["彼らはこの町に住んでいます。","彼らはこの町に住んでいました。","彼らはこの町を訪れました。","彼らはこの町が好きでした。"]},
+      {en:"I wanted to be a doctor.",ja:"私は医者になりたかった。",choices:["私は医者です。","私は医者になりたい。","私は医者になりたかった。","私は医者になりました。"]}
+    ],
+    熟語: [
+      {en:"I'm looking forward to the trip.",ja:"旅行を楽しみにしています。",choices:["旅行の計画を立てています。","旅行を楽しみにしています。","旅行から戻りました。","旅行が心配です。"]},
+      {en:"Can I try this on?",ja:"これを試着してもいいですか？",choices:["これを買ってもいいですか？","これを試着してもいいですか？","これを借りてもいいですか？","これを返してもいいですか？"]},
+      {en:"I took care of my little brother.",ja:"私は弟の世話をしました。",choices:["私は弟と遊びました。","私は弟の世話をしました。","私は弟を叱りました。","私は弟を助けました。"]},
+      {en:"She is good at singing.",ja:"彼女は歌が得意です。",choices:["彼女は歌が好きです。","彼女は歌が得意です。","彼女は歌が上手ではありません。","彼女はよく歌います。"]},
+      {en:"I gave up smoking.",ja:"私はタバコをやめました。",choices:["私はタバコを始めました。","私はタバコをやめました。","私はタバコを吸います。","私はタバコが嫌いです。"]},
+      {en:"Let me know if you need help.",ja:"助けが必要なら知らせてください。",choices:["助けが必要ですか？","助けが必要なら知らせてください。","助けてあげましょうか？","助けてくれてありがとう。"]},
+      {en:"I ran into an old friend.",ja:"古い友人に偶然会いました。",choices:["古い友人を訪ねました。","古い友人に偶然会いました。","古い友人に電話しました。","古い友人を思い出しました。"]},
+      {en:"She always keeps her room clean.",ja:"彼女はいつも部屋をきれいにしています。",choices:["彼女はいつも部屋を掃除します。","彼女はいつも部屋をきれいにしています。","彼女の部屋はきれいです。","彼女は部屋の掃除が好きです。"]},
+      {en:"I caught a cold last week.",ja:"私は先週風邪をひきました。",choices:["私は先週熱が出ました。","私は今週風邪をひきました。","私は先週風邪をひきました。","私は風邪が治りました。"]},
+      {en:"We should take a break.",ja:"休憩すべきです。",choices:["休憩しましょう。","休憩すべきです。","休憩してはいけません。","休憩が必要ですか？"]}
+    ],
+    会話表現: [
+      {en:"How was your weekend?",ja:"週末はどうでしたか？",choices:["週末は何をしますか？","週末はどうでしたか？","週末はどこに行きますか？","週末は誰と会いますか？"]},
+      {en:"Could you tell me the way to the station?",ja:"駅への道を教えていただけますか？",choices:["駅はどこですか？","この道は駅に続きますか？","駅への道を教えていただけますか？","駅まで歩いていけますか？"]},
+      {en:"I'm sorry I'm late.",ja:"遅れてすみません。",choices:["もう少し待ってください。","遅れてすみません。","遅くなるかもしれません。","早く来てください。"]},
+      {en:"Would you like some more?",ja:"もう少しいかがですか？",choices:["何が食べたいですか？","もう十分ですか？","もう少しいかがですか？","これは何ですか？"]},
+      {en:"What do you think about it?",ja:"それについてどう思いますか？",choices:["それについて知っていますか？","それについてどう思いますか？","それについて話してもいいですか？","それについて何か言いましたか？"]},
+      {en:"I'll call you back later.",ja:"後でかけ直します。",choices:["後でもう一度会いましょう。","後でかけ直します。","今すぐかけます。","明日電話します。"]},
+      {en:"May I speak to Taro, please?",ja:"太郎君をお願いできますか？",choices:["太郎君はいますか？","太郎君をお願いできますか？","太郎君と話したいのですが。","太郎君に電話させてください。"]},
+      {en:"That sounds great!",ja:"それは素晴らしいですね！",choices:["本当ですか？","それは素晴らしいですね！","もう一度言ってください。","よくわかりません。"]},
+      {en:"I agree with you.",ja:"あなたに同意します。",choices:["あなたに反対します。","あなたに同意します。","あなたはどう思いますか？","私もそう思います。"]},
+      {en:"You should see a doctor.",ja:"医者に診てもらうべきです。",choices:["医者に行きましたか？","医者に診てもらうべきです。","医者に電話してください。","医者は何と言いましたか？"]}
+    ],
+    文法: [
+      {en:"I was watching TV when she called.",ja:"彼女が電話したとき、私はテレビを見ていました。",choices:["私がテレビを見ていたとき、彼女が来ました。","彼女が電話したとき、私はテレビを見ていました。","私はテレビを見ながら電話しました。","彼女はテレビを見ているときに電話しました。"]},
+      {en:"She has already eaten lunch.",ja:"彼女はもう昼食を食べました。",choices:["彼女はまだ昼食を食べていません。","彼女は今昼食を食べています。","彼女はもう昼食を食べました。","彼女は昼食を食べませんでした。"]},
+      {en:"I want you to come with me.",ja:"私はあなたに一緒に来てほしいです。",choices:["私はあなたと一緒に来たいです。","私はあなたに一緒に来てほしいです。","あなたは私と来てもいいです。","私たちは一緒に来ます。"]},
+      {en:"This book is easier than that one.",ja:"この本はあの本より簡単です。",choices:["この本はあの本と同じくらい簡単です。","あの本はこの本より簡単です。","この本はあの本より簡単です。","この本はとても簡単です。"]},
+      {en:"He must be tired.",ja:"彼は疲れているに違いありません。",choices:["彼は疲れているかもしれません。","彼は疲れているに違いありません。","彼は疲れていません。","彼は疲れているはずがありません。"]},
+      {en:"I've lived here for five years.",ja:"私はここに5年間住んでいます。",choices:["私はここに5年前に住んでいました。","私はここに5年間住んでいます。","私はここに5年後に住みます。","私はここに5年間住んでいました。"]},
+      {en:"Do you know what time it is?",ja:"今何時か知っていますか？",choices:["何時に来ますか？","何時に出発しましたか？","今何時か知っていますか？","何時が都合いいですか？"]},
+      {en:"I was surprised at the news.",ja:"私はそのニュースに驚きました。",choices:["そのニュースは驚くべきでした。","私はそのニュースを信じました。","私はそのニュースに驚きました。","私はそのニュースに感動しました。"]},
+      {en:"She told me to wait here.",ja:"彼女は私にここで待つように言いました。",choices:["彼女は私といっしょにここで待ちました。","彼女は私にここで待つように言いました。","彼女はここで待っていました。","私は彼女にここで待つように言いました。"]},
+      {en:"I have two letters to write.",ja:"私には書かなければならない手紙が2通あります。",choices:["私は手紙を2通書きました。","私には書かなければならない手紙が2通あります。","私は手紙を2通もらいました。","私は手紙を2通書くつもりです。"]}
+    ]
+  },
+  3: {
+    単語: [
+      {en:"The earthquake damaged many buildings.",ja:"地震は多くの建物に損害を与えました。",choices:["地震は多くの人々を傷つけました。","地震は多くの建物に損害を与えました。","地震は多くの道路を壊しました。","地震は多くの家を燃やしました。"]},
+      {en:"She volunteers at the local hospital.",ja:"彼女は地元の病院でボランティアをしています。",choices:["彼女は地元の病院で働いています。","彼女は地元の病院でボランティアをしています。","彼女は地元の病院を訪問しています。","彼女は地元の病院に入院しています。"]},
+      {en:"The population of this city is growing.",ja:"この都市の人口は増えています。",choices:["この都市の人口は減っています。","この都市の人口は変わっていません。","この都市の人口は増えています。","この都市の経済は成長しています。"]},
+      {en:"He devoted his life to science.",ja:"彼は科学に生涯を捧げました。",choices:["彼は科学の研究を始めました。","彼は科学に生涯を捧げました。","彼は科学の本を書きました。","彼は科学者になりました。"]},
+      {en:"Environmental protection is important.",ja:"環境保護は大切です。",choices:["環境汚染は深刻です。","環境保護は大切です。","環境問題は難しいです。","環境の変化は急速です。"]},
+      {en:"The company developed new technology.",ja:"その会社は新しい技術を開発しました。",choices:["その会社は新しい製品を販売しました。","その会社は新しい技術を開発しました。","その会社は新しい工場を建てました。","その会社は新しい人材を雇いました。"]},
+      {en:"She achieved her goal at last.",ja:"彼女はついに目標を達成しました。",choices:["彼女はついに目標を諦めました。","彼女はまだ目標を達成していません。","彼女はついに目標を達成しました。","彼女はすでに目標を達成していました。"]},
+      {en:"Many people suffer from poverty.",ja:"多くの人が貧困に苦しんでいます。",choices:["多くの人が病気で苦しんでいます。","多くの人が貧困に苦しんでいます。","多くの人が貧困から抜け出しました。","多くの人が貧困について学んでいます。"]},
+      {en:"We need to reduce plastic waste.",ja:"私たちはプラスチックごみを減らす必要があります。",choices:["私たちはプラスチックを使わなければなりません。","私たちはプラスチックごみを減らす必要があります。","私たちはプラスチックをリサイクルしています。","私たちはプラスチックの問題を無視できません。"]},
+      {en:"The athlete broke the world record.",ja:"その選手は世界記録を破りました。",choices:["その選手は世界記録を作りました。","その選手は世界記録を破りました。","その選手は世界大会に出場しました。","その選手は世界一位になりました。"]}
+    ],
+    熟語: [
+      {en:"I'm in charge of this project.",ja:"私がこのプロジェクトを担当しています。",choices:["私はこのプロジェクトに参加しています。","私がこのプロジェクトを担当しています。","私はこのプロジェクトを提案しました。","私はこのプロジェクトに反対しています。"]},
+      {en:"She made up her mind to study abroad.",ja:"彼女は留学することを決意しました。",choices:["彼女は留学することを考えています。","彼女は留学することを決意しました。","彼女は留学することを諦めました。","彼女は留学することを夢見ています。"]},
+      {en:"We must deal with this problem.",ja:"私たちはこの問題に対処しなければなりません。",choices:["私たちはこの問題を無視できません。","私たちはこの問題に対処しなければなりません。","私たちはこの問題について話し合いました。","私たちはこの問題を解決しました。"]},
+      {en:"He called off the meeting.",ja:"彼は会議を中止しました。",choices:["彼は会議を延期しました。","彼は会議を中止しました。","彼は会議に遅刻しました。","彼は会議を早めました。"]},
+      {en:"She takes pride in her work.",ja:"彼女は自分の仕事に誇りを持っています。",choices:["彼女は自分の仕事が好きです。","彼女は自分の仕事に誇りを持っています。","彼女は自分の仕事に満足しています。","彼女は自分の仕事を楽しんでいます。"]},
+      {en:"I'm used to living alone.",ja:"私は一人暮らしに慣れています。",choices:["私は一人で生活することにしました。","私は一人暮らしが好きです。","私は一人暮らしに慣れています。","私は一人暮らしを始めました。"]},
+      {en:"He came up with a good idea.",ja:"彼は良いアイデアを思いつきました。",choices:["彼は良いアイデアを実行しました。","彼は良いアイデアを思いつきました。","彼は良いアイデアを借りました。","彼は良いアイデアを提案されました。"]},
+      {en:"She stood up for her beliefs.",ja:"彼女は自分の信念を守りました。",choices:["彼女は自分の信念を変えました。","彼女は自分の信念を守りました。","彼女は自分の信念を話しました。","彼女は自分の信念を失いました。"]},
+      {en:"We should give priority to safety.",ja:"安全を優先すべきです。",choices:["安全について考えるべきです。","安全を優先すべきです。","安全を確認すべきです。","安全を保証すべきです。"]},
+      {en:"The results depend on your effort.",ja:"結果はあなたの努力次第です。",choices:["努力すれば結果は出ます。","結果はあなたの努力次第です。","結果は努力とは関係ありません。","努力が結果を決めます。"]}
+    ],
+    会話表現: [
+      {en:"I'd like to make a reservation.",ja:"予約したいのですが。",choices:["予約を確認したいのですが。","予約したいのですが。","予約をキャンセルしたいのですが。","予約はできますか？"]},
+      {en:"Could you give me a hand?",ja:"手を貸してもらえますか？",choices:["一緒に来てもらえますか？","手を貸してもらえますか？","少し待ってもらえますか？","確認してもらえますか？"]},
+      {en:"As far as I know, it's true.",ja:"私の知る限り、それは本当です。",choices:["私の意見では、それは本当です。","私の知る限り、それは本当です。","それが本当かどうかわかりません。","私はそれが本当だと思います。"]},
+      {en:"I'm not sure about that.",ja:"それについてはよくわかりません。",choices:["それは正しくないと思います。","それについてはよくわかりません。","それは間違っています。","それは本当ですか？"]},
+      {en:"To be honest, I don't like it.",ja:"正直に言うと、それが好きではありません。",choices:["それが好きかどうかわかりません。","実は、それがとても好きです。","正直に言うと、それが好きではありません。","それについての正直な意見を聞かせてください。"]},
+      {en:"It's worth trying.",ja:"試してみる価値があります。",choices:["やってみてください。","試してみる価値があります。","試してみても無駄です。","それをやってみましょう。"]},
+      {en:"How long does it take to get there?",ja:"そこまでどのくらいかかりますか？",choices:["そこはどこですか？","どうやってそこに行きますか？","そこまでどのくらいかかりますか？","そこは遠いですか？"]},
+      {en:"I have no choice but to go.",ja:"行くしかありません。",choices:["行くかもしれません。","行きたくありません。","行くしかありません。","行くべきではありません。"]},
+      {en:"Let me think about it.",ja:"考えさせてください。",choices:["もう決めました。","少し待ってください。","考えさせてください。","もう一度説明してください。"]},
+      {en:"It goes without saying.",ja:"言うまでもありません。",choices:["それは当然のことです。","言うまでもありません。","それは誰も知りません。","それは難しいことです。"]}
+    ],
+    文法: [
+      {en:"If I had more time, I would travel.",ja:"もし時間がもっとあれば、旅行するのに。",choices:["時間があれば旅行します。","もし時間がもっとあれば、旅行するのに。","時間があったので旅行しました。","時間があれば旅行したかった。"]},
+      {en:"The book written by him is famous.",ja:"彼によって書かれた本は有名です。",choices:["彼が書いている本は有名です。","彼によって書かれた本は有名です。","彼は有名な本を書きました。","彼の本はとても有名です。"]},
+      {en:"I wish I could speak Spanish.",ja:"スペイン語が話せたらいいのに。",choices:["スペイン語を話したいです。","スペイン語が話せたらいいのに。","スペイン語を勉強しています。","スペイン語が話せて嬉しいです。"]},
+      {en:"She is said to be very talented.",ja:"彼女はとても才能があると言われています。",choices:["彼女はとても才能があります。","彼女はとても才能があると言われています。","彼女には才能がないと言われています。","彼女は才能があると自分で言っています。"]},
+      {en:"The earlier you start, the better.",ja:"早く始めれば始めるほど良いです。",choices:["できるだけ早く始めてください。","早く始めれば始めるほど良いです。","早く始めることが大切です。","早く始めれば間に合います。"]},
+      {en:"I don't know whether he is right.",ja:"彼が正しいかどうかわかりません。",choices:["彼が正しいとは思いません。","彼が正しいかどうかわかりません。","彼は正しいに違いありません。","彼が正しいかどうか聞いてください。"]},
+      {en:"Having finished the work, I went home.",ja:"仕事を終えてから、私は家に帰りました。",choices:["仕事を終えながら、家に帰りました。","仕事を終えてから、私は家に帰りました。","仕事を終える前に、家に帰りました。","仕事が終わらなかったので、家に帰りませんでした。"]},
+      {en:"The more you practice, the better you get.",ja:"練習すればするほど、上手になります。",choices:["もっと練習すると、上手になります。","練習すればするほど、上手になります。","練習しても、上手にはなりません。","少し練習すれば、上手になります。"]},
+      {en:"She seems to have forgotten my name.",ja:"彼女は私の名前を忘れたようです。",choices:["彼女は私の名前を思い出しました。","彼女は私の名前を知りません。","彼女は私の名前を忘れたようです。","彼女は私の名前を覚えています。"]},
+      {en:"This is the town where I was born.",ja:"ここは私が生まれた町です。",choices:["ここは私が住んでいる町です。","ここは私が生まれた町です。","ここは私が好きな町です。","ここは私が訪れたい町です。"]}
+    ]
+  }
+};
+
+const CATEGORIES = ["単語","熟語","会話表現","文法"];
+let grade = 1, cat = "単語", qIdx = 0, answered = false;
+let score = 0, total = 0;
+const synth = window.speechSynthesis;
+let currentQ = null;
+
+function setGrade(g) {
+  grade = g;
+  document.querySelectorAll('.grade-tab').forEach((t,i) => t.classList.toggle('active', i === g-1));
+  qIdx = 0; answered = false;
+  renderCatTabs(); loadQ();
+}
+function setCat(c) {
+  cat = c; qIdx = 0; answered = false;
+  renderCatTabs(); loadQ();
+}
+function renderCatTabs() {
+  document.getElementById('catTabs').innerHTML = CATEGORIES.map(c =>
+    `<button class="cat-tab${c===cat?' active':''}" onclick="setCat('${c}')">${c}</button>`
+  ).join('');
+}
+function getQuestions() { return DATA[grade][cat]; }
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+function loadQ() {
+  const qs = getQuestions();
+  currentQ = qs[qIdx % qs.length];
+  answered = false;
+  document.getElementById('qLabel').textContent = cat;
+  document.getElementById('qNum').textContent = `問題 ${(qIdx % qs.length)+1} / ${qs.length}`;
+  const btn = document.getElementById('listenBtn');
+  btn.className = 'listen-btn';
+  document.getElementById('listenTxt').textContent = 'タップして音声を再生';
+  document.getElementById('resultMsg').textContent = '';
+  document.getElementById('resultMsg').className = 'result-msg';
+  document.getElementById('answerReveal').style.display = 'none';
+  const shuffled = shuffle(currentQ.choices);
+  document.getElementById('choices').innerHTML = shuffled.map(c =>
+    `<button class="choice" onclick="answer(this,${JSON.stringify(c)},${JSON.stringify(currentQ.ja)})">${c}</button>`
+  ).join('');
+  updateScore();
+}
+
+function speak() {
+  if (!currentQ) return;
+  synth.cancel();
+  const utt = new SpeechSynthesisUtterance(currentQ.en);
+  utt.lang = 'en-US';
+  utt.rate = 0.85;
+  const btn = document.getElementById('listenBtn');
+  btn.className = 'listen-btn playing';
+  document.getElementById('listenTxt').textContent = '再生中...';
+  utt.onend = () => { btn.className = 'listen-btn'; document.getElementById('listenTxt').textContent = 'もう一度再生する'; };
+  utt.onerror = () => { btn.className = 'listen-btn'; document.getElementById('listenTxt').textContent = 'タップして音声を再生'; };
+  synth.speak(utt);
+}
+
+function answer(btn, chosen, correct) {
+  if (answered) return;
+  answered = true;
+  total++;
+  document.querySelectorAll('.choice').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.className = 'choice correct';
+  });
+  const msg = document.getElementById('resultMsg');
+  if (chosen === correct) {
+    score++;
+    btn.className = 'choice correct';
+    msg.textContent = '⭕ 正解！';
+    msg.className = 'result-msg ok';
+  } else {
+    btn.className = 'choice wrong';
+    msg.textContent = '❌ 不正解';
+    msg.className = 'result-msg ng';
+    const rev = document.getElementById('answerReveal');
+    rev.innerHTML = `英文: <span>${currentQ.en}</span>`;
+    rev.style.display = 'block';
+  }
+  updateScore();
+}
+
+function prevQ() {
+  synth.cancel();
+  const len = getQuestions().length;
+  qIdx = (qIdx - 1 + len) % len;
+  loadQ();
+}
+function nextQ() {
+  synth.cancel();
+  const len = getQuestions().length;
+  qIdx = (qIdx + 1) % len;
+  loadQ();
+}
+function resetScore() { score = 0; total = 0; updateScore(); }
+function updateScore() {
+  document.getElementById('scoreDisp').textContent = `${score} / ${total}`;
+}
+
+renderCatTabs();
+loadQ();
+</script>
+</body>
+</html>
