@@ -529,9 +529,14 @@ function loadQ() {
   document.getElementById('resultMsg').className = 'result-msg';
   document.getElementById('answerReveal').style.display = 'none';
   const shuffled = shuffle(currentQ.choices);
-  document.getElementById('choices').innerHTML = shuffled.map(c =>
-    `<button class="choice" onclick="answer(this,${JSON.stringify(c)},${JSON.stringify(currentQ.ja)})">${c}</button>`
+  currentQ._shuffled = shuffled;
+  const container = document.getElementById('choices');
+  container.innerHTML = shuffled.map((c, i) =>
+    `<button class="choice" data-idx="${i}">${c}</button>`
   ).join('');
+  container.querySelectorAll('.choice').forEach(btn => {
+    btn.addEventListener('click', () => answer(btn, parseInt(btn.dataset.idx)));
+  });
   updateScore();
 }
 
@@ -549,13 +554,15 @@ function speak() {
   synth.speak(utt);
 }
 
-function answer(btn, chosen, correct) {
+function answer(btn, idx) {
   if (answered) return;
   answered = true;
   total++;
-  document.querySelectorAll('.choice').forEach(b => {
+  const chosen = currentQ._shuffled[idx];
+  const correct = currentQ.ja;
+  document.querySelectorAll('.choice').forEach((b, i) => {
     b.disabled = true;
-    if (b.textContent === correct) b.className = 'choice correct';
+    if (currentQ._shuffled[i] === correct) b.className = 'choice correct';
   });
   const msg = document.getElementById('resultMsg');
   if (chosen === correct) {
