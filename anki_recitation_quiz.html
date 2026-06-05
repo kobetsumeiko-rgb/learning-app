@@ -38,7 +38,13 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
     <button class="lbtn" onclick="setLevel(10,this)">Lv.1　10空欄</button>
     <button class="lbtn" onclick="setLevel(20,this)">Lv.2　20空欄</button>
     <button class="lbtn" onclick="setLevel(30,this)">Lv.3　30空欄</button>
-    <button class="lbtn active" onclick="setLevel(40,this)">Lv.4　40空欄</button>
+    <button class="lbtn" onclick="setLevel(40,this)">Lv.4　40空欄</button>
+    <button class="lbtn" onclick="setLevel(50,this)">Lv.5　50空欄</button>
+    <button class="lbtn" onclick="setLevel(60,this)">Lv.6　60空欄</button>
+    <button class="lbtn" onclick="setLevel(70,this)">Lv.7　70空欄</button>
+    <button class="lbtn" onclick="setLevel(80,this)">Lv.8　80空欄</button>
+    <button class="lbtn" onclick="setLevel(90,this)">Lv.9　90空欄</button>
+    <button class="lbtn active" onclick="setLevel(100,this)">Lv.10　全部</button>
   </div>
   <div class="passage" id="passage"></div>
   <div class="actions">
@@ -72,18 +78,20 @@ const stopWords = /^(a|an|the|to|of|in|by|as|we|our|and|or|for|so|that|was|is|ar
 const wordOnly = [];
 sentences.forEach(s => s.words.forEach(w => { if(!/^[.,]$/.test(w)) wordOnly.push(w); }));
 
-let currentLevel = 40;
+const TOTAL_WORDS = wordOnly.length;
+
+let currentLevel = 100;
 let blankedIndices = new Set();
 
 function pickIndices(n){
-  const total = wordOnly.length;
-  let priorities = [...Array(total).keys()].filter(i => wordOnly[i].length > 2 && !stopWords.test(wordOnly[i]));
-  const result = new Set();
-  const shuffled = priorities.sort(() => Math.random() - 0.5);
-  shuffled.slice(0, n).forEach(i => result.add(i));
-  if(result.size < n){
-    const rest = [...Array(total).keys()].filter(i => !result.has(i));
-    rest.sort(() => Math.random() - 0.5).slice(0, n - result.size).forEach(i => result.add(i));
+  const clamped = Math.min(n, TOTAL_WORDS);
+  // priority: content words (length>2, not stopword)
+  let priorities = [...Array(TOTAL_WORDS).keys()].filter(i => wordOnly[i].length > 2 && !stopWords.test(wordOnly[i]));
+  priorities = priorities.sort(() => Math.random() - 0.5);
+  const result = new Set(priorities.slice(0, clamped));
+  if(result.size < clamped){
+    const rest = [...Array(TOTAL_WORDS).keys()].filter(i => !result.has(i));
+    rest.sort(() => Math.random() - 0.5).slice(0, clamped - result.size).forEach(i => result.add(i));
   }
   return result;
 }
@@ -96,7 +104,8 @@ function setLevel(n, el){
 }
 
 function render(){
-  blankedIndices = pickIndices(currentLevel);
+  const actual = Math.min(currentLevel, TOTAL_WORDS);
+  blankedIndices = pickIndices(actual);
   const passage = document.getElementById('passage');
   let wordIdx = 0;
   let html = '';
@@ -119,7 +128,7 @@ function render(){
   });
   passage.innerHTML = html;
   document.getElementById('correct-count').textContent = '-';
-  document.getElementById('total-count').textContent = currentLevel;
+  document.getElementById('total-count').textContent = actual;
 }
 
 function handleKey(e, idx){
@@ -152,7 +161,7 @@ function revealAll(){
     input.classList.add('correct');
     input.classList.remove('wrong');
   });
-  document.getElementById('correct-count').textContent = currentLevel;
+  document.getElementById('correct-count').textContent = Math.min(currentLevel, TOTAL_WORDS);
 }
 
 function resetAll(){ render(); }
