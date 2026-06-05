@@ -173,7 +173,85 @@ function guessPOS(ja){
 }
 
 const WORDS={
-  1:{},
+  1:{
+    "Let's Be Friends!(1)-(3)":{
+      "Part 1":[["fine","元気な"],["happy","幸せな"],["hungry","お腹がすいた"],["sleepy","眠い"],["sad","悲しい"]],
+      "Part 2":[["red","赤"],["blue","青"],["green","緑"],["white","白"],["orange","オレンジ色"],["black","黒"],["brown","茶"],["yellow","黄色"]],
+      "Part 3":[["first","１番目の"],["second","２番目の"],["third","３番目の"],["fourth","４番目の"],["fifth","５番目の"],["sixth","６番目の"],["seventh","７番目の"],["eighth","８番目の"],["ninth","９番目の"],["tenth","１０番目の"],["eleventh","１１番目の"],["twelfth","１２番目の"],["thirteenth","１３番目の"],["fourteenth","１４番目の"],["fifteenth","１５番目の"],["sixteenth","１６番目の"],["seventeenth","１７番目の"],["eighteenth","１８番目の"],["nineteenth","１９番目の"],["twentieth","２０番目の"],["twenty-first","２１番目の"],["twenty-second","２２番目の"],["twenty-third","２３番目の"],["twenty-fourth","２４番目の"],["thirtieth","３０番目の"],["January","１月"],["February","２月"],["March","３月"],["April","４月"],["May","５月"],["June","６月"],["July","７月"],["August","８月"],["September","９月"],["October","１０月"],["November","１１月"],["December","１２月"]]
+    },
+    "Let's Be Friends!(4)-(6)":{
+      "Part 4":[["one","１"],["two","２"],["three","３"],["four","４"],["five","５"],["six","６"],["seven","７"],["eight","８"],["nine","９"],["ten","１０"],["eleven","１１"],["twelve","１２"],["thirteen","１３"],["fourteen","１４"],["fifteen","１５"],["sixteen","１６"],["seventeen","１７"],["eighteen","１８"],["nineteen","１９"],["twenty","２０"],["twenty-one","２１"],["twenty-two","２２"],["thirty","３０"],["forty","４０"],["fifty","５０"],["sixty","６０"],["seventy","７０"],["eighty","８０"],["ninety","９０"]],
+      "Part 5":[["park","公園"],["river","川"],["mountain","山"],["lake","湖"],["fishing","釣り"],["skiing","スキー"],["soccer","サッカー"],["hiking","ハイキング"],["fast","速く"],["run","走る"],["piano","ピアノ"],["play","演奏する"],["dance","踊る"],["well","上手に"],["guitar","ギター"],["join","参加する"],["study","勉強する"],["English","英語"],["hard","一生懸命に"],["make","作る"],["friend","友達"],["many","たくさんの"],["enjoy","楽しむ"],["school trip","修学旅行"]]
+    },
+    "Unit 1":{
+      "Part 1":[["this","これ"],["student","生徒"],["fall","秋"],["live","済む"],["there","そこで"],["thing","もの・こと"],["about","～について"],["here","ここで"],["all","全ての"],["hello","こんにちは"],["years old","～歳"],["a","１つの"],["meet","会う"],["call","呼ぶ"],["am","～です"],["Ms.","（既婚・未婚問わず女性に対して）～さん"],["Japan","日本"],["from","～出身で"],["season","季節"]],
+      "Part 2":[["look","（意識して）見る"],["winter","冬"],["beautiful","美しい"],["why","なぜ"],["not","～ない"],["don't","do not の短縮形"],["very much","とても(好きだ)"],["very much","あまり(好きではない)"],["How about ~?","～はどうですか？"]],
+      "Part 3":[["swim","泳ぐ"],["class","授業"],["but","しかし"],["drums","ドラム・太鼓"],["can't","cannotの短縮形"],["flute","フルート"],["rugby","ラグビー"],["cool","カッコいい"]]
+    },
+    "Unit 2":{
+      "Part 1":[["school","学校"],["after","～の後で"],["come","来る"],["Yes","はい、そうです"],["No","いいえ"],["of","～の"],["new","新しい"],["Mr.","(男性に対して)～さん"],["here's","here isの短縮形"],["be interested in","～に興味がある"]],
+      "Part 2":[["usually","普通は、普段は"],["practice","練習する"],["Monday","月曜日"],["Wednesday","水曜日"],["Friday","金曜日"],["always","いつも"],["sometimes","ときどき"],["never","決して～ない"],["read","読む"],["often","よく、しばしば"],["night","夜"],["free","暇な"],["magazine","雑誌"],["a little","少し"],["on","（曜日）に"],["listen","(耳を傾けて)聞く"]],
+      "Part 3":[["well","あぁ、まぁ"],["say","言う"],["repeat","繰り返して言う"],["write","書く"],["ride","(乗り物に)乗る"],["rice","米"],["with","～といっしょに"],["father","父親"],["that's","that isの短縮形"],["curry","カレー"],["drama","演劇"]],
+      "Goal":[["team","チーム"]]
+    },
+    "Unit 3":{
+      "Part 1":[["climb","登る"],["homework","宿題"],["visit","訪れる"],["library","図書館"],["beach","浜辺・ビーチ"],["try","やってみる"],["festival","お祭り"],["eat","食べる"],["during","(夏休みなど)～の間に"],["family","家族"],["just","ただ～だけ"],["also","～もまた"],["every","毎～"],["sound","～に聞こえる"],["get up","起床する・起きる"],["late","遅く"],["have","(ピアノレッスンなど)～を受ける"],["lesson","授業・お稽古"],["walk","(犬)を散歩させる"],["video","動画・ビデオ"],["weekend","週末"],["stay","滞在する"],["at home","家で"],["grandfather","祖父"],["see","見る・見物する"]],
+      "Part 2":[["at","(特定の場所・施設)で"],["really","本当に"],["of course","もちろん"],["use","使う"],["computer","コンピュータ"]],
+      "Part 3":[["those","あれら・thatの複数形"],["they","それら・彼ら・彼女ら"],["heavy","重い"],["OK","じゃぁ"],["take","(写真)を取る"],["love","大好きである"]]
+    },
+    "Let's Read 1":{
+      "Part 1":[["fly","飛ぶ"],["for","（分、時間、年など）の間"],["or","～か～"],["minute","分"],["turn","～を回す"],["book","本"],["around","ぐるりと"]]
+    },
+    "You Can Do It! 1":{
+      "Part 1":[["right","正しい"],["kind","種類"],["be","～である(be動詞の原形)"]]
+    },
+    "Unit 4":{
+      "Part 1":[["junior high school","中学校"],["teacher","先生"],["science","理科"],["Japanese","国語"],["social studies","社会"],["P.E.","体育"],["art","美術"],["she","彼女は"],["he","彼は"],["popular","人気のある"],["his","彼の"],["funny","おかしい"],["famous","有名な"],["main","主な"],["character","登場人物・キャラクター"],["strong","強い"],["I see","わかりました"]],
+      "Part 2":[["who","誰が"],["maybe","もしかしたら"],["player","選手"],["him","彼を"],["ask","尋ねる・質問する"],["actor","俳優"],["singer","歌手"],["her","彼女の"],["isn't she?","彼女は～ですよね？(同意を求める)"]],
+      "Part 3":[["in front of","（場所）～の前に"],["floor","階"],["plan","案内板"],["building","建物"],["classroom","教室"],["over here","（案内版をみながら指でなぞりながら）こちらに"],["classmate","クラスメイト"],["hospital","病院"],["gym","体育館"],["restaurant","レストラン"],["guess","推測する"],["small","小さい"]],
+      "Goal":[["introduce","紹介する"],["be good at","～が上手だ"]],
+      "Daily Life Scene 1":[["desk","机"],["bag","かばん"],["by","～のそばに"],["under","～の下に"],["chair","いす"],["whose","誰の、誰のもの"],["box","入れ物・箱"],["yours","あなたのもの"],["mine","私のもの"],["any","(疑問文で)いくつかの"],["idea","考え"]],
+      "Active Grammar 2":[["us","私たちを"],["ours","私たちのもの"],["hers","彼女のもの"],["theirs","彼らのもの"],["them","彼らを"],["their","彼らの"],["these","これら・thisの複数形"]]
+    },
+    "Unit 5":{
+      "Part 1":[["between","(2つのもの)～の間"],["face","顔"],["camera","カメラ"],["now","今"],["know","知っている"],["life","生活"],["of course","もちろん"],["anything","何でも・どんなことでも"],["shy","恥ずかしがりの"],["begin","始める"],["sorry","ごめんなさい"],["Good to see you","会えてうれしい"],["turn on","（電気製品）をつける"],["after school","放課後"]],
+      "Part 2":[["where","どこ"],["room","部屋"],["lunch","昼食"],["choose","選ぶ"],["dish","料理"],["pizza","ピザ"],["nurse","看護師"],["office","オフィス"],["next to","～の隣"],["near","～の近く"],["cooking","料理"],["famous for","～で有名な"]],
+      "Part 3":[["some","(肯定文で)いくつかの"],["tennis","テニス"],["show","見せる"],["picture","写真"],["wheelchair","車いす"],["match","試合"],["luck","幸運"],["game","ゲーム"],["morning","朝"],["afternoon","午後"],["evening","夕方"],["before","～の前に(時間的な前)"],["bath","風呂"],["dinner","夕食"],["take a bath","入浴する"],["go to bed","寝る"]],
+      "Goal":[["Sunday","日曜日"],["a.m.","午前"],["p.m.","午後"],["noon","正午"],["tour","旅行"],["place","場所"],["time","時間"],["miss","逃す・見落とす"]],
+      "Daily Life Scene 2":[["chicken","鶏肉"],["beef","牛肉"],["vegetable","野菜"],["which","どれ"],["Would you like ~?","いかがですか"],["please","どうか・どうぞ"],["thousand","1000"],["Can I have ~?","～をいただけますか"],["I'd like ~","～がほしいです"],["How much?","いくらですか"],["a piece of","１切れ・１枚"],["tea","お茶"],["How many?","いくつ？"]]
+    },
+    "Unit 6":{
+      "Part 1":[["cheer","はげます"],["grandma","おばあちゃん"],["grandpa","おじいちゃん"],["grandmother","祖母"],["parents","両親"],["mother","母"],["father","父"],["child","子供"],["children","子供たち"],["sister","姉妹"],["brother","兄弟"],["active","活発な"],["have","持っている"],["many","たくさんの"],["give up","あきらめる"],["quiet","おとなしい"],["cook","料理する"],["breakfast","朝食"]],
+      "Part 2":[["almost","ほとんど"],["bicycle","自転車"],["dear","おや、まあ"],["cold","風邪"],["work","働く"],["train","電車"],["station","駅"],["All right","いいですよ(OKより丁寧)"],["have a cold","風邪をひいている"]],
+      "Part 3":[["sleep","眠る"],["either","～もまた、ない"],["worry","心配する"],["need","必要としている"],["rest","休息"],["set","（食卓）の準備をする"],["table","テーブル"],["wash","洗う"],["take out the trash","ごみを出す"]],
+      "Goal":[["help","手伝う・助ける"]],
+      "Daily Life Scene 3":[["Excuse me","すみません"],["bus","バス"],["o'clock","～時（時刻）"],["so","それで"],["number","番号・～番"],["Have a good trip!","良い旅を！"],["What time?","何時？"],["You're welcome","どういたしまして"]],
+      "Daily Life Scene 4":[["museum","博物館"],["on foot","徒歩で"],["straight","まっすぐ"],["along","～に沿って"],["corner","曲がり角"],["left","左"],["How long?","どれくらいの期間～？"],["take","（時間が）かかる"],["how","どのように"]],
+      "You Can Do It! 2":[["special","特別な"],["guest","ゲスト"],["today","今日"],["as","～として"],["talk","話す・しゃべる"]]
+    },
+    "Unit 7":{
+      "Part 1":[["did","doの過去形"],["buy","買う"],["bought","buyの過去形"],["temple","寺"],["TV","テレビ"],["clean","掃除する"],["house","家"],["saw","seeの過去形"],["ate","eatの過去形"],["shopping","買い物"],["yesterday","昨日"],["volunteer","ボランティア"],["took","takeの過去形"]],
+      "Part 2":[["traditional","伝統的な"],["because","～だから"],["sign","しるし"],["tell","伝える・話す"],["interesting","おもしろい"],["bad","気の毒な"],["poor","かわいそうな"],["drink","飲む"]],
+      "Part 3":[["wish","願い事"],["still","まだ"],["fever","熱"],["hear","聞く・聞こえる"],["lucky","幸運な"],["soon","すぐ"]],
+      "Part 4":[["hope","望む"],["present","プレゼント"],["people","人々"],["were","areの過去形"],["wonderful","素晴らしい"],["delicious","おいしい"],["had","haveの過去形"],["party","パーティー"],["exciting","興奮させるような"]],
+      "Goal":[["celebrate","祝う"],["different","いろいろな"],["city","都市"],["boat","ボート"],["tradition","伝統"],["best","最高の"]],
+      "Daily Life Scene 5":[["card","はがき"],["Saturday","土曜日"],["shop","店"],["person","人"],["yourself","あなた自身"],["age","年齢"],["off","割引"],["only","ただ～だけ"],["bring","持ってくる"],["own","自分自身の"],["more","より多くの"],["information","情報"]]
+    },
+    "Unit 8":{
+      "Part 1":[["ready","準備のできた"],["everything","全てのこと"],["kitchen","台所"],["later","あとで"],["stand","立つ・立っている"]],
+      "Part 2":[["far","遠くに"],["message","メッセージ"],["put","置く"],["pretty","かわいい"]],
+      "Part 3":[["surprise","びっくりさせること"],["inside","内側に"],["last","この前の・先～"],["then","そのとき"],["show","番組"],["tonight","今夜"],["story","物語"]]
+    },
+    "Let's Read 2":{
+      "Part 1":[["lion","ライオン"],["back","背中"],["catch","捕まえる"],["caught","catchの過去形"],["may","～してよい"],["hear","聞こえる"],["heard","hearの過去形"],["cry","鳴き声"],["got","getの過去形"],["away","去って"],["save","守る"],["true","本当の"]]
+    },
+    "You Can Do It! 3":{
+      "Part 1":[["topic","話題"],["open","開いている"],["anyone","誰でも"]]
+    },
+    "Let's Read More":{
+      "Part 1":[["difficult","難しい"],["for example","例えば"],["other","他の"],["learn","習う・学ぶ"],["word","言葉"],["clothes","衣服"],["wear","着ている"],["shirt","シャツ"],["easy","簡単な"],["think","思う・考える"],["came","comeの過去形"]]
+    }
+  },
   2:{
     "Unit 1":{"Part 1":[["met","meetの過去形"],["same","同じ"],["view","眺め、風景、景色"],["gift","贈り物"],["read","readの過去形"],["rode","rideの過去形"],["half","半分の、2分の1の"],["else","その他に"]],"Part 2":[["coach","～のコーチをする"],["other","別の、他の"],["feel","感じる"]],"Part 3":[["think","思う、考える"],["sunny","晴れている"],["angry","怒っている"],["surprised","驚いた"],["Thursday","木曜日"],["excited","興奮した、わくわくした"]],"Part 4":[["movie","映画"],["order","注文する"],["came","comeの過去形"],["lend","～を貸す"],["find","～を見つける"],["something","何か"],["found","findの過去形"],["lent","lendの過去形"],["happen","起こる、生じる"]],"Daily Life Scene 1":[["cycling","サイクリング"]]},
     "Unit 2":{"Part 1":[["problem","問題、課題"],["difficult","難しい、困難な"],["action","アクション"],["ball","ボール"],["easy","簡単な、易しい"],["pass","パスをする"],["actually","実は、実際は"]],"Part 2":[["improve","向上させる、改善する"],["important","重要な、大切な"],["stop","～を止める"],["point","点数"],["win","勝つ"]],"Part 3":[["job","仕事"],["believe","信じる"],["learn","習う、学ぶ"],["song","歌"],["teach","教える"],["taught","teachの過去形"],["could","canの過去形"]],"Goal":[["arm","腕"],["relax","くつろぐ"],["understand","理解する"],["each","おのおの"],["nature","自然"]],"Daily Life Scene 2":[["hour","時間"],["dream","夢"],["performer","演者"],["begin","始める"],["finish","終える"],["rain","雨が降る"],["began","beginの過去形"]]},
@@ -187,7 +265,7 @@ const WORDS={
 };
 
 const UNIT_ORDER={
-  1:["Unit 1","Unit 2","Unit 3","Unit 4","Unit 5","Unit 6","Unit 7","Unit 8"],
+  1:["Let's Be Friends!(1)-(3)","Let's Be Friends!(4)-(6)","Unit 1","Unit 2","Unit 3","Let's Read 1","You Can Do It! 1","Unit 4","Unit 5","Unit 6","Unit 7","Unit 8","Let's Read 2","You Can Do It! 3","Let's Read More"],
   2:["Unit 1","Unit 2","Unit 3","Unit 4","Unit 5","Unit 6","Unit 7","Unit 8"]
 };
 
@@ -302,12 +380,25 @@ function speakWord(){
   window.speechSynthesis.speak(utter);
 }
 
-function showFeedback(body,isOk,correctAns){
+function findEngByJa(ja){
+  for(const g of Object.keys(WORDS))
+    for(const u of Object.keys(WORDS[g]))
+      for(const p of Object.keys(WORDS[g][u]))
+        for(const w of WORDS[g][u][p])
+          if(w[1]===ja) return w[0];
+  return null;
+}
+
+function showFeedback(body,isOk,correctAns,wrongAns){
   const fb=document.createElement('div');
   fb.className='feedback '+(isOk?'ok':'ng');
-  fb.innerHTML=isOk
-    ?'<i class="ti ti-circle-check" style="font-size:18px"></i> 正解！'
-    :`<i class="ti ti-circle-x" style="font-size:18px"></i> 不正解　正解：<strong>${correctAns}</strong>`;
+  if(isOk){
+    fb.innerHTML='<i class="ti ti-circle-check" style="font-size:18px"></i> 正解！';
+  }else{
+    const wrongEng=wrongAns?findEngByJa(wrongAns):null;
+    const wrongLine=wrongEng?`<div style="margin-top:4px;font-size:12px">あなたの答え：<strong>${wrongAns}</strong> = ${wrongEng}</div>`:'';
+    fb.innerHTML=`<div><i class="ti ti-circle-x" style="font-size:18px"></i> 不正解　正解：<strong>${correctAns}</strong></div>${wrongLine}`;
+  }
   body.appendChild(fb);
 }
 
@@ -341,14 +432,14 @@ function renderQ(){
             if(btn.textContent===q[1]) btn.classList.add('correct');
             else if(btn.textContent===opt) btn.classList.add('wrong');
           });
-          showFeedback(body,isOk,q[1]);
+          showFeedback(body,isOk,q[1],isOk?null:opt);
           updateNav();
         };
       }
       grid.appendChild(b);
     });
     body.appendChild(grid);
-    if(answered) showFeedback(body,answers[curQ]===q[1],q[1]);
+    if(answered) showFeedback(body,answers[curQ]===q[1],q[1],answers[curQ]===q[1]?null:answers[curQ]);
   }else{
     document.getElementById('q-word').textContent=q[1];
     const inp=document.createElement('input');inp.type='text';inp.className='spelling-input';
