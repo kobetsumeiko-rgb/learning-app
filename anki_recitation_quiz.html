@@ -12,13 +12,18 @@ body{font-family:sans-serif;background:#f5f5f0;min-height:100vh;padding:2rem 1re
 h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
 .subtitle{font-size:14px;color:#888;margin-bottom:1.5rem}
 .level-btns{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
-.lbtn{padding:8px 20px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#333;font-size:14px;cursor:pointer;transition:all .15s}
+.lbtn{padding:8px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#333;font-size:13px;cursor:pointer;transition:all .15s}
 .lbtn:hover{background:#f0f0f0}
 .lbtn.active{background:#e6f1fb;color:#185fa5;border-color:#378add}
+.lbtn.final{border-color:#BA7517;color:#854F0B;background:#FAEEDA}
+.lbtn.final.active{background:#EF9F27;color:#fff;border-color:#EF9F27}
 .passage{font-size:17px;line-height:2.4;color:#1a1a1a;background:#f8f8f6;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
 .blank-input{display:inline-block;border:none;border-bottom:2px solid #378add;background:transparent;color:#185fa5;font-size:17px;font-family:sans-serif;text-align:center;outline:none;padding:0 2px;min-width:40px;vertical-align:baseline}
 .blank-input.correct{border-bottom-color:#1D9E75;color:#0F6E56}
 .blank-input.wrong{border-bottom-color:#E24B4A;color:#A32D2D;animation:shake .3s}
+.final-mode .blank-input{border-bottom-color:#BA7517;color:#854F0B}
+.final-mode .blank-input.correct{border-bottom-color:#1D9E75;color:#0F6E56}
+.final-mode .blank-input.wrong{border-bottom-color:#E24B4A;color:#A32D2D}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 .actions{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
 .btn{padding:8px 20px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#333;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px}
@@ -28,6 +33,7 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
 .score{font-size:14px;color:#888;display:flex;align-items:center;gap:8px;margin-bottom:1rem}
 .score span{font-size:20px;font-weight:500;color:#1a1a1a}
 .hint{font-size:12px;color:#aaa;margin-top:0.5rem}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;background:#FAEEDA;color:#854F0B;margin-left:8px;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -44,7 +50,8 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
     <button class="lbtn" onclick="setLevel(70,this)">Lv.7　70空欄</button>
     <button class="lbtn" onclick="setLevel(80,this)">Lv.8　80空欄</button>
     <button class="lbtn" onclick="setLevel(90,this)">Lv.9　90空欄</button>
-    <button class="lbtn active" onclick="setLevel(100,this)">Lv.10　全部</button>
+    <button class="lbtn" onclick="setLevel(136,this)">Lv.10　全空欄</button>
+    <button class="lbtn final" onclick="setFinal(this)">🏆 FINAL　段落頭のみ</button>
   </div>
   <div class="passage" id="passage"></div>
   <div class="actions">
@@ -57,6 +64,13 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
 </div>
 
 <script>
+// 段落定義（段落の最初の文のインデックス）
+// 段落1: sentences 0,1,2
+// 段落2: sentences 3,4,5,6
+// 段落3: sentences 7,8,9,10
+// 段落4: sentences 11,12
+const paragraphs = [[0,1,2],[3,4,5,6],[7,8,9,10],[11,12]];
+
 const sentences = [
   {words:["Japan","is","a","perfect","destination","for","family","vacations","."]},
   {words:["First",",","the","Japanese","hospitality","is","wonderful","."]},
@@ -77,15 +91,50 @@ const stopWords = /^(a|an|the|to|of|in|by|as|we|our|and|or|for|so|that|was|is|ar
 
 const wordOnly = [];
 sentences.forEach(s => s.words.forEach(w => { if(!/^[.,]$/.test(w)) wordOnly.push(w); }));
+const TOTAL_WORDS = wordOnly.length; // 136
 
-const TOTAL_WORDS = wordOnly.length;
-
-let currentLevel = 100;
+let currentLevel = 10;
+let isFinal = false;
 let blankedIndices = new Set();
+
+// 各文の先頭単語のwordOnlyインデックスを計算
+function getFirstWordIndices(){
+  const result = new Set();
+  let wi = 0;
+  sentences.forEach((s, si) => {
+    let firstFound = false;
+    s.words.forEach(w => {
+      if(!/^[.,]$/.test(w)){
+        if(!firstFound){ firstFound = true; result.add(wi); }
+        wi++;
+      }
+    });
+  });
+  return result;
+}
+
+// 各段落の先頭文の先頭単語インデックスを返す
+function getParagraphFirstWordIndices(){
+  const result = new Set();
+  let wi = 0;
+  sentences.forEach((s, si) => {
+    const isParagraphFirst = paragraphs.some(p => p[0] === si);
+    let firstFound = false;
+    s.words.forEach(w => {
+      if(!/^[.,]$/.test(w)){
+        if(!firstFound){
+          firstFound = true;
+          if(isParagraphFirst) result.add(wi);
+        }
+        wi++;
+      }
+    });
+  });
+  return result;
+}
 
 function pickIndices(n){
   const clamped = Math.min(n, TOTAL_WORDS);
-  // priority: content words (length>2, not stopword)
   let priorities = [...Array(TOTAL_WORDS).keys()].filter(i => wordOnly[i].length > 2 && !stopWords.test(wordOnly[i]));
   priorities = priorities.sort(() => Math.random() - 0.5);
   const result = new Set(priorities.slice(0, clamped));
@@ -97,15 +146,24 @@ function pickIndices(n){
 }
 
 function setLevel(n, el){
+  isFinal = false;
   currentLevel = n;
   document.querySelectorAll('.lbtn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
+  document.getElementById('passage').classList.remove('final-mode');
   render();
 }
 
+function setFinal(el){
+  isFinal = true;
+  document.querySelectorAll('.lbtn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('passage').classList.add('final-mode');
+  renderFinal();
+}
+
 function render(){
-  const actual = Math.min(currentLevel, TOTAL_WORDS);
-  blankedIndices = pickIndices(actual);
+  blankedIndices = pickIndices(currentLevel);
   const passage = document.getElementById('passage');
   let wordIdx = 0;
   let html = '';
@@ -128,7 +186,47 @@ function render(){
   });
   passage.innerHTML = html;
   document.getElementById('correct-count').textContent = '-';
-  document.getElementById('total-count').textContent = actual;
+  document.getElementById('total-count').textContent = Math.min(currentLevel, TOTAL_WORDS);
+}
+
+function renderFinal(){
+  // 段落の先頭単語のインデックスを取得
+  const paraFirstIndices = getParagraphFirstWordIndices();
+  blankedIndices = new Set();
+  // 段落先頭単語以外は全部空欄
+  for(let i = 0; i < TOTAL_WORDS; i++){
+    if(!paraFirstIndices.has(i)) blankedIndices.add(i);
+  }
+
+  const passage = document.getElementById('passage');
+  let wordIdx = 0;
+  let html = '';
+  let paraIdx = -1;
+
+  sentences.forEach((s, si) => {
+    // 段落の区切りを検出
+    paragraphs.forEach((p, pi) => { if(p[0] === si) paraIdx = pi; });
+
+    s.words.forEach(w => {
+      if(/^[.,]$/.test(w)){
+        html += w + ' ';
+      } else {
+        const idx = wordIdx;
+        if(blankedIndices.has(idx)){
+          const len = Math.max(w.length * 11, 44);
+          html += `<input class="blank-input" data-answer="${w}" data-idx="${idx}" style="width:${len}px" placeholder="___" onkeydown="handleKey(event,${idx})"> `;
+        } else {
+          // 段落先頭単語は太字で表示
+          html += `<strong>${w}</strong> `;
+        }
+        wordIdx++;
+      }
+    });
+    if(si < sentences.length - 1) html += '<br>';
+  });
+  passage.innerHTML = html;
+  document.getElementById('correct-count').textContent = '-';
+  document.getElementById('total-count').textContent = blankedIndices.size;
 }
 
 function handleKey(e, idx){
@@ -161,12 +259,16 @@ function revealAll(){
     input.classList.add('correct');
     input.classList.remove('wrong');
   });
-  document.getElementById('correct-count').textContent = Math.min(currentLevel, TOTAL_WORDS);
+  document.getElementById('correct-count').textContent = document.querySelectorAll('.blank-input').length;
 }
 
-function resetAll(){ render(); }
+function resetAll(){
+  if(isFinal) renderFinal();
+  else render();
+}
 
-render();
+// 初期表示
+setLevel(10, document.querySelector('.lbtn'));
 </script>
 </body>
 </html>
