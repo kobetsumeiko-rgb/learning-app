@@ -48,6 +48,15 @@ input.spelling-input{font-size:18px;text-align:center;letter-spacing:.1em;paddin
 .part-list{padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px}
 .part-pill{padding:4px 10px;border:1px solid #d0d0d0;border-radius:20px;background:transparent;cursor:pointer;font-size:12px;color:#666;transition:all .15s;white-space:nowrap}
 .part-pill.active{background:#EBF4FF;border-color:#378ADD;color:#1a6abf}
+.choice-btn.correct{background:#EDFDF3;border-color:#34A853;color:#1e7e34;font-weight:500}
+.choice-btn.wrong{background:#FEF2F2;border-color:#e74c3c;color:#c0392b}
+.choice-btn.show-answer{background:#EDFDF3;border-color:#34A853;color:#1e7e34;font-weight:500}
+.feedback{margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;display:flex;align-items:center;gap:8px}
+.feedback.ok{background:#EDFDF3;color:#1e7e34;border:1px solid #34A853}
+.feedback.ng{background:#FEF2F2;color:#c0392b;border:1px solid #e74c3c}
+.speak-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid #d0d0d0;border-radius:20px;background:#fff;color:#555;font-size:12px;cursor:pointer;transition:all .15s;margin-bottom:8px}
+.speak-btn:hover{background:#f0f0f0;border-color:#378ADD;color:#1a6abf}
+.speak-btn.speaking{background:#EBF4FF;border-color:#378ADD;color:#1a6abf}
 .sel-summary{font-size:12px;color:#888;margin-top:6px;min-height:16px}
 .app-header{text-align:center;padding:1.5rem 0 .5rem}
 .app-header h1{font-size:20px;font-weight:600;margin-bottom:4px}
@@ -106,6 +115,7 @@ input.spelling-input{font-size:18px;text-align:center;letter-spacing:.1em;paddin
   <div id="q-nav" style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:1rem"></div>
   <div class="card">
     <div style="font-size:12px;color:#888;margin-bottom:4px" id="q-num"></div>
+    <button class="speak-btn" id="speak-btn" onclick="speakWord()"><i class="ti ti-volume"></i> 発音を聞く</button>
     <div class="q-word" id="q-word"></div>
     <div id="q-body"></div>
   </div>
@@ -278,6 +288,29 @@ function startQuiz(){
 function showScreen(id){['s-setup','s-quiz','s-result'].forEach(s=>{document.getElementById(s).className='screen'+(s===id?' active':'');});}
 function goSetup(){showScreen('s-setup');}
 
+function speakWord(){
+  const q=questions[curQ];
+  if(!q)return;
+  const word=qMode==='choice'?q[0]:q[0];
+  const btn=document.getElementById('speak-btn');
+  window.speechSynthesis.cancel();
+  const utter=new SpeechSynthesisUtterance(word);
+  utter.lang='en-US';utter.rate=0.9;
+  btn.classList.add('speaking');
+  utter.onend=()=>btn.classList.remove('speaking');
+  utter.onerror=()=>btn.classList.remove('speaking');
+  window.speechSynthesis.speak(utter);
+}
+
+function showFeedback(body,isOk,correctAns){
+  const fb=document.createElement('div');
+  fb.className='feedback '+(isOk?'ok':'ng');
+  fb.innerHTML=isOk
+    ?'<i class="ti ti-circle-check" style="font-size:18px"></i> 正解！'
+    :`<i class="ti ti-circle-x" style="font-size:18px"></i> 不正解　正解：<strong>${correctAns}</strong>`;
+  body.appendChild(fb);
+}
+
 function renderQ(){
   const n=questions.length;
   document.getElementById('q-num').textContent=`問題 ${curQ+1} / ${n}`;
@@ -285,33 +318,67 @@ function renderQ(){
   document.getElementById('prog-fill').style.width=(answers.filter(a=>a!==null&&a!=='').length/n*100)+'%';
   renderQNav();
   const q=questions[curQ],body=document.getElementById('q-body');body.innerHTML='';
+  const answered=answers[curQ]!==null&&answers[curQ]!=='';
+
   if(qMode==='choice'){
     document.getElementById('q-word').textContent=q[0];
     const opts=choiceOptions[curQ];
     const grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px';
     opts.forEach(opt=>{
       const b=document.createElement('button');
-      b.className='choice-btn'+(answers[curQ]===opt?' selected':'');
+      b.className='choice-btn';
       b.textContent=opt;
-      b.onclick=()=>{
-        answers[curQ]=opt;
-        grid.querySelectorAll('.choice-btn').forEach(btn=>{
-          btn.classList.toggle('selected',btn.textContent===opt);
-        });
-        updateNav();
-      };
+      if(answered){
+        b.disabled=true;
+        if(opt===q[1]) b.classList.add('correct');
+        else if(opt===answers[curQ]) b.classList.add('wrong');
+      }else{
+        b.onclick=()=>{
+          answers[curQ]=opt;
+          const isOk=opt===q[1];
+          grid.querySelectorAll('.choice-btn').forEach(btn=>{
+            btn.disabled=true;
+            if(btn.textContent===q[1]) btn.classList.add('correct');
+            else if(btn.textContent===opt) btn.classList.add('wrong');
+          });
+          showFeedback(body,isOk,q[1]);
+          updateNav();
+        };
+      }
       grid.appendChild(b);
     });
     body.appendChild(grid);
+    if(answered) showFeedback(body,answers[curQ]===q[1],q[1]);
   }else{
     document.getElementById('q-word').textContent=q[1];
     const inp=document.createElement('input');inp.type='text';inp.className='spelling-input';
     inp.placeholder='英語のつづりを入力…';inp.value=answers[curQ]||'';
+    if(answered) inp.disabled=true;
     inp.oninput=()=>{answers[curQ]=inp.value.trim();updateNav();};
     body.appendChild(inp);
     const hint=document.createElement('div');hint.className='hint';hint.textContent=`ヒント：${q[0].length}文字`;
     body.appendChild(hint);
-    setTimeout(()=>inp.focus(),50);
+    if(!answered){
+      const checkBtn=document.createElement('button');
+      checkBtn.className='btn btn-primary';
+      checkBtn.style.cssText='width:100%;justify-content:center;margin-top:10px';
+      checkBtn.innerHTML='<i class="ti ti-check"></i> 確認する';
+      checkBtn.onclick=()=>{
+        const val=inp.value.trim();
+        if(!val)return;
+        answers[curQ]=val;
+        inp.disabled=true;
+        checkBtn.remove();
+        const isOk=val.toLowerCase()===q[0].toLowerCase();
+        showFeedback(body,isOk,q[0]);
+        updateNav();
+      };
+      body.appendChild(checkBtn);
+      setTimeout(()=>inp.focus(),50);
+    }else{
+      const isOk=answers[curQ].toLowerCase()===q[0].toLowerCase();
+      showFeedback(body,isOk,q[0]);
+    }
   }
   document.getElementById('btn-prev').disabled=curQ===0;
   document.getElementById('btn-next').style.display=curQ===n-1?'none':'flex';
@@ -328,7 +395,7 @@ function updateNav(){
   renderQNav();
 }
 function prevQ(){if(curQ>0){curQ--;renderQ();}}
-function nextQ(){if(curQ<questions.length-1){curQ++;renderQ();}}
+function nextQ(){if(curQ<questions.length-1){curQ++;renderQ();}else if(answers.every(a=>a!==null&&a!=='')){submitQuiz();}}
 
 function submitQuiz(){
   let correct=0;
