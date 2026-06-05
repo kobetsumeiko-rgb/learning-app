@@ -11,6 +11,21 @@ body{font-family:sans-serif;background:#f5f5f0;min-height:100vh;padding:2rem 1re
 .wrap{max-width:720px;margin:0 auto;background:#fff;border-radius:16px;padding:2rem;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
 .subtitle{font-size:14px;color:#888;margin-bottom:1.5rem}
+
+/* 音声コントロール */
+.audio-bar{display:flex;align-items:center;gap:10px;background:#f0f7ff;border:1px solid #cde3f6;border-radius:10px;padding:10px 14px;margin-bottom:1.5rem;flex-wrap:wrap}
+.audio-bar .play-btn{width:40px;height:40px;border-radius:50%;border:none;background:#185fa5;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.audio-bar .play-btn:hover{background:#1049818}
+.audio-bar .play-btn.playing{background:#E24B4A}
+.audio-bar .stop-btn{width:36px;height:36px;border-radius:50%;border:1px solid #cde3f6;background:#fff;color:#185fa5;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.audio-bar .stop-btn:hover{background:#e6f1fb}
+.speed-btns{display:flex;gap:6px;flex-wrap:wrap}
+.speed-btn{padding:5px 12px;border:1px solid #cde3f6;border-radius:6px;background:#fff;color:#185fa5;font-size:13px;cursor:pointer;transition:all .15s}
+.speed-btn:hover{background:#e6f1fb}
+.speed-btn.active{background:#185fa5;color:#fff;border-color:#185fa5}
+.audio-label{font-size:13px;color:#185fa5;font-weight:500;margin-right:4px}
+.audio-status{font-size:12px;color:#888;margin-left:auto}
+
 .level-btns{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
 .lbtn{padding:8px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#333;font-size:13px;cursor:pointer;transition:all .15s}
 .lbtn:hover{background:#f0f0f0}
@@ -33,13 +48,30 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
 .score{font-size:14px;color:#888;display:flex;align-items:center;gap:8px;margin-bottom:1rem}
 .score span{font-size:20px;font-weight:500;color:#1a1a1a}
 .hint{font-size:12px;color:#aaa;margin-top:0.5rem}
-.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;background:#FAEEDA;color:#854F0B;margin-left:8px;vertical-align:middle}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>暗唱テスト練習</h1>
   <p class="subtitle">A family from Thailand（教科書 Unit 3）</p>
+
+  <!-- 音声コントロール -->
+  <div class="audio-bar">
+    <span class="audio-label">🔊 音声</span>
+    <button class="play-btn" id="playBtn" onclick="togglePlay()" title="再生/一時停止">
+      <i class="ti ti-player-play"></i>
+    </button>
+    <button class="stop-btn" onclick="stopAudio()" title="停止">
+      <i class="ti ti-player-stop"></i>
+    </button>
+    <div class="speed-btns">
+      <button class="speed-btn" onclick="setSpeed(0.5,this)">遅い 0.5×</button>
+      <button class="speed-btn" onclick="setSpeed(0.7,this)">やや遅い 0.7×</button>
+      <button class="speed-btn active" onclick="setSpeed(1.0,this)">普通 1.0×</button>
+    </div>
+    <span class="audio-status" id="audioStatus">停止中</span>
+  </div>
+
   <div class="level-btns">
     <button class="lbtn" onclick="setLevel(10,this)">Lv.1　10空欄</button>
     <button class="lbtn" onclick="setLevel(20,this)">Lv.2　20空欄</button>
@@ -64,11 +96,103 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
 </div>
 
 <script>
-// 段落定義（段落の最初の文のインデックス）
-// 段落1: sentences 0,1,2
-// 段落2: sentences 3,4,5,6
-// 段落3: sentences 7,8,9,10
-// 段落4: sentences 11,12
+// ===== 英文テキスト =====
+const fullPassageText = `Japan is a perfect destination for family vacations. First, the Japanese hospitality is wonderful. When we visited hotels, restaurants, and tourist attractions, the staff were always warm and friendly. Additionally, Japan is a very safe country. One evening, we went to a local festival. Our children walked around without any worries about safety. Our son bought a snow cone by himself while we played a shooting game. Finally, people keep public places such as parks and streets clean. Everything was so clean and organized that we were really impressed. One day, when we were waiting for our Shinkansen, the cleaning staff suddenly arrived. We were surprised that they cleaned the whole train in such a short time. We are very glad that we visited this country. Our children will never forget this wonderful week in Japan.`;
+
+// ===== 音声 =====
+let currentRate = 1.0;
+let isPlaying = false;
+let currentUtterance = null;
+
+function getEnglishVoice(){
+  const voices = speechSynthesis.getVoices();
+  return voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('samantha'))
+    || voices.find(v => v.lang === 'en-US')
+    || voices.find(v => v.lang.startsWith('en'))
+    || null;
+}
+
+function setSpeed(rate, el){
+  currentRate = rate;
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  if(isPlaying){
+    stopAudio();
+    startAudio();
+  }
+}
+
+function startAudio(){
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(fullPassageText);
+  utter.lang = 'en-US';
+  utter.rate = currentRate;
+  utter.pitch = 1.0;
+  const voice = getEnglishVoice();
+  if(voice) utter.voice = voice;
+
+  utter.onstart = () => {
+    isPlaying = true;
+    document.getElementById('audioStatus').textContent = '再生中...';
+    const btn = document.getElementById('playBtn');
+    btn.innerHTML = '<i class="ti ti-player-pause"></i>';
+    btn.classList.add('playing');
+  };
+  utter.onend = () => {
+    isPlaying = false;
+    document.getElementById('audioStatus').textContent = '停止中';
+    const btn = document.getElementById('playBtn');
+    btn.innerHTML = '<i class="ti ti-player-play"></i>';
+    btn.classList.remove('playing');
+    currentUtterance = null;
+  };
+  utter.onerror = () => {
+    isPlaying = false;
+    document.getElementById('audioStatus').textContent = 'エラー';
+    const btn = document.getElementById('playBtn');
+    btn.innerHTML = '<i class="ti ti-player-play"></i>';
+    btn.classList.remove('playing');
+  };
+  currentUtterance = utter;
+  speechSynthesis.speak(utter);
+}
+
+function togglePlay(){
+  if(isPlaying){
+    speechSynthesis.pause();
+    isPlaying = false;
+    document.getElementById('audioStatus').textContent = '一時停止中';
+    const btn = document.getElementById('playBtn');
+    btn.innerHTML = '<i class="ti ti-player-play"></i>';
+    btn.classList.remove('playing');
+  } else if(speechSynthesis.paused){
+    speechSynthesis.resume();
+    isPlaying = true;
+    document.getElementById('audioStatus').textContent = '再生中...';
+    const btn = document.getElementById('playBtn');
+    btn.innerHTML = '<i class="ti ti-player-pause"></i>';
+    btn.classList.add('playing');
+  } else {
+    startAudio();
+  }
+}
+
+function stopAudio(){
+  speechSynthesis.cancel();
+  isPlaying = false;
+  document.getElementById('audioStatus').textContent = '停止中';
+  const btn = document.getElementById('playBtn');
+  btn.innerHTML = '<i class="ti ti-player-play"></i>';
+  btn.classList.remove('playing');
+  currentUtterance = null;
+}
+
+// voices が非同期ロードの場合に備えて
+if(speechSynthesis.onvoiceschanged !== undefined){
+  speechSynthesis.onvoiceschanged = () => {};
+}
+
+// ===== 問題 =====
 const paragraphs = [[0,1,2],[3,4,5,6],[7,8,9,10],[11,12]];
 
 const sentences = [
@@ -91,29 +215,12 @@ const stopWords = /^(a|an|the|to|of|in|by|as|we|our|and|or|for|so|that|was|is|ar
 
 const wordOnly = [];
 sentences.forEach(s => s.words.forEach(w => { if(!/^[.,]$/.test(w)) wordOnly.push(w); }));
-const TOTAL_WORDS = wordOnly.length; // 136
+const TOTAL_WORDS = wordOnly.length;
 
 let currentLevel = 10;
 let isFinal = false;
 let blankedIndices = new Set();
 
-// 各文の先頭単語のwordOnlyインデックスを計算
-function getFirstWordIndices(){
-  const result = new Set();
-  let wi = 0;
-  sentences.forEach((s, si) => {
-    let firstFound = false;
-    s.words.forEach(w => {
-      if(!/^[.,]$/.test(w)){
-        if(!firstFound){ firstFound = true; result.add(wi); }
-        wi++;
-      }
-    });
-  });
-  return result;
-}
-
-// 各段落の先頭文の先頭単語インデックスを返す
 function getParagraphFirstWordIndices(){
   const result = new Set();
   let wi = 0;
@@ -122,10 +229,7 @@ function getParagraphFirstWordIndices(){
     let firstFound = false;
     s.words.forEach(w => {
       if(!/^[.,]$/.test(w)){
-        if(!firstFound){
-          firstFound = true;
-          if(isParagraphFirst) result.add(wi);
-        }
+        if(!firstFound){ firstFound = true; if(isParagraphFirst) result.add(wi); }
         wi++;
       }
     });
@@ -190,23 +294,15 @@ function render(){
 }
 
 function renderFinal(){
-  // 段落の先頭単語のインデックスを取得
   const paraFirstIndices = getParagraphFirstWordIndices();
   blankedIndices = new Set();
-  // 段落先頭単語以外は全部空欄
   for(let i = 0; i < TOTAL_WORDS; i++){
     if(!paraFirstIndices.has(i)) blankedIndices.add(i);
   }
-
   const passage = document.getElementById('passage');
   let wordIdx = 0;
   let html = '';
-  let paraIdx = -1;
-
   sentences.forEach((s, si) => {
-    // 段落の区切りを検出
-    paragraphs.forEach((p, pi) => { if(p[0] === si) paraIdx = pi; });
-
     s.words.forEach(w => {
       if(/^[.,]$/.test(w)){
         html += w + ' ';
@@ -216,7 +312,6 @@ function renderFinal(){
           const len = Math.max(w.length * 11, 44);
           html += `<input class="blank-input" data-answer="${w}" data-idx="${idx}" style="width:${len}px" placeholder="___" onkeydown="handleKey(event,${idx})"> `;
         } else {
-          // 段落先頭単語は太字で表示
           html += `<strong>${w}</strong> `;
         }
         wordIdx++;
@@ -267,7 +362,6 @@ function resetAll(){
   else render();
 }
 
-// 初期表示
 setLevel(10, document.querySelector('.lbtn'));
 </script>
 </body>
