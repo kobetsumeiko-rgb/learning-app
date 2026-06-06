@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>古文動詞識別クイズ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#faf8f3;
+  --card:#ffffff;
+  --border:#e0dbd0;
+  --text:#2a2520;
+  --muted:#7a726a;
+  --green-bg:#eaf5e8;
+  --green-border:#6ab04c;
+  --green-text:#2d6a1f;
+  --red-bg:#fdf0ee;
+  --red-border:#e07060;
+  --red-text:#8a2a1f;
+  --accent:#5a3e28;
+  --accent-light:#c8a87a;
+  --progress-bg:#e0dbd0;
+  --progress-fill:#5a3e28;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-height:100vh;padding:2rem 1rem}
+h1{font-family:'Noto Serif JP',serif;font-size:1.5rem;font-weight:700;color:var(--accent);text-align:center;margin-bottom:.25rem;letter-spacing:.05em}
+.subtitle{text-align:center;font-size:12px;color:var(--muted);margin-bottom:1.5rem}
+.container{max-width:640px;margin:0 auto}
+.progress-wrap{margin-bottom:.5rem}
+.progress-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px}
+.progress{height:5px;background:var(--progress-bg);border-radius:3px;overflow:hidden}
+.progress-bar{height:100%;background:var(--progress-fill);transition:width .4s ease;border-radius:3px}
+.score-row{display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-bottom:1rem}
+.score-val{font-size:15px;font-weight:500;color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(90,62,40,.06)}
+.q-num{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.75rem}
+.sentence{font-family:'Noto Serif JP',serif;font-size:1.2rem;line-height:2.4;color:var(--text)}
+.underline{text-decoration:underline;text-underline-offset:4px;font-weight:700;color:var(--accent)}
+.selects{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:1.25rem}
+.sel-group label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:500;letter-spacing:.05em}
+select{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:13px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a726a'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px}
+select:focus{outline:none;border-color:var(--accent)}
+.btn-row{display:flex;gap:8px;margin-top:1.25rem;align-items:center}
+button{font-family:'Noto Sans JP',sans-serif;cursor:pointer;border-radius:7px;font-size:13px;padding:8px 18px;transition:all .15s}
+.btn-check{background:var(--accent);color:#fff;border:none;font-weight:500}
+.btn-check:hover{background:#3d2a1a}
+.btn-check:active{transform:scale(.97)}
+.btn-nav{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-nav:hover{background:var(--border);color:var(--text)}
+.btn-nav:disabled{opacity:.35;cursor:default}
+.feedback{margin-top:1.25rem;border-radius:9px;padding:1rem 1.25rem;font-size:13px;line-height:1.8;display:none}
+.feedback.show{display:block}
+.feedback.correct{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green-text)}
+.feedback.wrong{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red-text)}
+.answer-line{font-weight:700;font-size:14px;margin-bottom:.4rem}
+.correct-ans{margin-bottom:.5rem;font-size:13px}
+.correct-ans b{font-weight:700}
+.point{font-size:12.5px;line-height:1.85;border-top:1px solid rgba(0,0,0,.1);margin-top:.6rem;padding-top:.6rem}
+.point-title{font-weight:700;margin-bottom:.2rem}
+.nav-bottom{display:flex;align-items:center;gap:8px;justify-content:center}
+.nav-center{font-size:13px;color:var(--muted);flex:1;text-align:center}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>古文動詞識別クイズ</h1>
+  <p class="subtitle">行・活用の種類・活用形を選んで答えましょう</p>
+
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span id="q-label">問題 1 / 50</span>
+      <span id="score-label">正解 0 / 0</span>
+    </div>
+    <div class="progress"><div class="progress-bar" id="pbar" style="width:0%"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="q-num" id="q-num">問題 1</div>
+    <div class="sentence" id="sentence"></div>
+    <div class="selects">
+      <div class="sel-group"><label>行</label><select id="sel-gyo"></select></div>
+      <div class="sel-group"><label>活用の種類</label><select id="sel-type"></select></div>
+      <div class="sel-group"><label>活用形</label><select id="sel-form"></select></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-check" onclick="check()">答え合わせ</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <div class="nav-bottom">
+    <button class="btn-nav" id="btn-prev" onclick="go(-1)" disabled>← 前へ</button>
+    <span class="nav-center" id="nav-center">1 / 50</span>
+    <button class="btn-nav" id="btn-next" onclick="go(1)">次へ →</button>
+  </div>
+</div>
+
+<script>
+const GYO=['ア行','カ行','ガ行','サ行','ザ行','タ行','ダ行','ナ行','バ行','マ行','ラ行','ワ行','ハ行','ヤ行'];
+const TYPES=['四段活用','上一段活用','上二段活用','下一段活用','下二段活用','カ行変格活用','サ行変格活用','ナ行変格活用','ラ行変格活用'];
+const FORMS=['未然形','連用形','終止形','連体形','已然形','命令形'];
+
+// 問題データ
+const Q=[
+
+  // ===== 四段活用 =====
+  {sent:['春になれば、花が','咲き','て山を彩る。'],uw:1,
+   gyo:'カ行',type:'四段活用',form:'連用形',
+   point:'「咲く」はカ行四段活用。活用語尾：か・き・く・く・け・け\n「咲き＋て」のように、テ・ニ・ケリに続く形が連用形。'},
+
+  {sent:['この道を','行けば','、都に着くだろう。'],uw:1,
+   gyo:'カ行',type:'四段活用',form:'已然形',
+   point:'「行く」はカ行四段活用。接続助詞「ば」は已然形に付く（順接確定条件）。「行け＋ば」→已然形。'},
+
+  {sent:['雪が','降り','て、野山が白くなった。'],uw:1,
+   gyo:'ラ行',type:'四段活用',form:'連用形',
+   point:'「降る」はラ行四段活用。活用語尾：ら・り・る・る・れ・れ\n「降り＋て」→連用形。'},
+
+  {sent:['そのことを','知ら','ずして、何も語るな。'],uw:1,
+   gyo:'ラ行',type:'四段活用',form:'未然形',
+   point:'「知る」はラ行四段活用。打消の助動詞「ず」は未然形に接続。「知ら＋ず」→未然形。'},
+
+  {sent:['山里に','住む','人の心は清らかなり。'],uw:1,
+   gyo:'マ行',type:'四段活用',form:'連体形',
+   point:'「住む」はマ行四段活用。活用語尾：ま・み・む・む・め・め\n「住む＋人」→体言に続く連体形。'},
+
+  {sent:['書を','読み','て知恵を養う。'],uw:1,
+   gyo:'マ行',type:'四段活用',form:'連用形',
+   point:'「読む」はマ行四段活用。「読み＋て」→連用形。'},
+
+  {sent:['師の教えを','聞けど','、なお迷いは消えず。'],uw:1,
+   gyo:'カ行',type:'四段活用',form:'已然形',
+   point:'「聞く」はカ行四段活用。接続助詞「ど（逆接）」は已然形に接続。「聞け＋ど」→已然形。'},
+
+  {sent:['心に','思ふ','こと多かれど語らず。'],uw:1,
+   gyo:'ハ行',type:'四段活用',form:'連体形',
+   point:'「思ふ」はハ行四段活用。活用語尾：は・ひ・ふ・ふ・へ・へ\n「思ふ＋こと」→体言に続く連体形。'},
+
+  {sent:['神に','祈ら','むとて、社に参った。'],uw:1,
+   gyo:'ラ行',type:'四段活用',form:'未然形',
+   point:'「祈る」はラ行四段活用。意志の助動詞「む」は未然形に接続。「祈ら＋む」→未然形。'},
+
+  {sent:['風が','吹く','たびに松は揺れた。'],uw:1,
+   gyo:'カ行',type:'四段活用',form:'連体形',
+   point:'「吹く」はカ行四段活用。「吹く＋たびに」→体言「たびに」に続く連体形。'},
+
+  // ===== 上一段活用（全7語：ひ・い・き・に・み・ゐ + 射る）=====
+  {sent:['この花の美しさは','見れど','飽かぬものなり。'],uw:1,
+   gyo:'マ行',type:'上一段活用',form:'已然形',
+   point:'「見る」はマ行上一段活用。活用：み・み・みる・みる・みれ・みよ\n上一段は「ひいきにみゐる」の7語。「見れ＋ど」→已然形。'},
+
+  {sent:['御簾の中に','居る','女房の声が聞こえた。'],uw:1,
+   gyo:'ワ行',type:'上一段活用',form:'連体形',
+   point:'「居る（ゐる）」はワ行上一段活用。活用：ゐ・ゐ・ゐる・ゐる・ゐれ・ゐよ\n「ゐる＋女房」→連体形。「ひいきにみゐる」のひとつ。'},
+
+  {sent:['仏前に','着き','て、経を読んだ。'],uw:1,
+   gyo:'カ行',type:'上一段活用',form:'連用形',
+   point:'「着る」はカ行上一段活用。活用：き・き・きる・きる・きれ・きよ\n「着き＋て」→連用形。「ひいきにみゐる」のひとつ（き）。'},
+
+  {sent:['神を','率ゐ','て都に向かった。'],uw:1,
+   gyo:'ワ行',type:'上一段活用',form:'連用形',
+   point:'「率ゐる（ゐる）」はワ行上一段活用。活用：ゐ・ゐ・ゐる・ゐる・ゐれ・ゐよ\n「率ゐ＋て」→連用形。'},
+
+  {sent:['弓を','射れ','ば、的に当たった。'],uw:1,
+   gyo:'ヤ行',type:'上一段活用',form:'已然形',
+   point:'「射る」はヤ行上一段活用。活用：い・い・いる・いる・いれ・いよ\n「ひいきにみゐる」の「い」。「射れ＋ば」→已然形。'},
+
+  {sent:['松の葉に','似たる','ものを探した。'],uw:1,
+   gyo:'ナ行',type:'上一段活用',form:'連体形',
+   point:'「似る」はナ行上一段活用。活用：に・に・にる・にる・にれ・によ\n「似たる」の「似（に）」は連用形だが、「似たる」全体で連体形。「ひいきにみゐる」の「に」。'},
+
+  {sent:['秋の夜、一人','干る','衣は哀れなり。'],uw:1,
+   gyo:'ハ行',type:'上一段活用',form:'終止形',
+   point:'「干る（ひる）」はハ行上一段活用。活用：ひ・ひ・ひる・ひる・ひれ・ひよ\n「ひいきにみゐる」の「ひ」。文末に単独で使われ終止形。'},
+
+  // ===== 上二段活用 =====
+  {sent:['かの人は早く','起き','て、水を汲みにいった。'],uw:1,
+   gyo:'カ行',type:'上二段活用',form:'連用形',
+   point:'「起く」はカ行上二段活用。活用：き・き・く・くる・くれ・きよ\n「起き＋て」→連用形。現代語「起きる（上一段）」と混同しないこと。'},
+
+  {sent:['君を','恋ひ','て袖は濡れにけり。'],uw:1,
+   gyo:'ハ行',type:'上二段活用',form:'連用形',
+   point:'「恋ふ」はハ行上二段活用。活用：ひ・ひ・ふ・ふる・ふれ・ひよ\n「恋ひ＋て」→連用形。'},
+
+  {sent:['夜もすがら','起き','ていた。'],uw:1,
+   gyo:'カ行',type:'上二段活用',form:'連用形',
+   point:'「起く」はカ行上二段活用。「起き＋て」→連用形。繰り返し出題される重要語。'},
+
+  // ===== 下一段活用（「蹴る」のみ）=====
+  {sent:['鞠を','蹴れ','ば高く上がった。'],uw:1,
+   gyo:'カ行',type:'下一段活用',form:'已然形',
+   point:'「蹴る」はカ行下一段活用。古文の下一段活用はこの語のみ。\n活用：け・け・ける・ける・けれ・けよ\n「蹴れ＋ば」→已然形。'},
+
+  {sent:['石を','蹴','て川に投げた。'],uw:1,
+   gyo:'カ行',type:'下一段活用',form:'連用形',
+   point:'「蹴る」はカ行下一段活用。古文で下一段活用はこの語だけ。\n活用：け・け・ける・ける・けれ・けよ\n「蹴（け）＋て」→連用形。'},
+
+  // ===== 下二段活用 =====
+  {sent:['夜が','更けぬ','れど、旅人は歩き続けた。'],uw:1,
+   gyo:'カ行',type:'下二段活用',form:'連用形',
+   point:'「更く」はカ行下二段活用。活用：け・け・く・くる・くれ・けよ\n「更け＋ぬ（完了）」→連用形。'},
+
+  {sent:['空が','晴れ','て、旅立ちの日となった。'],uw:1,
+   gyo:'ラ行',type:'下二段活用',form:'連用形',
+   point:'「晴る」はラ行下二段活用。活用：れ・れ・る・るる・るれ・れよ\n「晴れ＋て」→連用形。'},
+
+  {sent:['川のほとりに','立て','ば、風が心地よかった。'],uw:1,
+   gyo:'タ行',type:'下二段活用',form:'已然形',
+   point:'「立つ（下二段）」はタ行下二段活用。活用：て・て・つ・つる・つれ・てよ\n「立て＋ば」→已然形。四段の「立つ（立ち）」と区別すること。'},
+
+  {sent:['月を','眺め','つつ、物思いにふけった。'],uw:1,
+   gyo:'マ行',type:'下二段活用',form:'連用形',
+   point:'「眺む」はマ行下二段活用。活用：め・め・む・むる・むれ・めよ\n「眺め＋つつ（接続助詞）」→連用形。'},
+
+  {sent:['この山を','越え','ば、村が見えてくる。'],uw:1,
+   gyo:'ヤ行',type:'下二段活用',form:'已然形',
+   point:'「越ゆ」はヤ行下二段活用。活用：え・え・ゆ・ゆる・ゆれ・えよ\n「越え＋ば」→已然形。'},
+
+  {sent:['過ちを','改め','よと師は言った。'],uw:1,
+   gyo:'マ行',type:'下二段活用',form:'命令形',
+   point:'「改む」はマ行下二段活用。活用：め・め・む・むる・むれ・めよ\n「改めよ」→命令形。下二段・下一段の命令形語尾は「よ」。'},
+
+  // ===== カ行変格活用（来）=====
+  {sent:['都へ','来','し日のことを忘れない。'],uw:1,
+   gyo:'カ行',type:'カ行変格活用',form:'連用形',
+   point:'「来（く）」はカ行変格活用。活用：こ・き・く・くる・くれ・こよ\n「来（き）＋し（過去の助動詞）」→連用形。'},
+
+  {sent:['旅人が','来たれ','ば、飯を出した。'],uw:1,
+   gyo:'カ行',type:'カ行変格活用',form:'已然形',
+   point:'「来（く）」はカ行変格活用。「来たれ（きたれ）」は「来＋たり」の已然形。\n「来（く）」の已然形は「くれ」。複合語でも語幹部分の活用を見る。'},
+
+  {sent:['翌朝、風が','来る','ことを知った。'],uw:1,
+   gyo:'カ行',type:'カ行変格活用',form:'連体形',
+   point:'「来（く）」はカ行変格活用。活用：こ・き・く・くる・くれ・こよ\n「来る（くる）＋こと」→体言に続く連体形。'},
+
+  // ===== サ行変格活用（す・おはす、複合語含む）=====
+  {sent:['早く','せよ','と急かされる。'],uw:1,
+   gyo:'サ行',type:'サ行変格活用',form:'命令形',
+   point:'「す」はサ行変格活用。活用：せ・し・す・する・すれ・せよ\n「せよ」→命令形。サ変の命令形は「せよ」。'},
+
+  {sent:['人の言葉を','信ぜ','ずにはいられない。'],uw:1,
+   gyo:'サ行',type:'サ行変格活用',form:'未然形',
+   point:'「信ず」はサ行変格活用（複合サ変）。活用：ぜ・じ・ず・ずる・ずれ・ぜよ\n「信ぜ＋ず（打消）」→未然形。'},
+
+  {sent:['御仏を','礼す','る僧の姿は尊かった。'],uw:1,
+   gyo:'サ行',type:'サ行変格活用',form:'連体形',
+   point:'「礼す（らいす）」はサ行変格活用（複合サ変）。活用：せ・し・す・する・すれ・せよ\n「礼する＋僧」→連体形。'},
+
+  {sent:['歌を','詠じ','て心を慰めた。'],uw:1,
+   gyo:'サ行',type:'サ行変格活用',form:'連用形',
+   point:'「詠ず（えいず）」はサ行変格活用（複合サ変）。活用：ぜ・じ・ず・ずる・ずれ・ぜよ\n「詠じ＋て」→連用形。'},
+
+  {sent:['帝が','おはします','御殿は輝いていた。'],uw:1,
+   gyo:'サ行',type:'サ行変格活用',form:'連体形',
+   point:'「おはします」はサ行変格活用の尊敬語。活用：おはしませ・おはしまし・おはします・おはします・おはしますれ・おはしませ\n「おはします＋御殿」→連体形。'},
+
+  {sent:['翁は宮中に','参じ','て申し上げた。'],uw:1,
+   gyo:'サ行',type:'サ行変格活用',form:'連用形',
+   point:'「参ず（まゐず）」はサ行変格活用（複合サ変）。活用：ぜ・じ・ず・ずる・ずれ・ぜよ\n「参じ＋て」→連用形。'},
+
+  {sent:['夢に','せ','ば覚めなければよかった。'],uw:1,
+   gyo:'サ行',type:'サ行変格活用',form:'未然形',
+   point:'「す」はサ行変格活用。活用：せ・し・す・する・すれ・せよ\n「せ＋ば（仮定）」→未然形接続の「ば（仮定条件）」の場合、未然形に接続。'},
+
+  // ===== ナ行変格活用（死ぬ・往ぬ/去ぬ のみ）=====
+  {sent:['父が','死ぬ','ことを予感していた。'],uw:1,
+   gyo:'ナ行',type:'ナ行変格活用',form:'終止形',
+   point:'「死ぬ」はナ行変格活用。活用：な・に・ぬ・ぬる・ぬれ・ね\nナ変動詞は「死ぬ」と「往ぬ（いぬ）」のみ。文末単独→終止形。'},
+
+  {sent:['消えも','死な','ばや、と思った。'],uw:1,
+   gyo:'ナ行',type:'ナ行変格活用',form:'未然形',
+   point:'「死ぬ」はナ行変格活用。活用：な・に・ぬ・ぬる・ぬれ・ね\n「死な＋ばや（願望）」→未然形接続の「ばや」に続く未然形。'},
+
+  {sent:['故郷へ','往に','けり。'],uw:1,
+   gyo:'ナ行',type:'ナ行変格活用',form:'連用形',
+   point:'「往ぬ（いぬ）」はナ行変格活用。活用：な・に・ぬ・ぬる・ぬれ・ね\nナ変は「死ぬ」と「往ぬ（いぬ）」だけ。「往に＋けり（過去）」→連用形。'},
+
+  {sent:['鳥が','往ぬる','を眺めていた。'],uw:1,
+   gyo:'ナ行',type:'ナ行変格活用',form:'連体形',
+   point:'「往ぬ」はナ行変格活用。活用：な・に・ぬ・ぬる・ぬれ・ね\n「往ぬる＋を」→体言・助詞「を」に続く連体形。'},
+
+  {sent:['早く','死ね','と言われても困る。'],uw:1,
+   gyo:'ナ行',type:'ナ行変格活用',form:'命令形',
+   point:'「死ぬ」はナ行変格活用。活用：な・に・ぬ・ぬる・ぬれ・ね\n「死ね」→命令形。ナ変の命令形は「ね」。'},
+
+  {sent:['主人が','死ぬれ','ば、家人は悲しんだ。'],uw:1,
+   gyo:'ナ行',type:'ナ行変格活用',form:'已然形',
+   point:'「死ぬ」はナ行変格活用。活用：な・に・ぬ・ぬる・ぬれ・ね\n「死ぬれ＋ば」→已然形。'},
+
+  // ===== ラ行変格活用（あり・をり・はべり・いまそかり）=====
+  {sent:['かぐや姫が','あり','けると聞いた。'],uw:1,
+   gyo:'ラ行',type:'ラ行変格活用',form:'連用形',
+   point:'「あり」はラ行変格活用。活用：ら・り・り・る・れ・れ\nラ変は終止形が「り」で終わる。「あり＋けり（過去）」→連用形。'},
+
+  {sent:['翁、竹の中に','をり','。'],uw:1,
+   gyo:'ラ行',type:'ラ行変格活用',form:'終止形',
+   point:'「をり」はラ行変格活用。活用：をら・をり・をり・をる・をれ・をれ\nラ変の終止形は「り」で終わる点が特徴。文末で単独使用→終止形。'},
+
+  {sent:['殿に','はべる','者は誰ぞ。'],uw:1,
+   gyo:'ラ行',type:'ラ行変格活用',form:'連体形',
+   point:'「はべり」はラ行変格活用（丁寧語）。活用：はべら・はべり・はべり・はべる・はべれ・はべれ\nラ変は連体形が「る」。「はべる＋者」→連体形。'},
+
+  {sent:['帝の御前に','いまそかれ','ば、申し上げた。'],uw:1,
+   gyo:'ラ行',type:'ラ行変格活用',form:'已然形',
+   point:'「いまそかり」はラ行変格活用（「いる・ある」の尊敬語）。\n活用：いまそから・いまそかり・いまそかり・いまそかる・いまそかれ・いまそかれ\n「いまそかれ＋ば」→已然形。'},
+
+  {sent:['この世に','あら','ずして何を求めん。'],uw:1,
+   gyo:'ラ行',type:'ラ行変格活用',form:'未然形',
+   point:'「あり」はラ行変格活用。活用：ら・り・り・る・れ・れ\n「あら＋ず（打消）」→未然形。'},
+
+  {sent:['宮中に','をれ','ど、心は故郷にあり。'],uw:1,
+   gyo:'ラ行',type:'ラ行変格活用',form:'已然形',
+   point:'「をり」はラ行変格活用。活用：をら・をり・をり・をる・をれ・をれ\n「をれ＋ど（逆接）」→已然形。'},
+
+  {sent:['御前に','はべり','て、命を承った。'],uw:1,
+   gyo:'ラ行',type:'ラ行変格活用',form:'連用形',
+   point:'「はべり」はラ行変格活用。活用：はべら・はべり・はべり・はべる・はべれ・はべれ\nラ変の連用形は「り」（終止形と同形）。「はべり＋て」→連用形。'},
+];
+
+let idx=0, answers=new Array(Q.length).fill(null);
+
+function populate(sel,arr){
+  sel.innerHTML='<option value="">選択…</option>';
+  arr.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
+}
+
+function countCorrect(){
+  return answers.filter((a,i)=>a&&a.gyo===Q[i].gyo&&a.type===Q[i].type&&a.form===Q[i].form).length;
+}
+function countAnswered(){
+  return answers.filter(a=>a).length;
+}
+
+function render(){
+  const q=Q[idx];
+  const n=Q.length;
+  document.getElementById('q-num').textContent=`問題 ${idx+1}`;
+  document.getElementById('q-label').textContent=`問題 ${idx+1} / ${n}`;
+  document.getElementById('nav-center').textContent=`${idx+1} / ${n}`;
+  document.getElementById('score-label').textContent=`正解 ${countCorrect()} / ${countAnswered()}`;
+  document.getElementById('pbar').style.width=(idx/n*100)+'%';
+  document.getElementById('btn-prev').disabled=(idx===0);
+  document.getElementById('btn-next').disabled=(idx===n-1);
+
+  let html='';
+  q.sent.forEach((s,i)=>{
+    html+= i===q.uw ? `<span class="underline">${s}</span>` : s;
+  });
+  document.getElementById('sentence').innerHTML=html;
+
+  populate(document.getElementById('sel-gyo'),GYO);
+  populate(document.getElementById('sel-type'),TYPES);
+  populate(document.getElementById('sel-form'),FORMS);
+
+  const saved=answers[idx];
+  if(saved){
+    document.getElementById('sel-gyo').value=saved.gyo||'';
+    document.getElementById('sel-type').value=saved.type||'';
+    document.getElementById('sel-form').value=saved.form||'';
+    showFeedback(saved.gyo,saved.type,saved.form);
+  } else {
+    document.getElementById('feedback').className='feedback';
+    document.getElementById('feedback').innerHTML='';
+  }
+}
+
+function check(){
+  const gyo=document.getElementById('sel-gyo').value;
+  const type=document.getElementById('sel-type').value;
+  const form=document.getElementById('sel-form').value;
+  if(!gyo||!type||!form){alert('すべて選択してください');return;}
+  answers[idx]={gyo,type,form};
+  showFeedback(gyo,type,form);
+  document.getElementById('score-label').textContent=`正解 ${countCorrect()} / ${countAnswered()}`;
+}
+
+function showFeedback(gyo,type,form){
+  const q=Q[idx];
+  const ok=gyo===q.gyo&&type===q.type&&form===q.form;
+  const fb=document.getElementById('feedback');
+  let html=ok
+    ?`<div class="answer-line">✓ 正解！</div>`
+    :`<div class="answer-line">✗ 不正解</div><div class="correct-ans">正しい答え：<b>${q.gyo}</b>　<b>${q.type}</b>　<b>${q.form}</b></div>`;
+  html+=`<div class="point"><div class="point-title">【考え方・ポイント】</div>${q.point.replace(/\n/g,'<br>')}</div>`;
+  fb.innerHTML=html;
+  fb.className='feedback show '+(ok?'correct':'wrong');
+}
+
+function go(dir){
+  idx=Math.max(0,Math.min(Q.length-1,idx+dir));
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
