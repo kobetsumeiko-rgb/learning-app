@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>歴史テスト対策 — 要約＆一問一答</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+  background: #f5f4f0;
+  color: #1a1a1a;
+  font-size: 15px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+header {
+  background: #2a2560;
+  color: #fff;
+  padding: 1.5rem 1.25rem 1.25rem;
+}
+header h1 { font-size: 18px; font-weight: 500; letter-spacing: 0.03em; }
+header p { font-size: 12px; opacity: 0.65; margin-top: 4px; }
+.tabs {
+  display: flex; background: #fff;
+  border-bottom: 1px solid #e0ddd6;
+  position: sticky; top: 0; z-index: 10;
+}
+.tab {
+  flex: 1; padding: 12px 8px; font-size: 14px; font-weight: 500;
+  text-align: center; cursor: pointer; border: none; background: none;
+  color: #888; border-bottom: 3px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab.active { color: #2a2560; border-bottom-color: #2a2560; }
+.main { padding: 1rem; max-width: 680px; margin: 0 auto; }
+.chapter-scroll {
+  display: flex; gap: 8px; overflow-x: auto;
+  padding-bottom: 4px; margin-bottom: 1.25rem; scrollbar-width: none;
+}
+.chapter-scroll::-webkit-scrollbar { display: none; }
+.chip {
+  white-space: nowrap; padding: 5px 14px; border-radius: 20px;
+  border: 1px solid #ccc; font-size: 12px; cursor: pointer;
+  background: #fff; color: #555; font-weight: 500;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.chip.active { background: #2a2560; color: #fff; border-color: #2a2560; }
+.summary-card {
+  background: #fff; border-radius: 12px; border: 1px solid #e0ddd6;
+  padding: 1.25rem; margin-bottom: 1rem;
+}
+.summary-card h2 { font-size: 15px; font-weight: 500; color: #2a2560; margin-bottom: 0.75rem; }
+.summary-text { font-size: 14px; color: #333; line-height: 1.85; }
+.keywords { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 1rem; }
+.kw {
+  background: #eeedf8; color: #2a2560; border-radius: 4px;
+  padding: 2px 8px; font-size: 12px; font-weight: 500;
+}
+.qa-controls {
+  display: flex; gap: 8px; margin-bottom: 1rem;
+  flex-wrap: wrap; align-items: center;
+}
+.reveal-btn {
+  font-size: 13px; padding: 5px 14px; border-radius: 20px;
+  border: 1px solid #ccc; background: #fff; color: #555; cursor: pointer; font-weight: 500;
+}
+.reveal-btn:hover { background: #f0eff8; }
+.score-row { display: flex; gap: 12px; margin-bottom: 1rem; }
+.score-card {
+  flex: 1; background: #fff; border: 1px solid #e0ddd6;
+  border-radius: 10px; padding: 12px; text-align: center;
+}
+.score-card .num { font-size: 22px; font-weight: 500; color: #2a2560; }
+.score-card .lbl { font-size: 11px; color: #888; margin-top: 2px; }
+.qa-item {
+  background: #fff; border: 1px solid #e0ddd6;
+  border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 10px;
+}
+.qa-q { font-size: 14px; font-weight: 500; color: #1a1a1a; margin-bottom: 8px; }
+.qa-q-num {
+  display: inline-block; background: #2a2560; color: #fff;
+  border-radius: 4px; font-size: 11px; padding: 1px 6px;
+  margin-right: 6px; font-weight: 500; vertical-align: 1px;
+}
+.ans-btn {
+  font-size: 12px; padding: 4px 12px; border-radius: 20px;
+  border: 1px solid #ccc; background: #f5f4f0; color: #666; cursor: pointer;
+}
+.ans-btn:hover { background: #eeedf8; }
+.qa-answer {
+  display: none; margin-top: 8px; padding: 8px 12px;
+  background: #f0fbf6; border-radius: 8px; font-size: 14px;
+  font-weight: 500; color: #0f6e56; border-left: 3px solid #1d9e75;
+}
+.qa-answer.show { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>歴史テスト対策</h1>
+  <p>要約 &amp; 一問一答（太字語句が答え）</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('summary', this)">📖 要約</button>
+  <button class="tab" onclick="showTab('qa', this)">✏️ 一問一答</button>
+</div>
+
+<div class="main">
+  <div id="tab-summary">
+    <div class="chapter-scroll" id="summary-chips"></div>
+    <div id="summary-content"></div>
+  </div>
+  <div id="tab-qa" style="display:none">
+    <div class="chapter-scroll" id="qa-chips"></div>
+    <div class="qa-controls">
+      <button class="reveal-btn" onclick="revealAll()">すべての答えを表示</button>
+      <button class="reveal-btn" onclick="hideAll()">すべて隠す</button>
+    </div>
+    <div class="score-row">
+      <div class="score-card"><div class="num" id="total-q">0</div><div class="lbl">問</div></div>
+      <div class="score-card"><div class="num" id="shown-q">0</div><div class="lbl">確認済み</div></div>
+    </div>
+    <div id="qa-content"></div>
+  </div>
+</div>
+
+<script>
+const summaries = [
+  {
+    title: "① アジアの中の江戸社会",
+    text: "17世紀、徳川将軍家を頂点とする幕藩体制が成立。江戸幕府はキリスト教への警戒などから他国との交流を制限したが、長崎・対馬・薩摩・松前の4か所で限定的な対外関係を維持した。松前ではアイヌ民族との交易が行われた。国内では新田開発・商品作物の普及・交通整備が進み、寺子屋・儒学・国学・蘭学が発達して社会が成熟した。",
+    keywords: ["幕藩体制","江戸幕府","長崎・対馬・薩摩・松前","琉球王国","アイヌ民族","商品作物","寺子屋","儒学","国学","蘭学"]
+  },
+  {
+    title: "② 清の繁栄と結びつくアジア",
+    text: "17世紀前半、満洲人による清が成立。康熙帝・乾隆帝のもとで版図を拡大し、冊封関係を維持した。1683年に海禁政策を解除し、広州など4港での互市貿易を公認。茶・絹・陶磁器の輸出で銀が大量流入し、18世紀末には人口が約3億に達した。東南アジアとの交易拡大で華僑ネットワークが形成された。",
+    keywords: ["清","康熙帝","乾隆帝","冊封関係","海禁政策","広州","互市貿易","銀","華僑"]
+  },
+  {
+    title: "③ アジア・アメリカに向かうヨーロッパ",
+    text: "17世紀、オスマン帝国・ムガル帝国などの巨大イスラーム王朝がインド洋交易を支えていた。17世紀にはオランダ東インド会社がアジア交易の覇権を握った。北アメリカではイギリス・フランスが植民地を拡大。奴隷商人が黒人奴隷をアメリカに輸送し、大西洋三角貿易が成立した。",
+    keywords: ["オスマン帝国","ムガル帝国","東インド会社","大西洋三角貿易"]
+  },
+  {
+    title: "④ イギリスの革命とアメリカの独立",
+    text: "17世紀イギリスでは、ピューリタン革命・名誉革命を経て権利の章典が制定され立憲君主政が確立。北米13植民地への重税に反発した植民地人が独立戦争を起こし、1776年に独立宣言、1783年パリ条約で独立承認。1787年の合衆国憲法でロック・モンテスキュー・ルソーら啓蒙思想に基づく三権分立制と共和政が採用され、初代大統領にワシントンが就いた。",
+    keywords: ["権利の章典","立憲君主政","独立宣言","合衆国憲法","三権分立制","共和政","ワシントン","ロック","モンテスキュー","ルソー","啓蒙思想"]
+  },
+  {
+    title: "⑤ フランス革命 〜ヨーロッパ近代の幕開け",
+    text: "18世紀フランスの旧体制では第三身分が重税に苦しんでいた。1789年に国民議会が結成、バスティーユ監獄襲撃を経て人権宣言が採択された。立法議会・国民公会（第一共和政）と移行し、市民社会の理念が広まった。革命は国民国家成立の画期となった。",
+    keywords: ["国民議会","人権宣言","立法議会","国民公会","第一共和政","市民社会","国民国家"]
+  },
+  {
+    title: "⑥ 革命の拡大と国民意識の芽生え",
+    text: "国民公会ではロベスピエールが恐怖政治を行った。その後、総裁政府が成立。ナポレオンは1799年に統領政府を樹立し、ナポレオン法典を制定。1804年に第一帝政を開始した。フランス革命の理念は世界に広まった。ナポレオン失脚後はウィーン会議が開かれウィーン体制が成立。ラテンアメリカではクリオーリョを中心に独立運動が起こった。",
+    keywords: ["ロベスピエール","総裁政府","フランス革命","統領政府","ナポレオン法典","第一帝政","大陸封鎖令","ウィーン会議","ウィーン体制","クリオーリョ"]
+  }
+];
+
+const qaData = [
+  // ① アジアの中の江戸社会（画像1・2）
+  [
+    { q: "17世紀、徳川将軍家を頂点として成立した政治体制を何というか？", a: "幕藩体制" },
+    { q: "幕藩体制のもとで開かれた、将軍家を頂点とする政府を何というか？", a: "江戸幕府" },
+    { q: "江戸幕府が限定的な対外関係を結んだ4か所の地域をすべて答えよ。", a: "長崎・対馬・薩摩・松前" },
+    { q: "薩摩藩を通じて交易した、将軍代替わりごとに使節を送ってきた王国は？", a: "琉球王国" },
+    { q: "松前藩を通じて交易が行われた北海道の先住民族は？", a: "アイヌ民族" },
+    { q: "農村で綿花・紅花などを販売目的で栽培した作物を何というか？", a: "商品作物" },
+    { q: "18世紀以降、庶民の教育の場として各地に増加した施設は？", a: "寺子屋" },
+    { q: "武士の教育として各地で行われた、孔子の教えを中心とした学問は？", a: "儒学" },
+    { q: "18世紀半ば以降に発達した、日本独自の価値観を再発見しようとした学問は？", a: "国学" },
+    { q: "欧米諸国に対応するため発達した、科学技術を学ぶ学問を何というか？", a: "蘭学" },
+  ],
+  // ② 清の繁栄と結びつくアジア（画像3・4）
+  [
+    { q: "17世紀前半、満洲人が漢人の明に代わって中国東北部で成立させた王朝は？", a: "清" },
+    { q: "清の皇帝で、旧明領を支配し新たな中国王朝としての地位を確立した人物は？", a: "康熙帝" },
+    { q: "清の皇帝で、チベットや新疆（東トルキスタン）にまで支配地を広げた人物は？", a: "乾隆帝" },
+    { q: "清が周辺国との関係を維持するために用いた、朝貢を基礎とした外交体制は？", a: "冊封関係" },
+    { q: "清が1683年に鄭氏を降伏させるまで続けた、海上進出や貿易を禁止する政策は？", a: "海禁政策" },
+    { q: "清が海禁解除後、貿易を管理する海関を置いた4港のうち、ヨーロッパ諸国の入航が許された港は？", a: "広州" },
+    { q: "清が民間の海外貿易を公認した4港での貿易を何というか？", a: "互市貿易" },
+    { q: "清の輸出品（絹・陶磁器・茶など）の対価として大量に流入した国際的通貨は？", a: "銀" },
+    { q: "清の交易拡大にともない東南アジアを中心に形成された中国系移民を何というか？", a: "華僑" },
+  ],
+  // ③ アジア・アメリカに向かうヨーロッパ（画像5・6）
+  [
+    { q: "17世紀に地中海からインド洋にかけて繁栄し、イスタンブルを都とした巨大イスラーム王朝は？", a: "オスマン帝国" },
+    { q: "オスマン帝国・サファヴィー朝とともに栄えた、インドの巨大イスラーム帝国は？", a: "ムガル帝国" },
+    { q: "17世紀にポルトガルに対抗し江戸幕府のヨーロッパ唯一の貿易相手となったオランダの機関は？", a: "東インド会社" },
+    { q: "西アフリカ・アメリカ大陸・ヨーロッパを結ぶ三角形の貿易を何というか？", a: "大西洋三角貿易" },
+  ],
+  // ④ イギリスの革命とアメリカの独立（画像7・8）
+  [
+    { q: "名誉革命後、議会が制定した立憲君主政の基礎となる文書は？", a: "権利の章典" },
+    { q: "権利の章典制定後に確立した、法に基づいて政治を行う政治体制は？", a: "立憲君主政" },
+    { q: "1776年に採択された、「自由と平等」のための戦いであることを宣言した文書は？", a: "独立宣言" },
+    { q: "1787年に定められた、三権分立制と共和政を定めたアメリカの最高法規は？", a: "合衆国憲法" },
+    { q: "合衆国憲法で採用された、立法・司法・行政を分離する原則を何というか？", a: "三権分立制" },
+    { q: "合衆国憲法で定められた、自由で平等な市民が主権をもつ政体は？", a: "共和政" },
+    { q: "合衆国憲法制定後、初代大統領に就任した人物は？", a: "ワシントン" },
+    { q: "社会契約説を唱え、独立宣言に影響を与えたイギリスの思想家は？", a: "ロック" },
+    { q: "三権分立を唱えたフランスの思想家は？", a: "モンテスキュー" },
+    { q: "人民主権論を唱えたフランスの思想家は？", a: "ルソー" },
+    { q: "ロック・モンテスキュー・ルソーらが担った、17〜18世紀の新しい社会思想を総称して何というか？", a: "啓蒙思想" },
+  ],
+  // ⑤ フランス革命（画像9・10前半）
+  [
+    { q: "1789年、第三身分の議員が結成した、後に憲法制定国民議会となる議会は？", a: "国民議会" },
+    { q: "国民議会がバスティーユ襲撃後に採択した、個人の平等と国民主権をうたう文書は？", a: "人権宣言（人および市民の権利宣言）" },
+    { q: "1791年の憲法をもとに選挙で成立したフランスの議会は？", a: "立法議会" },
+    { q: "1792年に男子普通選挙によって成立した議会は？", a: "国民公会" },
+    { q: "国民公会が宣言した、共和政による政体を何というか？", a: "第一共和政" },
+    { q: "フランス革命が目指した、基本的人権を平等にもつ個人（市民）によって構成される社会を何というか？", a: "市民社会" },
+    { q: "フランス革命で、共通の法・制度のもとに人々を統合した国家形態を何というか？", a: "国民国家" },
+  ],
+  // ⑥ 革命の拡大と国民意識の芽生え（画像10後半・11・12）
+  [
+    { q: "国民公会で急進共和派の主導権を握り、恐怖政治を行った人物は？", a: "ロベスピエール" },
+    { q: "1795年、ロベスピエール処刑後に新憲法のもとで成立した政府は？", a: "総裁政府" },
+    { q: "封建制度を廃止し、生命・財産の保障や思想・言論の自由などの理念を示した革命を何というか？", a: "フランス革命" },
+    { q: "ナポレオンが1799年のクーデタで総裁政府を倒して樹立した政府は？", a: "統領政府" },
+    { q: "ナポレオンが制定した、所有権の確立などを定めた民法典を何というか？", a: "ナポレオン法典（民法典）" },
+    { q: "ナポレオンが1804年に国民投票によって開始した政体は？", a: "第一帝政" },
+    { q: "ナポレオン失脚後、オーストリア外相メッテルニヒを中心に開かれたヨーロッパ秩序再建の会議は？", a: "ウィーン会議" },
+    { q: "ウィーン会議で成立した、復古的・反動的な国際秩序を何というか？", a: "ウィーン体制" },
+    { q: "ラテンアメリカ独立運動の中心となった、植民地生まれの白人を何というか？", a: "クリオーリョ" },
+  ]
+];
+
+const chapterLabels = ["①江戸社会","②清・アジア","③ヨーロッパ","④英・米","⑤仏革命","⑥ナポレオン"];
+
+function showTab(name, btn) {
+  document.getElementById('tab-summary').style.display = name === 'summary' ? '' : 'none';
+  document.getElementById('tab-qa').style.display = name === 'qa' ? '' : 'none';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function buildSummaryChips() {
+  document.getElementById('summary-chips').innerHTML = summaries.map((s, i) =>
+    `<button class="chip${i===0?' active':''}" onclick="selectSummary(${i}, this)">${chapterLabels[i]}</button>`
+  ).join('');
+}
+
+function selectSummary(i, btn) {
+  document.querySelectorAll('#summary-chips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderSummary(i);
+}
+
+function renderSummary(i) {
+  const s = summaries[i];
+  document.getElementById('summary-content').innerHTML = `
+    <div class="summary-card">
+      <h2>${s.title}</h2>
+      <p class="summary-text">${s.text}</p>
+      <div class="keywords">${s.keywords.map(k=>`<span class="kw">${k}</span>`).join('')}</div>
+    </div>
+  `;
+}
+
+function buildQAChips() {
+  document.getElementById('qa-chips').innerHTML =
+    `<button class="chip active" onclick="selectQA(-1, this)">全章</button>` +
+    chapterLabels.map((l, i) =>
+      `<button class="chip" onclick="selectQA(${i}, this)">${l}</button>`
+    ).join('');
+}
+
+function selectQA(i, btn) {
+  document.querySelectorAll('#qa-chips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderQA(i);
+}
+
+function renderQA(chapterIdx) {
+  const items = chapterIdx === -1 ? qaData.flat() : qaData[chapterIdx];
+  document.getElementById('total-q').textContent = items.length;
+  document.getElementById('shown-q').textContent = 0;
+  document.getElementById('qa-content').innerHTML = items.map((item, i) => `
+    <div class="qa-item">
+      <div class="qa-q"><span class="qa-q-num">Q${i+1}</span>${item.q}</div>
+      <button class="ans-btn" onclick="toggleAnswer(${i}, this)">答えを見る</button>
+      <div class="qa-answer" id="ans-${i}">${item.a}</div>
+    </div>
+  `).join('');
+}
+
+function toggleAnswer(i, btn) {
+  const el = document.getElementById('ans-'+i);
+  btn.textContent = el.classList.toggle('show') ? '隠す' : '答えを見る';
+  updateScore();
+}
+
+function updateScore() {
+  document.getElementById('shown-q').textContent =
+    document.querySelectorAll('.qa-answer.show').length;
+}
+
+function revealAll() {
+  document.querySelectorAll('.qa-answer').forEach(el => el.classList.add('show'));
+  document.querySelectorAll('.ans-btn').forEach(btn => btn.textContent = '隠す');
+  updateScore();
+}
+
+function hideAll() {
+  document.querySelectorAll('.qa-answer').forEach(el => el.classList.remove('show'));
+  document.querySelectorAll('.ans-btn').forEach(btn => btn.textContent = '答えを見る');
+  updateScore();
+}
+
+buildSummaryChips();
+renderSummary(0);
+buildQAChips();
+renderQA(-1);
+</script>
+</body>
+</html>
