@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地理 テスト対策</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+  :root {
+    --main: #2a2560;
+    --main-light: #3d3890;
+    --accent: #e8a020;
+    --bg: #f5f4f0;
+    --card: #fff;
+    --border: #e0ddd6;
+    --correct-bg: #f0fbf6;
+    --correct-border: #4caf84;
+    --essay-bg: #fff9f0;
+    --essay-border: #e8a020;
+    --tag-bold: #2a7be4;
+    --tag-blank: #2a7be4;
+    --tag-essay: #e8a020;
+    --text: #1a1a2e;
+    --muted: #666;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .app-header { background: var(--main); color: #fff; padding: 16px 20px 12px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(42,37,96,0.3); }
+  .app-header h1 { font-size: 17px; font-weight: 700; letter-spacing: 0.05em; }
+  .app-header .subtitle { font-size: 11px; opacity: 0.75; margin-top: 2px; }
+  .tabs { display: flex; background: var(--main); padding: 0 20px; border-bottom: 2px solid rgba(255,255,255,0.15); }
+  .tab-btn { background: none; border: none; color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 500; padding: 10px 16px 8px; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; font-family: inherit; }
+  .tab-btn.active { color: #fff; border-bottom-color: var(--accent); }
+  .chapter-scroll { background: #fff; padding: 10px 16px; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
+  .chapter-scroll::-webkit-scrollbar { height: 3px; }
+  .chapter-scroll::-webkit-scrollbar-track { background: #f0f0f0; }
+  .chapter-scroll::-webkit-scrollbar-thumb { background: var(--main); border-radius: 2px; }
+  .chip { display: inline-block; padding: 5px 13px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1.5px solid var(--border); background: #fff; color: var(--muted); margin-right: 6px; transition: all 0.2s; white-space: nowrap; }
+  .chip.active { background: var(--main); color: #fff; border-color: var(--main); }
+  .content { max-width: 760px; margin: 0 auto; padding: 16px; }
+  .score-bar { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+  .score-label { font-size: 12px; color: var(--muted); }
+  .score-num { font-size: 14px; font-weight: 700; color: var(--main); }
+  .summary-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+  .summary-card h2 { font-size: 15px; font-weight: 700; color: var(--main); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid var(--main); }
+  .summary-text { font-size: 13.5px; line-height: 1.85; color: var(--text); }
+  .keyword-list { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .keyword-tag { background: #eef1fc; color: var(--main); font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 12px; border: 1px solid #c5caee; }
+  .qa-controls { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+  .toggle-all-btn { background: var(--main); color: #fff; border: none; border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+  .toggle-all-btn:hover { background: var(--main-light); }
+  .qa-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; transition: box-shadow 0.2s; }
+  .qa-card.essay { border-left: 4px solid var(--essay-border); }
+  .qa-card:hover { box-shadow: 0 2px 8px rgba(42,37,96,0.08); }
+  .qa-header { display: flex; align-items: flex-start; gap: 8px; }
+  .qa-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; color: #fff; flex-shrink: 0; margin-top: 2px; }
+  .qa-tag.bold, .qa-tag.blank { background: var(--tag-bold); }
+  .qa-tag.essay { background: var(--tag-essay); }
+  .qa-question { font-size: 13.5px; font-weight: 500; line-height: 1.7; flex: 1; }
+  .show-btn { width: 100%; background: #f2f1ee; border: 1px dashed #bbb; border-radius: 8px; padding: 8px; font-size: 12px; color: var(--muted); cursor: pointer; margin-top: 10px; font-family: inherit; transition: all 0.2s; }
+  .show-btn:hover { background: #e8e7e4; }
+  .qa-answer { margin-top: 8px; padding: 10px 12px; border-radius: 8px; font-size: 13px; line-height: 1.7; font-weight: 500; display: none; }
+  .qa-answer.visible { display: block; }
+  .qa-answer.normal { background: var(--correct-bg); border: 1px solid var(--correct-border); color: #1a6644; }
+  .qa-answer.essay-ans { background: var(--essay-bg); border: 1px solid var(--essay-border); color: #7a4a00; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .chapter-title-qa { font-size: 13px; font-weight: 700; color: var(--main); margin-bottom: 12px; padding: 8px 12px; background: #eef1fc; border-radius: 8px; border-left: 4px solid var(--main); }
+</style>
+</head>
+<body>
+<div class="app-header">
+  <h1>🌍 地理 テスト対策</h1>
+  <div class="subtitle">要約 ＋ 一問一答</div>
+</div>
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('summary', this)">📖 要約</button>
+  <button class="tab-btn" onclick="switchTab('qa', this)">✏️ 一問一答</button>
+</div>
+<div class="chapter-scroll" id="chapterScroll"></div>
+<div class="content">
+  <div class="tab-panel active" id="tab-summary"><div id="summaryContent"></div></div>
+  <div class="tab-panel" id="tab-qa">
+    <div class="score-bar">
+      <span class="score-label">総問数</span><span class="score-num" id="totalCount">0</span>
+      <span class="score-label" style="margin-left:16px">確認済み</span><span class="score-num" id="checkedCount">0</span>
+    </div>
+    <div class="qa-controls"><button class="toggle-all-btn" id="toggleAllBtn" onclick="toggleAllAnswers()">すべての答えを表示</button></div>
+    <div id="qaContent"></div>
+  </div>
+</div>
+<script>
+const summaries = [
+  {
+    title: "① 地球上の位置と私たちの生活",
+    text: "地球の表面は陸地と海洋からなり、フランス付近を中心に見ると陸地が最大になる陸半球、ニュージーランド沖を中心に見ると海洋が最大になる水半球に分けられる。地球上の絶対的な位置は緯度と経度で表す。緯度は赤道を0度として南北を各90度に分けたもので、同じ緯度の地点を結んだ線を緯線という。経度はイギリス・ロンドン郊外の旧グリニッジ天文台を通る本初子午線（経度0度）を基準に東西各180度に分けたもので、同じ経度の地点を結んだ線を経線という。地球の自転軸（地軸）は公転面に対して23.4度傾いており、北回帰線・南回帰線・白夜・極夜などの現象が生じる。",
+    keywords: ["陸半球","水半球","緯度","経度","緯線","経線","本初子午線","北回帰線","南回帰線","白夜","極夜"]
+  },
+  {
+    title: "② 時差と私たちの生活",
+    text: "地球は自転によって1日（24時間）でほぼ1回転（360度）するため、経度15度ごとに1時間の時差が生じる。1884年に本初子午線がグリニッジ標準時（GMT）として国際的な時刻の基準に定められると、各国・地域は標準時子午線を定めて国内の標準時のもととした。日本の標準時子午線は兵庫県明石市を通る東経135度である。1日分の時間差を調整するため、経度180度の線を中心に日付変更線が設定されている。中国のように東西に広い国でも単一の標準時を採用している場合があり、地域によって生活時間が異なることもある。",
+    keywords: ["時差","グリニッジ標準時（GMT）","標準時","日付変更線"]
+  },
+  {
+    title: "③ 地球儀と地図",
+    text: "地球の模型である地球儀は、距離・面積の比率・角度・方位などの要素がいずれも正しく表現されている。一方、球面である地球表面を平面の地図で表すとひずみが生じる。平面の地図では地図投影法（図法）が用いられる。角度を正しく表すメルカトル図法は等角航路を示し、海図として利用される。距離と方位を正しく表す正距方位図法は大圏航路（大圏コース）が直線で表される。面積を正しく表すホモロサイン図法（グード図法）はサンソン図法とモルワイデ図法を接合した正積図である。",
+    keywords: ["地球儀","ひずみ","地図投影法（図法）","メルカトル図法","等角航路","正距方位図法","大圏航路","正積図","サンソン図法","モルワイデ図法","ホモロサイン図法"]
+  },
+  {
+    title: "④ 身の回りの地図",
+    text: "地形や気候などの自然環境、人口・土地利用・産業などの社会環境に関わる情報を地球上の位置と結びつけたものを地理情報という。地図はその目的から主題図と一般図に分けられる。主題図は観光案内図や鉄道路線図のように特定のテーマを強調した地図であり、一般図は地形図などの基本的な地理情報が盛り込まれた地図である。縮尺によって表示される範囲や情報が異なり、現在は電子国土基本図が整備され、地理院地図としてインターネット上に公開されている。",
+    keywords: ["地理情報","主題図","一般図","地形図","縮尺","電子国土基本図","地理院地図"]
+  },
+  {
+    title: "⑤ 統計地図の種類と利用",
+    text: "人口や生産量などの統計データ、気温や降水量などの観測データを地図上に表した主題図を統計地図という。統計地図には、数量を点の多さで表すドットマップ、等しい値の地点を線で結ぶ等値線図、図形の大小や線の太さで表す図形表現図、移動を線で表す流線図、階級に区分して色分けする階級区分図（コロプレスマップ）、等面積メッシュに区切るメッシュマップ、地図を変形させたカルトグラム（変形地図）などがある。複数の統計地図を比較することで地域の特徴や変化を読み取ることができる。",
+    keywords: ["統計地図","ドットマップ","等値線図","図形表現図","流線図","階級区分図","メッシュマップ","カルトグラム"]
+  },
+  {
+    title: "⑥ 地理情報システム（GIS）の利用",
+    text: "地図データに位置情報をもった各種データを重ね合わせる技術を地理情報システム（GIS）という。GISにはGPSや日本のみちびきなどに代表される全球測位衛星システム（GNSS）、地上から離れた所から陸上・海洋・大気などを観測・探査するリモートセンシング（遠隔探査）などの技術が支えている。日々膨大に生成・記録されるビッグデータもGISで可視化できるようになり、交通渋滞の緩和や企業のマーケティングなど様々な場面で活用されている。",
+    keywords: ["地理情報システム（GIS）","全球測位衛星システム（GNSS）","リモートセンシング","ビッグデータ","GPS"]
+  },
+  {
+    title: "⑦ 現代世界の国家",
+    text: "国と国との境界線を国境といい、山脈や河川などの自然の地形に沿った自然的国境と、緯線や経線・建造物などを利用した人為的国境がある。国家は主権・領域・国民の三つの要素から成り立つ。領域は領土・領海・領空からなる。領海の外側には接続水域があり、さらにその外側に排他的経済水域（EEZ）がある。他国から干渉されずに政治を行える国を独立国といい、主権をもたない非独立地域を植民地、それを支配する国を宗主国という。1960年はアフリカの17か国が独立したアフリカの年とよばれる。",
+    keywords: ["国境","自然的国境","人為的国境","主権","領域","領土","領海","領空","国民","接続水域","排他的経済水域（EEZ）","独立国","植民地","宗主国","アフリカの年"]
+  },
+  {
+    title: "⑧ 日本の位置と領域",
+    text: "日本はユーラシア大陸の東の海上に位置する島国で、領土面積は約38万km²（世界第61位）だが、領海と排他的経済水域の合計は約447万km²と世界有数の広さをもつ。これは数多くの島々が広範囲に存在するためで、南端の沖ノ鳥島が北回帰線より南にも領域を広げている。海底の大陸棚には天然ガスなどの資源が存在する。現在の領土は1951年のサンフランシスコ平和条約で定められたが、北方領土（ロシアが不法占拠）、竹島（韓国が不法占拠）、尖閣諸島（領有権問題なし）などの課題がある。",
+    keywords: ["大陸棚","サンフランシスコ平和条約","北方領土","竹島","尖閣諸島"]
+  },
+  {
+    title: "⑨ 国家間の結びつき",
+    text: "冷戦終結後もロシアのウクライナ侵攻によって北大西洋条約機構（NATO）の加盟国が増えるなど、新たな緊張が生まれている。国家どうしの関係が複雑になるなかで、国際連合（国連）の果たす役割が重要になっている。現在193か国が加盟し、持続可能な開発目標（SDGs）に向けた取り組みでも中心的役割を担う。経済のグローバル化が進み、ヨーロッパ連合（EU）・東南アジア諸国連合（ASEAN）・USMCA・MERCOSUR・APECなど地域ごとの経済的結びつきが重要になっている。",
+    keywords: ["NATO","国際連合（国連）","SDGs","EU","ASEAN","USMCA","MERCOSUR","APEC"]
+  },
+  {
+    title: "⑩ 貿易によって結びつく世界",
+    text: "私たちの生活は外国からの輸入品なしでは成り立たず、金融や娯楽などのサービス貿易の割合も拡大している。かつて先進国と発展途上国の貿易は垂直分業の関係にあったが、新興国の台頭により水平分業へ移行し、互いの強みを生かした国際分業が進んでいる。貿易の自由化のため、GATTを引き継ぐ世界貿易機関（WTO）が設立された。特定の国や地域間の自由貿易協定（FTA）や、より広い分野で連携する経済連携協定（EPA）も増え、CPTPP・RCEPなどの協定が結ばれている。",
+    keywords: ["サービス貿易","先進国","発展途上国","新興国","垂直分業","水平分業","国際分業","保護貿易","WTO","FTA","知的財産権","EPA","CPTPP","RCEP"]
+  },
+];
+
+const qaData = [
+  // 第1章
+  [
+    {type:"bold", q:"フランス付近を中心に地球を眺めたとき、陸地の割合が最大になる半球を何というか。", a:"陸半球"},
+    {type:"bold", q:"ニュージーランド沖を中心に地球を眺めたとき、海洋の割合が最大になる半球を何というか。", a:"水半球"},
+    {type:"bold", q:"地球上のある地点の南北の位置を表す座標を何というか。", a:"緯度"},
+    {type:"bold", q:"地球上のある地点の東西の位置を表す座標を何というか。", a:"経度"},
+    {type:"bold", q:"赤道を0度として南北それぞれ90度に分けた、同じ緯度の地点を結んだ線を何というか。", a:"緯線"},
+    {type:"bold", q:"本初子午線を基準に東西それぞれ180度に分けた、同じ経度の地点を結んだ線を何というか。", a:"経線"},
+    {type:"bold", q:"イギリス・ロンドン郊外の旧グリニッジ天文台を通る、経度0度の経線を何というか。", a:"本初子午線"},
+    {type:"bold", q:"北半球の夏至に太陽が真上を通る、北緯23.4度の緯線を何というか。", a:"北回帰線"},
+    {type:"bold", q:"北半球の冬至に太陽が真上を通る、南緯23.4度の緯線を何というか。", a:"南回帰線"},
+    {type:"bold", q:"北極圏・南極圏で夏に太陽が沈まず、一晩中暗くならない現象を何というか。", a:"白夜"},
+    {type:"bold", q:"北極圏・南極圏で冬に一日中太陽が昇らない現象を何というか。", a:"極夜"},
+    {type:"blank", q:"本初子午線から東側の180度までが（　）、西側の180度までが（　）である。", a:"東経・西経"},
+    {type:"blank", q:"赤道から北の範囲を（　）、南の範囲を（　）という。", a:"北半球・南半球"},
+    {type:"blank", q:"地球の自転軸（地軸）は、公転面に対する垂直方向から約（　）度傾いている。", a:"23.4（23度26分）"},
+    {type:"blank", q:"旧グリニッジ天文台を通る経度0度の南北の線を（　）という。", a:"子午線"},
+    {type:"blank", q:"北緯66.6度よりも高緯度の地域を（　）という。", a:"北極圏"},
+    {type:"blank", q:"南緯66.6度よりも高緯度の地域を（　）という。", a:"南極圏"},
+    {type:"essay", q:"【チャレンジ】北極圏や南極圏で白夜という現象が起こる理由を説明しよう。", a:"地軸が傾いた状態で太陽の周りを回るため、1日中太陽光が当たり続ける日が生じるから。"},
+  ],
+  // 第2章
+  [
+    {type:"bold", q:"経度15度ごとに生じる時刻の差を何というか。", a:"時差"},
+    {type:"bold", q:"1884年に本初子午線を基準として国際的な時刻の基準に定められた、ロンドンを基準とする標準時を何というか。", a:"グリニッジ標準時（GMT）"},
+    {type:"bold", q:"各国・地域が国内の時刻の基準とする時刻を何というか。", a:"標準時"},
+    {type:"bold", q:"1日分の時間差を調整するために経度180度の線を中心に設定されている線を何というか。", a:"日付変更線"},
+    {type:"blank", q:"地球は自転によって1日（24時間）でほぼ1回転するため、経度（　）度ごとに1時間の時差が生じる。", a:"15"},
+    {type:"blank", q:"日本の標準時子午線は、兵庫県明石市を通る東経（　）度である。", a:"135"},
+    {type:"blank", q:"首都ペキン（北京）が位置する東部を基準にして単一の標準時を採用しているため、地域によって人々の生活時間が異なる国はどこか。", a:"中国"},
+  ],
+  // 第3章
+  [
+    {type:"bold", q:"地球の模型で、距離・面積の比率・角度・方位などの要素がいずれも正しく表現されているものを何というか。", a:"地球儀"},
+    {type:"bold", q:"球面である地球表面を平面の地図で表すと生じるものを何というか。", a:"ひずみ"},
+    {type:"bold", q:"角度・距離・方位・面積などの要素のうちいくつかのみを正しく表現しようとしたさまざまな図法の総称を何というか。", a:"地図投影法（図法）"},
+    {type:"bold", q:"緯線・経線に対する角度や形の関係が正しい正角図で、地図上の任意の2点を結んだ直線が等角航路を示す図法を何というか。", a:"メルカトル図法"},
+    {type:"bold", q:"メルカトル図法の地図上で、任意の2点を結んだ直線が示すものを何というか。", a:"等角航路"},
+    {type:"bold", q:"図の中心からの距離と方位が正しい地図に用いられる図法を何というか。", a:"正距方位図法"},
+    {type:"bold", q:"正距方位図法の地図で、図の中心からの最短距離として直線で表されるものを何というか。", a:"大圏航路（大圏コース）"},
+    {type:"bold", q:"面積の関係が正しい地図を何というか。", a:"正積図"},
+    {type:"bold", q:"低緯度でのひずみが小さい図法を何というか。", a:"サンソン図法"},
+    {type:"bold", q:"高緯度でのひずみが小さい図法を何というか。", a:"モルワイデ図法"},
+    {type:"bold", q:"サンソン図法とモルワイデ図法を接合した図法を何というか。", a:"ホモロサイン図法（グード図法）"},
+    {type:"blank", q:"角度を正しく表す図法で、緯線・経線に対する角度や形の関係が正しい図を何というか。", a:"正角図"},
+    {type:"blank", q:"正距方位図法の地図で、距離と方位が正しい図の（　）からの距離と方位が正確である。", a:"中心"},
+  ],
+  // 第4章
+  [
+    {type:"bold", q:"地形や気候などの自然環境、人口・土地利用・産業などの社会環境に関わる情報を地球上の位置と結びつけたものを何というか。", a:"地理情報"},
+    {type:"bold", q:"人口や植生、観光など何らかの主題（テーマ）を強調して表現した地図を何というか。", a:"主題図"},
+    {type:"bold", q:"土地の起伏や土地利用、川や湖などの水系、道路や行政界などの基本的な地理情報が特定のテーマに偏ることなく盛り込まれた地図を何というか。", a:"一般図"},
+    {type:"bold", q:"国土地理院が発行する、縮尺によって表示される範囲や情報が異なる地図を何というか。", a:"地形図"},
+    {type:"bold", q:"地図が実際の距離をどれだけ縮めて表しているかの割合を何というか。", a:"縮尺"},
+    {type:"bold", q:"紙媒体の地形図や空中写真などをデジタルデータにしたものを何というか。", a:"電子国土基本図"},
+    {type:"bold", q:"電子国土基本図がインターネット上に公開されているサービスを何というか。", a:"地理院地図"},
+  ],
+  // 第5章
+  [
+    {type:"bold", q:"人口や生産量などの統計データ、気温や降水量などの観測データを地図上に表した主題図を何というか。", a:"統計地図"},
+    {type:"bold", q:"その地点での数量を点の多さで表現した統計地図を何というか。", a:"ドットマップ"},
+    {type:"bold", q:"等しい値の地点を線で結んだ統計地図を何というか。", a:"等値線図"},
+    {type:"bold", q:"統計数値を図形の大小や線の太さなどで表した統計地図を何というか。", a:"図形表現図"},
+    {type:"bold", q:"人や物の移動を線で表した統計地図を何というか。", a:"流線図"},
+    {type:"bold", q:"都道府県や国ごとに色分けされた、統計数値をいくつかの階級に区分し色彩や模様のパターンで表現した地図を何というか。", a:"階級区分図（コロプレスマップ）"},
+    {type:"bold", q:"地域を等面積のメッシュ（網目）に区切り、各メッシュを単位として統計データを地図化したものを何というか。", a:"メッシュマップ"},
+    {type:"bold", q:"統計データを効果的に示すために地図を変形させたものを何というか。", a:"カルトグラム（変形地図）"},
+  ],
+  // 第6章
+  [
+    {type:"bold", q:"地図データに位置情報をもった各種データを重ね合わせて表示・分析する技術を何というか。", a:"地理情報システム（GIS）"},
+    {type:"bold", q:"アメリカのGPSや日本のみちびき、EUのGalileoなどに代表される、地球上のどこにいても現在地の表示を可能にするシステムを何というか。", a:"全球測位衛星システム（GNSS）"},
+    {type:"bold", q:"地上から離れた所から、陸上・海洋・大気などの現象を観測・探査する技術を何というか。", a:"リモートセンシング（遠隔探査）"},
+    {type:"bold", q:"日々膨大に生成・記録される、GISを用いることで地図で可視化することが可能なデータを何というか。", a:"ビッグデータ"},
+    {type:"blank", q:"地図データに観測データや統計データといった（　）を重ね合わせる技術はGISとよばれる。", a:"空間データ"},
+    {type:"blank", q:"GISには緯度・経度などの（　）が不可欠である。", a:"位置情報"},
+    {type:"blank", q:"GNSSの代表例として、アメリカ合衆国が運営する測位システムを何というか。", a:"GPS"},
+  ],
+  // 第7章
+  [
+    {type:"bold", q:"国と国との境界線を何というか。", a:"国境"},
+    {type:"bold", q:"山脈や河川、湖沼、海洋などの自然の地形に沿って定められた国境を何というか。", a:"自然的国境"},
+    {type:"bold", q:"緯線や経線、建造物などを利用した国境を何というか。", a:"人為的国境"},
+    {type:"bold", q:"国家が他国から干渉されずに国家を統治する権力を何というか。", a:"主権"},
+    {type:"bold", q:"国家の主権が及ぶ陸・海・空の範囲を何というか。", a:"領域"},
+    {type:"bold", q:"国家の主権が及ぶ陸の範囲を何というか。", a:"領土"},
+    {type:"bold", q:"国家の主権が及ぶ海の範囲を何というか。", a:"領海"},
+    {type:"bold", q:"国家の主権が及ぶ空の範囲を何というか。", a:"領空"},
+    {type:"bold", q:"領域に属している人々を何というか。", a:"国民"},
+    {type:"bold", q:"領海の外側にある水域を何というか。", a:"接続水域"},
+    {type:"bold", q:"接続水域を含む、沿岸国に独占的な資源の利用・管理が認められている水域を何というか。", a:"排他的経済水域（EEZ）"},
+    {type:"bold", q:"他国から干渉されずに政治を行うことができる国を何というか。", a:"独立国"},
+    {type:"bold", q:"主権をもたない非独立地域を何というか。", a:"植民地"},
+    {type:"bold", q:"植民地を領有・支配する国を何というか。", a:"宗主国"},
+    {type:"bold", q:"1960年にアフリカの17か国が独立を果たしたことから、この年は何とよばれるか。", a:"アフリカの年"},
+    {type:"blank", q:"アルゼンチンとチリの国境となっている山脈を何というか。", a:"アンデス山脈"},
+    {type:"blank", q:"フランスとスペインの国境となっている山脈を何というか。", a:"ピレネー山脈"},
+    {type:"blank", q:"アムール川（ヘイロン川）を国境としている2か国はどこか。", a:"中国・ロシア"},
+  ],
+  // 第8章
+  [
+    {type:"bold", q:"石油や天然ガス、メタンハイドレートなど豊富な海底資源が存在する比較的平坦な海底を何というか。", a:"大陸棚"},
+    {type:"bold", q:"現在の日本の領土を定めた、第二次世界大戦後の1951年に結ばれた条約を何というか。", a:"サンフランシスコ平和条約"},
+    {type:"bold", q:"北海道の北東部にある歯舞群島、色丹島、国後島、択捉島を総称して何というか。", a:"北方領土"},
+    {type:"bold", q:"島根県に属する日本固有の領土で、韓国が不法に占拠している島を何というか。", a:"竹島"},
+    {type:"bold", q:"1895年に沖縄県に編入された日本固有の領土で、ほかの国との間に解決すべき領有権問題は存在しない島々を何というか。", a:"尖閣諸島"},
+    {type:"blank", q:"日本の領土面積は約（　）万km²である。", a:"38"},
+    {type:"blank", q:"日本の領海と排他的経済水域の合計は約（　）万km²である。", a:"447"},
+    {type:"blank", q:"日本の南端にあり、その存在によって日本が北回帰線よりも南の地域にも領域を広げている島を何というか。", a:"沖ノ鳥島"},
+    {type:"blank", q:"北方領土を現在不法に占拠している国はどこか。", a:"ロシア"},
+    {type:"blank", q:"竹島を1952年から不法に占拠している国はどこか。", a:"韓国"},
+  ],
+  // 第9章
+  [
+    {type:"bold", q:"ロシアのウクライナ侵攻によって加盟国が増えるなど、新たな緊張が生まれている軍事同盟を何というか。", a:"北大西洋条約機構（NATO）"},
+    {type:"bold", q:"1945年に発足し、現在193か国が加盟している国際組織を何というか。", a:"国際連合（国連）"},
+    {type:"bold", q:"国連が中心的な役割を担うことが期待されている、2015年に採択された目標を何というか。", a:"持続可能な開発目標（SDGs）"},
+    {type:"bold", q:"ヨーロッパの27か国がまとまり、経済面などでアメリカ合衆国のような大国と対抗できる存在になっている組織を何というか。", a:"ヨーロッパ連合（EU）"},
+    {type:"bold", q:"1960年代当初は5か国で結成され、1990年代末には10か国に拡大した東南アジアの地域組織を何というか。", a:"東南アジア諸国連合（ASEAN）"},
+    {type:"bold", q:"北アメリカで結ばれた、米国・メキシコ・カナダによる協定を何というか。", a:"米国・メキシコ・カナダ協定（USMCA）"},
+    {type:"bold", q:"南アメリカの地域経済圏（南米南部共同市場）を何というか。", a:"MERCOSUR"},
+    {type:"bold", q:"環太平洋地域の経済協力の枠組みを何というか。", a:"アジア太平洋経済協力（APEC）"},
+  ],
+  // 第10章
+  [
+    {type:"bold", q:"目に見える商品だけでなく、金融や娯楽などのサービスを輸出入する貿易を何というか。", a:"サービス貿易"},
+    {type:"bold", q:"工業化が進み、経済成長が著しい国を何というか。", a:"新興国"},
+    {type:"bold", q:"互いに強みを生かした製品を輸出し合うことを何というか。", a:"国際分業"},
+    {type:"bold", q:"かつて先進国が工業製品を輸出し、発展途上国が食料品や原燃料を輸出する関係を何というか。", a:"垂直分業"},
+    {type:"bold", q:"互いに工業製品を輸出し合う関係を何というか。", a:"水平分業"},
+    {type:"bold", q:"工業化が進み経済発展した国のことを何というか。", a:"先進国"},
+    {type:"bold", q:"経済発展の水準が低く、経済成長の途上にある国を何というか。", a:"発展途上国"},
+    {type:"bold", q:"自国の産業を保護・育成するために輸入品の関税を高めたり数量を制限したりする貿易を何というか。", a:"保護貿易"},
+    {type:"bold", q:"1995年にGATTの役割を引き継いだ組織を何というか。", a:"世界貿易機関（WTO）"},
+    {type:"bold", q:"特定の国や地域の間だけで関税を撤廃したり規制を緩和したりする協定を何というか。", a:"自由貿易協定（FTA）"},
+    {type:"bold", q:"人間の知的創造によって生み出された成果が財産として認められる権利を何というか。", a:"知的財産権"},
+    {type:"bold", q:"人の移動や投資、知的財産権の保護といった幅広い分野で連携を強めようとする協定を何というか。", a:"経済連携協定（EPA）"},
+    {type:"bold", q:"環太平洋地域の国々を中心とした、包括的および先進的な協定を何というか。", a:"CPTPP（環太平洋パートナーシップに関する包括的及び先進的な協定）"},
+    {type:"bold", q:"東アジア・東南アジアの国々が参加する地域的な包括的経済連携協定を何というか。", a:"RCEP協定（地域的な包括的経済連携）"},
+  ],
+];
+
+let currentChapter = 0;
+let allVisible = false;
+let checkedSet = new Set();
+
+function renderChips() {
+  const scroll = document.getElementById('chapterScroll');
+  scroll.innerHTML = summaries.map((s, i) =>
+    `<span class="chip ${i===currentChapter?'active':''}" onclick="selectChapter(${i})">${s.title}</span>`
+  ).join('');
+}
+
+function renderSummary() {
+  const s = summaries[currentChapter];
+  document.getElementById('summaryContent').innerHTML = `
+    <div class="summary-card">
+      <h2>${s.title}</h2>
+      <div class="summary-text">${s.text}</div>
+      <div class="keyword-list">${s.keywords.map(k=>`<span class="keyword-tag">${k}</span>`).join('')}</div>
+    </div>`;
+}
+
+function renderQA() {
+  const items = qaData[currentChapter] || [];
+  document.getElementById('totalCount').textContent = items.length;
+  updateCheckedCount();
+  document.getElementById('qaContent').innerHTML = `
+    <div class="chapter-title-qa">${summaries[currentChapter].title}</div>
+    ${items.map((item, i) => {
+      const id = `qa-${currentChapter}-${i}`;
+      const isEssay = item.type === 'essay';
+      const tagLabel = item.type === 'bold' ? '太字' : item.type === 'blank' ? '空所' : '記述';
+      return `
+        <div class="qa-card ${isEssay?'essay':''}" id="card-${id}">
+          <div class="qa-header">
+            <span class="qa-tag ${item.type}">${tagLabel}</span>
+            <div class="qa-question">${item.q}</div>
+          </div>
+          <button class="show-btn" id="btn-${id}" onclick="toggleAnswer('${id}')">答えを見る</button>
+          <div class="qa-answer ${isEssay?'essay-ans':'normal'}" id="ans-${id}">${item.a}</div>
+        </div>`;
+    }).join('')}`;
+}
+
+function updateCheckedCount() {
+  const items = qaData[currentChapter] || [];
+  let count = 0;
+  items.forEach((_, i) => { if (checkedSet.has(`qa-${currentChapter}-${i}`)) count++; });
+  document.getElementById('checkedCount').textContent = count;
+}
+
+function toggleAnswer(id) {
+  const ans = document.getElementById(`ans-${id}`);
+  const btn = document.getElementById(`btn-${id}`);
+  const visible = ans.classList.contains('visible');
+  if (visible) {
+    ans.classList.remove('visible');
+    btn.textContent = '答えを見る';
+    checkedSet.delete(id);
+  } else {
+    ans.classList.add('visible');
+    btn.textContent = '隠す';
+    checkedSet.add(id);
+  }
+  updateCheckedCount();
+}
+
+function toggleAllAnswers() {
+  allVisible = !allVisible;
+  const items = qaData[currentChapter] || [];
+  items.forEach((_, i) => {
+    const id = `qa-${currentChapter}-${i}`;
+    const ans = document.getElementById(`ans-${id}`);
+    const btn = document.getElementById(`btn-${id}`);
+    if (!ans) return;
+    if (allVisible) { ans.classList.add('visible'); btn.textContent = '隠す'; checkedSet.add(id); }
+    else { ans.classList.remove('visible'); btn.textContent = '答えを見る'; checkedSet.delete(id); }
+  });
+  document.getElementById('toggleAllBtn').textContent = allVisible ? 'すべての答えを隠す' : 'すべての答えを表示';
+  updateCheckedCount();
+}
+
+function selectChapter(i) {
+  currentChapter = i;
+  allVisible = false;
+  document.getElementById('toggleAllBtn').textContent = 'すべての答えを表示';
+  renderChips();
+  renderSummary();
+  renderQA();
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  btn.classList.add('active');
+}
+
+renderChips();
+renderSummary();
+renderQA();
+</script>
+</body>
+</html>
