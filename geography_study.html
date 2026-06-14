@@ -317,6 +317,12 @@ const qaData = [
   ],
 ];
 
+// ===== STATE =====
+let currentChapter = 0;
+let allVisible = false;
+let checkedSet = new Set();
+let filterMode = false;
+
 // ===== TTS =====
 let ttsSpeed = 1.0;
 let ttsPlaying = false;
@@ -455,10 +461,6 @@ function ttsUpdateUI(playing) {
   }
 }
 
-
-let allVisible = false;
-let checkedSet = new Set();
-let filterMode = false; // 復習モード
 
 // localStorage キー
 const MARK_KEY = 'geo_marks';
