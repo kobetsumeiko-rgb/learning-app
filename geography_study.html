@@ -354,11 +354,12 @@ function speak(text) {
 function wait(ms) {
   return new Promise((resolve) => {
     if (ttsAbort) { resolve(); return; }
+    const start = Date.now();
     const id = setInterval(() => {
       if (ttsAbort) { clearInterval(id); resolve(); return; }
-      if (!ttsPaused) { clearInterval(id); resolve(); }
+      if (ttsPaused) return; // 一時停止中は時間を進めない
+      if (Date.now() - start >= ms) { clearInterval(id); resolve(); }
     }, 100);
-    setTimeout(() => { clearInterval(id); resolve(); }, ms + 5000); // safety
   });
 }
 
