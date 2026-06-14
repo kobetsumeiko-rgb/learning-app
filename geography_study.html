@@ -73,6 +73,17 @@
   .mark-btn.marked { opacity: 1; transform: scale(1.15); }
   .qa-card.marked-card { border-color: #f5c842; background: #fffdf0; }
   .no-review-msg { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
+  .tts-bar { background: var(--main); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .tts-btn { background: rgba(255,255,255,0.15); border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 600; padding: 7px 14px; cursor: pointer; font-family: inherit; transition: background 0.2s; display: flex; align-items: center; gap: 5px; }
+  .tts-btn:hover { background: rgba(255,255,255,0.28); }
+  .tts-btn:disabled { opacity: 0.4; cursor: default; }
+  .tts-btn.primary { background: #fff; color: var(--main); }
+  .tts-btn.primary:hover { background: #eee; }
+  .tts-speed { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+  .speed-chip { background: rgba(255,255,255,0.15); border: none; border-radius: 6px; color: rgba(255,255,255,0.75); font-size: 11px; font-weight: 600; padding: 5px 10px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .speed-chip.active { background: var(--accent); color: #fff; }
+  .tts-status { color: rgba(255,255,255,0.8); font-size: 11px; width: 100%; margin-top: 2px; min-height: 16px; }
+  .tts-highlight { background: #fff9c4 !important; border-color: #f5c842 !important; box-shadow: 0 0 0 2px #f5c842; }
 </style>
 </head>
 <body>
@@ -91,6 +102,16 @@
     <div class="score-bar">
       <span class="score-label">総問数</span><span class="score-num" id="totalCount">0</span>
       <span class="score-label" style="margin-left:16px">確認済み</span><span class="score-num" id="checkedCount">0</span>
+    </div>
+    <div class="tts-bar">
+      <button class="tts-btn primary" id="ttsPlayBtn" onclick="ttsPlay()">▶ 再生</button>
+      <button class="tts-btn" id="ttsPauseBtn" onclick="ttsPause()" disabled>⏸ 一時停止</button>
+      <button class="tts-btn" id="ttsStopBtn" onclick="ttsStop()" disabled>⏹ 停止</button>
+      <div class="tts-speed">
+        <button class="speed-chip active" id="speed1x" onclick="setSpeed(1.0)">標準</button>
+        <button class="speed-chip" id="speed05x" onclick="setSpeed(0.5)">0.5×</button>
+      </div>
+      <div class="tts-status" id="ttsStatus">再生ボタンで読み上げ開始</div>
     </div>
     <div class="qa-controls">
       <button class="filter-btn" id="filterBtn" onclick="toggleFilter()">⭐ 復習問題のみ</button>
@@ -296,7 +317,145 @@ const qaData = [
   ],
 ];
 
-let currentChapter = 0;
+// ===== TTS =====
+let ttsSpeed = 1.0;
+let ttsPlaying = false;
+let ttsPaused = false;
+let ttsAbort = false;
+let ttsCurrentUtterance = null;
+let ttsResolve = null;
+
+function setSpeed(s) {
+  ttsSpeed = s;
+  document.getElementById('speed1x').classList.toggle('active', s === 1.0);
+  document.getElementById('speed05x').classList.toggle('active', s === 0.5);
+}
+
+function speak(text) {
+  return new Promise((resolve) => {
+    if (ttsAbort) { resolve('abort'); return; }
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP';
+    u.rate = ttsSpeed;
+    ttsCurrentUtterance = u;
+    ttsResolve = resolve;
+    u.onend = () => resolve('done');
+    u.onerror = () => resolve('error');
+    speechSynthesis.speak(u);
+  });
+}
+
+function wait(ms) {
+  return new Promise((resolve) => {
+    if (ttsAbort) { resolve(); return; }
+    const id = setInterval(() => {
+      if (ttsAbort) { clearInterval(id); resolve(); return; }
+      if (!ttsPaused) { clearInterval(id); resolve(); }
+    }, 100);
+    setTimeout(() => { clearInterval(id); resolve(); }, ms + 5000); // safety
+  });
+}
+
+async function ttsPlay() {
+  if (ttsPaused) {
+    // 一時停止から再開
+    ttsPaused = false;
+    speechSynthesis.resume();
+    ttsUpdateUI(true);
+    return;
+  }
+  if (ttsPlaying) return;
+
+  ttsAbort = false;
+  ttsPaused = false;
+  ttsPlaying = true;
+  ttsUpdateUI(true);
+
+  const items = filterMode
+    ? (qaData[currentChapter] || []).map((item, i) => ({item, i})).filter(({i}) => markedSet.has(`qa-${currentChapter}-${i}`))
+    : (qaData[currentChapter] || []).map((item, i) => ({item, i}));
+
+  for (let idx = 0; idx < items.length; idx++) {
+    if (ttsAbort) break;
+    const {item, i} = items[idx];
+    const id = `qa-${currentChapter}-${i}`;
+    const card = document.getElementById(`card-${id}`);
+
+    // ハイライト
+    document.querySelectorAll('.qa-card').forEach(c => c.classList.remove('tts-highlight'));
+    if (card) {
+      card.classList.add('tts-highlight');
+      card.scrollIntoView({behavior: 'smooth', block: 'center'});
+    }
+
+    const qNum = `第${idx+1}問。`;
+    const qText = item.q.replace(/（　）/g, 'ここに入る語句は').replace(/【チャレンジ】/g, '');
+    document.getElementById('ttsStatus').textContent = `問題 ${idx+1}/${items.length}：読み上げ中…`;
+
+    await speak(qNum + qText);
+    if (ttsAbort) break;
+
+    // 3秒ポーズ（一時停止考慮）
+    document.getElementById('ttsStatus').textContent = `問題 ${idx+1}/${items.length}：考え中… (3秒)`;
+    await wait(3000);
+    if (ttsAbort) break;
+
+    // 答えを表示してから読み上げ
+    const ans = document.getElementById(`ans-${id}`);
+    const btn = document.getElementById(`btn-${id}`);
+    if (ans) { ans.classList.add('visible'); if(btn) btn.textContent = '隠す'; }
+
+    document.getElementById('ttsStatus').textContent = `問題 ${idx+1}/${items.length}：答え読み上げ中…`;
+    await speak('答えは、' + item.a);
+    if (ttsAbort) break;
+
+    await wait(1000);
+  }
+
+  document.querySelectorAll('.qa-card').forEach(c => c.classList.remove('tts-highlight'));
+  ttsPlaying = false;
+  ttsPaused = false;
+  ttsAbort = false;
+  document.getElementById('ttsStatus').textContent = ttsAbort ? '停止しました' : '読み上げ完了！';
+  ttsUpdateUI(false);
+}
+
+function ttsPause() {
+  if (!ttsPlaying) return;
+  if (ttsPaused) {
+    ttsPaused = false;
+    speechSynthesis.resume();
+    document.getElementById('ttsPauseBtn').textContent = '⏸ 一時停止';
+    document.getElementById('ttsStatus').textContent = '再開しました';
+  } else {
+    ttsPaused = true;
+    speechSynthesis.pause();
+    document.getElementById('ttsPauseBtn').textContent = '▶ 再開';
+    document.getElementById('ttsStatus').textContent = '一時停止中…';
+  }
+}
+
+function ttsStop() {
+  ttsAbort = true;
+  ttsPaused = false;
+  ttsPlaying = false;
+  speechSynthesis.cancel();
+  document.querySelectorAll('.qa-card').forEach(c => c.classList.remove('tts-highlight'));
+  document.getElementById('ttsStatus').textContent = '停止しました';
+  ttsUpdateUI(false);
+}
+
+function ttsUpdateUI(playing) {
+  document.getElementById('ttsPlayBtn').disabled = playing && !ttsPaused;
+  document.getElementById('ttsPauseBtn').disabled = !playing;
+  document.getElementById('ttsStopBtn').disabled = !playing;
+  if (!playing) {
+    document.getElementById('ttsPauseBtn').textContent = '⏸ 一時停止';
+    document.getElementById('ttsPlayBtn').disabled = false;
+  }
+}
+
+
 let allVisible = false;
 let checkedSet = new Set();
 let filterMode = false; // 復習モード
@@ -429,10 +588,12 @@ function toggleAllAnswers() {
 }
 
 function selectChapter(i) {
+  ttsStop();
   currentChapter = i;
   allVisible = false;
   filterMode = false;
   document.getElementById('toggleAllBtn').textContent = 'すべての答えを表示';
+  document.getElementById('ttsStatus').textContent = '再生ボタンで読み上げ開始';
   renderChips();
   renderSummary();
   renderQA();
