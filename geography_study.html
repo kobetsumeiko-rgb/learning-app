@@ -66,6 +66,13 @@
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
   .chapter-title-qa { font-size: 13px; font-weight: 700; color: var(--main); margin-bottom: 12px; padding: 8px 12px; background: #eef1fc; border-radius: 8px; border-left: 4px solid var(--main); }
+  .qa-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; }
+  .filter-btn { background: #fff; color: var(--muted); border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .filter-btn.active { background: #fff3e0; color: #b35c00; border-color: var(--accent); }
+  .mark-btn { background: none; border: none; font-size: 18px; cursor: pointer; padding: 2px 4px; line-height: 1; opacity: 0.3; transition: opacity 0.2s, transform 0.15s; flex-shrink: 0; }
+  .mark-btn.marked { opacity: 1; transform: scale(1.15); }
+  .qa-card.marked-card { border-color: #f5c842; background: #fffdf0; }
+  .no-review-msg { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
 </style>
 </head>
 <body>
@@ -85,7 +92,10 @@
       <span class="score-label">総問数</span><span class="score-num" id="totalCount">0</span>
       <span class="score-label" style="margin-left:16px">確認済み</span><span class="score-num" id="checkedCount">0</span>
     </div>
-    <div class="qa-controls"><button class="toggle-all-btn" id="toggleAllBtn" onclick="toggleAllAnswers()">すべての答えを表示</button></div>
+    <div class="qa-controls">
+      <button class="filter-btn" id="filterBtn" onclick="toggleFilter()">⭐ 復習問題のみ</button>
+      <button class="toggle-all-btn" id="toggleAllBtn" onclick="toggleAllAnswers()">すべての答えを表示</button>
+    </div>
     <div id="qaContent"></div>
   </div>
 </div>
@@ -289,12 +299,27 @@ const qaData = [
 let currentChapter = 0;
 let allVisible = false;
 let checkedSet = new Set();
+let filterMode = false; // 復習モード
+
+// localStorage キー
+const MARK_KEY = 'geo_marks';
+
+function loadMarks() {
+  try { return new Set(JSON.parse(localStorage.getItem(MARK_KEY) || '[]')); }
+  catch(e) { return new Set(); }
+}
+function saveMarks() {
+  localStorage.setItem(MARK_KEY, JSON.stringify([...markedSet]));
+}
+let markedSet = loadMarks();
 
 function renderChips() {
   const scroll = document.getElementById('chapterScroll');
-  scroll.innerHTML = summaries.map((s, i) =>
-    `<span class="chip ${i===currentChapter?'active':''}" onclick="selectChapter(${i})">${s.title}</span>`
-  ).join('');
+  scroll.innerHTML = summaries.map((s, i) => {
+    const count = (qaData[i] || []).filter((_, j) => markedSet.has(`qa-${i}-${j}`)).length;
+    const badge = count > 0 ? ` <span style="background:#e8a020;color:#fff;border-radius:10px;padding:0 5px;font-size:10px;">${count}</span>` : '';
+    return `<span class="chip ${i===currentChapter?'active':''}" onclick="selectChapter(${i})">${s.title}${badge}</span>`;
+  }).join('');
 }
 
 function renderSummary() {
@@ -309,19 +334,42 @@ function renderSummary() {
 
 function renderQA() {
   const items = qaData[currentChapter] || [];
+  const displayItems = filterMode
+    ? items.map((item, i) => ({item, i})).filter(({i}) => markedSet.has(`qa-${currentChapter}-${i}`))
+    : items.map((item, i) => ({item, i}));
+
   document.getElementById('totalCount').textContent = items.length;
-  updateCheckedCount();
+  document.getElementById('checkedCount').textContent = [...markedSet].filter(k => k.startsWith(`qa-${currentChapter}-`)).length;
+
+  // フィルターボタンの見た目
+  const filterBtn = document.getElementById('filterBtn');
+  if (filterMode) {
+    filterBtn.classList.add('active');
+    filterBtn.textContent = '⭐ 復習問題のみ（表示中）';
+  } else {
+    filterBtn.classList.remove('active');
+    filterBtn.textContent = '⭐ 復習問題のみ';
+  }
+
+  if (filterMode && displayItems.length === 0) {
+    document.getElementById('qaContent').innerHTML = `
+      <div class="no-review-msg">⭐ この章に復習マークした問題はありません</div>`;
+    return;
+  }
+
   document.getElementById('qaContent').innerHTML = `
-    <div class="chapter-title-qa">${summaries[currentChapter].title}</div>
-    ${items.map((item, i) => {
+    <div class="chapter-title-qa">${summaries[currentChapter].title}${filterMode ? '　⭐ 復習モード' : ''}</div>
+    ${displayItems.map(({item, i}) => {
       const id = `qa-${currentChapter}-${i}`;
       const isEssay = item.type === 'essay';
       const tagLabel = item.type === 'bold' ? '太字' : item.type === 'blank' ? '空所' : '記述';
+      const isMarked = markedSet.has(id);
       return `
-        <div class="qa-card ${isEssay?'essay':''}" id="card-${id}">
+        <div class="qa-card ${isEssay?'essay':''} ${isMarked?'marked-card':''}" id="card-${id}">
           <div class="qa-header">
             <span class="qa-tag ${item.type}">${tagLabel}</span>
             <div class="qa-question">${item.q}</div>
+            <button class="mark-btn ${isMarked?'marked':''}" id="mark-${id}" onclick="toggleMark('${id}')" title="復習マーク">⭐</button>
           </div>
           <button class="show-btn" id="btn-${id}" onclick="toggleAnswer('${id}')">答えを見る</button>
           <div class="qa-answer ${isEssay?'essay-ans':'normal'}" id="ans-${id}">${item.a}</div>
@@ -329,27 +377,41 @@ function renderQA() {
     }).join('')}`;
 }
 
-function updateCheckedCount() {
-  const items = qaData[currentChapter] || [];
-  let count = 0;
-  items.forEach((_, i) => { if (checkedSet.has(`qa-${currentChapter}-${i}`)) count++; });
-  document.getElementById('checkedCount').textContent = count;
+function toggleMark(id) {
+  if (markedSet.has(id)) {
+    markedSet.delete(id);
+  } else {
+    markedSet.add(id);
+  }
+  saveMarks();
+  const card = document.getElementById(`card-${id}`);
+  const btn = document.getElementById(`mark-${id}`);
+  const isMarked = markedSet.has(id);
+  btn.classList.toggle('marked', isMarked);
+  card.classList.toggle('marked-card', isMarked);
+  // チップのバッジ更新
+  renderChips();
+  // 確認済み数更新
+  document.getElementById('checkedCount').textContent =
+    [...markedSet].filter(k => k.startsWith(`qa-${currentChapter}-`)).length;
+  // 復習モード中に外したら再描画
+  if (filterMode) renderQA();
+}
+
+function toggleFilter() {
+  filterMode = !filterMode;
+  allVisible = false;
+  document.getElementById('toggleAllBtn').textContent = 'すべての答えを表示';
+  renderQA();
 }
 
 function toggleAnswer(id) {
   const ans = document.getElementById(`ans-${id}`);
   const btn = document.getElementById(`btn-${id}`);
+  if (!ans) return;
   const visible = ans.classList.contains('visible');
-  if (visible) {
-    ans.classList.remove('visible');
-    btn.textContent = '答えを見る';
-    checkedSet.delete(id);
-  } else {
-    ans.classList.add('visible');
-    btn.textContent = '隠す';
-    checkedSet.add(id);
-  }
-  updateCheckedCount();
+  if (visible) { ans.classList.remove('visible'); btn.textContent = '答えを見る'; }
+  else { ans.classList.add('visible'); btn.textContent = '隠す'; }
 }
 
 function toggleAllAnswers() {
@@ -360,16 +422,16 @@ function toggleAllAnswers() {
     const ans = document.getElementById(`ans-${id}`);
     const btn = document.getElementById(`btn-${id}`);
     if (!ans) return;
-    if (allVisible) { ans.classList.add('visible'); btn.textContent = '隠す'; checkedSet.add(id); }
-    else { ans.classList.remove('visible'); btn.textContent = '答えを見る'; checkedSet.delete(id); }
+    if (allVisible) { ans.classList.add('visible'); btn.textContent = '隠す'; }
+    else { ans.classList.remove('visible'); btn.textContent = '答えを見る'; }
   });
   document.getElementById('toggleAllBtn').textContent = allVisible ? 'すべての答えを隠す' : 'すべての答えを表示';
-  updateCheckedCount();
 }
 
 function selectChapter(i) {
   currentChapter = i;
   allVisible = false;
+  filterMode = false;
   document.getElementById('toggleAllBtn').textContent = 'すべての答えを表示';
   renderChips();
   renderSummary();
