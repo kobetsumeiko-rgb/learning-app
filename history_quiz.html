@@ -646,7 +646,6 @@ function renderQA(chapterIdx) {
   document.getElementById('total-q').textContent = items.length;
   document.getElementById('shown-q').textContent = 0;
   // 単元内のマーク数を計算
-  const flat = qaData.flat();
   const chapterItems = currentChapter === -1 ? flat : qaData[currentChapter];
   const chapterMarkedCount = chapterItems.filter(item => markedSet.has(flat.indexOf(item))).length;
   document.getElementById('marked-q').textContent = chapterMarkedCount;
