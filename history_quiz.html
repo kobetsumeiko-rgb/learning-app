@@ -521,6 +521,14 @@ function speakCurrent() {
       uA.rate = speechRate;
       currentUtterance = uA;
       document.getElementById('audio-status').textContent = `Q${speechIndex + 1} 答えを読み上げ中…`;
+      // 答えを画面に自動表示
+      const ansEl = document.getElementById('ans-' + item.domIndex);
+      const ansBtn = ansEl ? ansEl.previousElementSibling : null;
+      if (ansEl && !ansEl.classList.contains('show')) {
+        ansEl.classList.add('show');
+        if (ansBtn && ansBtn.classList.contains('ans-btn')) ansBtn.textContent = '隠す';
+        updateScore();
+      }
       uA.onend = () => {
         if (!isSpeaking) return;
         speechIndex++;
@@ -637,7 +645,11 @@ function renderQA(chapterIdx) {
   const items = getFilteredItems();
   document.getElementById('total-q').textContent = items.length;
   document.getElementById('shown-q').textContent = 0;
-  document.getElementById('marked-q').textContent = markedSet.size;
+  // 単元内のマーク数を計算
+  const flat = qaData.flat();
+  const chapterItems = currentChapter === -1 ? flat : qaData[currentChapter];
+  const chapterMarkedCount = chapterItems.filter(item => markedSet.has(flat.indexOf(item))).length;
+  document.getElementById('marked-q').textContent = chapterMarkedCount;
 
   const mapSrc = document.getElementById('map-img') ? document.getElementById('map-img').src : '';
 
@@ -675,7 +687,11 @@ function toggleMark(gi, di) {
   const btn = card ? card.querySelector('.mark-btn') : null;
   if (card) card.classList.toggle('marked-card', markedSet.has(gi));
   if (btn) btn.classList.toggle('marked', markedSet.has(gi));
-  document.getElementById('marked-q').textContent = markedSet.size;
+  // 単元内マーク数を再計算して表示
+  const flat = qaData.flat();
+  const chapterItems = currentChapter === -1 ? flat : qaData[currentChapter];
+  const chapterMarkedCount = chapterItems.filter(item => markedSet.has(flat.indexOf(item))).length;
+  document.getElementById('marked-q').textContent = chapterMarkedCount;
 }
 
 function toggleAnswer(i, btn) {
