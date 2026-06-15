@@ -88,6 +88,78 @@ header p { font-size: 12px; opacity: 0.65; margin-top: 4px; }
   font-weight: 400; line-height: 1.8;
 }
 .qa-answer.show { display: block; }
+
+/* ★ マークボタン */
+.mark-btn {
+  font-size: 18px; background: none; border: none; cursor: pointer;
+  padding: 0 4px; line-height: 1; color: #ccc;
+  transition: color 0.15s, transform 0.1s;
+  vertical-align: middle;
+}
+.mark-btn.marked { color: #f5a623; }
+.mark-btn:active { transform: scale(1.3); }
+
+/* マーク済みカードの強調 */
+.qa-item.marked-card { border-color: #f5a623; background: #fffdf5; }
+.qa-item.marked-card.essay { border-left-color: #e8a020; }
+
+/* 現在読み上げ中カードのハイライト */
+.qa-item.speaking { outline: 2px solid #2a2560; outline-offset: 2px; }
+
+/* フィルター行 */
+.filter-row {
+  display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;
+}
+.filter-btn {
+  font-size: 12px; padding: 4px 12px; border-radius: 20px;
+  border: 1px solid #ccc; background: #fff; color: #555; cursor: pointer; font-weight: 500;
+  transition: background 0.12s, color 0.12s;
+}
+.filter-btn.active { background: #f5a623; color: #fff; border-color: #f5a623; }
+
+/* 音声プレイヤーパネル */
+.audio-panel {
+  background: #fff; border: 1px solid #e0ddd6; border-radius: 12px;
+  padding: 12px 16px; margin-bottom: 1rem;
+}
+.audio-panel-title {
+  font-size: 12px; color: #888; margin-bottom: 8px; font-weight: 500;
+}
+.audio-controls {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.audio-play-btn {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: #2a2560; color: #fff; border: none; cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.audio-play-btn:hover { background: #1e1a4a; }
+.audio-play-btn:disabled { background: #bbb; cursor: not-allowed; }
+.audio-stop-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: #f5f4f0; color: #555; border: 1px solid #ccc; cursor: pointer;
+  font-size: 14px; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.audio-stop-btn:hover { background: #e0ddd6; }
+.audio-progress {
+  font-size: 12px; color: #555; min-width: 60px;
+}
+.audio-speed-group {
+  display: flex; gap: 4px; margin-left: auto;
+}
+.speed-btn {
+  font-size: 11px; padding: 3px 10px; border-radius: 12px;
+  border: 1px solid #ccc; background: #f5f4f0; color: #555; cursor: pointer; font-weight: 500;
+}
+.speed-btn.active { background: #2a2560; color: #fff; border-color: #2a2560; }
+.audio-status {
+  font-size: 11px; color: #2a2560; margin-top: 6px; min-height: 16px;
+  font-weight: 500;
+}
 </style>
 </head>
 <body>
@@ -109,6 +181,28 @@ header p { font-size: 12px; opacity: 0.65; margin-top: 4px; }
   </div>
   <div id="tab-qa" style="display:none">
     <div class="chapter-scroll" id="qa-chips"></div>
+
+    <!-- 音声プレイヤー -->
+    <div class="audio-panel">
+      <div class="audio-panel-title">🔊 読み上げ（問題 → 3秒 → 答え）</div>
+      <div class="audio-controls">
+        <button class="audio-play-btn" id="audio-play-btn" onclick="togglePlay()" title="再生／一時停止">▶</button>
+        <button class="audio-stop-btn" onclick="stopAudio()" title="停止">■</button>
+        <span class="audio-progress" id="audio-progress">－ / －</span>
+        <div class="audio-speed-group">
+          <button class="speed-btn active" id="speed-normal" onclick="setSpeed(1.0)">標準</button>
+          <button class="speed-btn" id="speed-half" onclick="setSpeed(0.5)">0.5×</button>
+        </div>
+      </div>
+      <div class="audio-status" id="audio-status"></div>
+    </div>
+
+    <!-- フィルター -->
+    <div class="filter-row">
+      <button class="filter-btn active" id="filter-all" onclick="setFilter('all')">すべて</button>
+      <button class="filter-btn" id="filter-marked" onclick="setFilter('marked')">⭐ マークのみ</button>
+    </div>
+
     <div class="qa-controls">
       <button class="reveal-btn" onclick="revealAll()">すべての答えを表示</button>
       <button class="reveal-btn" onclick="hideAll()">すべて隠す</button>
@@ -116,6 +210,7 @@ header p { font-size: 12px; opacity: 0.65; margin-top: 4px; }
     <div class="score-row">
       <div class="score-card"><div class="num" id="total-q">0</div><div class="lbl">問</div></div>
       <div class="score-card"><div class="num" id="shown-q">0</div><div class="lbl">確認済み</div></div>
+      <div class="score-card"><div class="num" id="marked-q">0</div><div class="lbl">⭐ マーク</div></div>
     </div>
     <div id="qa-content"></div>
   </div>
@@ -313,13 +408,189 @@ const qaData = [
 const chapterLabels = ["①江戸社会","②清・アジア","③ヨーロッパ","④英・米","⑤仏革命","⑥ナポレオン"];
 const typeLabel = { bold:"太字", blank:"空所", essay:"記述" };
 const typeTagClass = { bold:"tag-blank", blank:"tag-blank", essay:"tag-essay" };
-const mapImgSrc = document.getElementById("map-img") ? document.getElementById("map-img").src : "";
 
+// ========== マーク管理 ==========
+let markedSet = new Set(JSON.parse(localStorage.getItem('markedQuestions') || '[]'));
+function saveMarks() {
+  localStorage.setItem('markedQuestions', JSON.stringify([...markedSet]));
+}
+
+// ========== フィルター・章管理 ==========
+let currentChapter = -1;
+let currentFilter = 'all'; // 'all' | 'marked'
+
+// ========== 音声管理 ==========
+let speechItems = [];       // 現在表示中の問題リスト（{q, a, domIndex}）
+let speechIndex = 0;        // 何問目を読み上げ中か
+let isSpeaking = false;     // 再生中フラグ
+let isPaused = false;       // 一時停止フラグ
+let speechRate = 1.0;       // 読み上げ速度
+let pauseTimer = null;      // 3秒待機タイマー
+let currentUtterance = null;
+
+function stripHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+}
+
+function setSpeed(rate) {
+  speechRate = rate;
+  document.getElementById('speed-normal').classList.toggle('active', rate === 1.0);
+  document.getElementById('speed-half').classList.toggle('active', rate === 0.5);
+  // 再生中なら再起動
+  if (isSpeaking && !isPaused) {
+    const idx = speechIndex;
+    stopAudio();
+    speechIndex = idx;
+    isSpeaking = true;
+    isPaused = false;
+    speakCurrent();
+  }
+}
+
+function buildSpeechItems() {
+  const items = getFilteredItems();
+  speechItems = items.map((item, di) => ({
+    q: stripHtml(item.q),
+    a: stripHtml(item.a),
+    domIndex: di
+  }));
+}
+
+function togglePlay() {
+  if (!isSpeaking && !isPaused) {
+    // 新規再生
+    buildSpeechItems();
+    if (speechItems.length === 0) return;
+    speechIndex = 0;
+    isSpeaking = true;
+    isPaused = false;
+    speakCurrent();
+  } else if (isSpeaking && !isPaused) {
+    // 一時停止
+    window.speechSynthesis.cancel();
+    clearTimeout(pauseTimer);
+    isPaused = true;
+    isSpeaking = false;
+    updateAudioUI();
+  } else if (isPaused) {
+    // 再開（問題の頭から再開）
+    isSpeaking = true;
+    isPaused = false;
+    speakCurrent();
+  }
+}
+
+function stopAudio() {
+  window.speechSynthesis.cancel();
+  clearTimeout(pauseTimer);
+  isSpeaking = false;
+  isPaused = false;
+  speechIndex = 0;
+  highlightSpeaking(-1);
+  updateAudioUI();
+}
+
+function speakCurrent() {
+  if (!isSpeaking || speechIndex >= speechItems.length) {
+    // 全問終了
+    stopAudio();
+    document.getElementById('audio-status').textContent = '✅ 読み上げ完了';
+    return;
+  }
+  const item = speechItems[speechIndex];
+  highlightSpeaking(item.domIndex);
+  updateAudioUI();
+
+  // 問題を読む
+  const uQ = new SpeechSynthesisUtterance(item.q);
+  uQ.lang = 'ja-JP';
+  uQ.rate = speechRate;
+  currentUtterance = uQ;
+  document.getElementById('audio-status').textContent = `Q${speechIndex + 1} 問題を読み上げ中…`;
+
+  uQ.onend = () => {
+    if (!isSpeaking) return;
+    // 3秒待機してから答えへ
+    document.getElementById('audio-status').textContent = `Q${speechIndex + 1} 考え中… (3秒)`;
+    pauseTimer = setTimeout(() => {
+      if (!isSpeaking) return;
+      const uA = new SpeechSynthesisUtterance(item.a);
+      uA.lang = 'ja-JP';
+      uA.rate = speechRate;
+      currentUtterance = uA;
+      document.getElementById('audio-status').textContent = `Q${speechIndex + 1} 答えを読み上げ中…`;
+      uA.onend = () => {
+        if (!isSpeaking) return;
+        speechIndex++;
+        pauseTimer = setTimeout(() => {
+          speakCurrent();
+        }, 800);
+      };
+      window.speechSynthesis.speak(uA);
+    }, 3000);
+  };
+  window.speechSynthesis.speak(uQ);
+}
+
+function highlightSpeaking(domIndex) {
+  document.querySelectorAll('.qa-item').forEach((el, i) => {
+    el.classList.toggle('speaking', i === domIndex);
+  });
+  if (domIndex >= 0) {
+    const el = document.querySelectorAll('.qa-item')[domIndex];
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function updateAudioUI() {
+  const btn = document.getElementById('audio-play-btn');
+  const progress = document.getElementById('audio-progress');
+  if (isSpeaking && !isPaused) {
+    btn.textContent = '⏸';
+  } else if (isPaused) {
+    btn.textContent = '▶';
+    document.getElementById('audio-status').textContent = '⏸ 一時停止中';
+  } else {
+    btn.textContent = '▶';
+    if (!document.getElementById('audio-status').textContent.includes('完了')) {
+      document.getElementById('audio-status').textContent = '';
+    }
+  }
+  const total = speechItems.length || getFilteredItems().length;
+  progress.textContent = isSpeaking ? `${speechIndex + 1} / ${total}` : `－ / ${total}`;
+}
+
+// ========== フィルター ==========
+function setFilter(f) {
+  currentFilter = f;
+  document.getElementById('filter-all').classList.toggle('active', f === 'all');
+  document.getElementById('filter-marked').classList.toggle('active', f === 'marked');
+  stopAudio();
+  renderQA(currentChapter);
+}
+
+function getFilteredItems() {
+  const raw = currentChapter === -1 ? qaData.flat() : qaData[currentChapter];
+  if (currentFilter === 'marked') {
+    // グローバルインデックスでフィルタ
+    const flat = qaData.flat();
+    return raw.filter(item => {
+      const gi = flat.indexOf(item);
+      return markedSet.has(gi);
+    });
+  }
+  return raw;
+}
+
+// ========== タブ・チャプター ==========
 function showTab(name, btn) {
   document.getElementById('tab-summary').style.display = name === 'summary' ? '' : 'none';
   document.getElementById('tab-qa').style.display = name === 'qa' ? '' : 'none';
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
+  if (name !== 'qa') stopAudio();
 }
 
 function buildSummaryChips() {
@@ -356,26 +627,55 @@ function buildQAChips() {
 function selectQA(i, btn) {
   document.querySelectorAll('#qa-chips .chip').forEach(c => c.classList.remove('active'));
   btn.classList.add('active');
+  currentChapter = i;
+  stopAudio();
   renderQA(i);
 }
 
 function renderQA(chapterIdx) {
-  const items = chapterIdx === -1 ? qaData.flat() : qaData[chapterIdx];
+  const flat = qaData.flat();
+  const items = getFilteredItems();
   document.getElementById('total-q').textContent = items.length;
   document.getElementById('shown-q').textContent = 0;
-  document.getElementById('qa-content').innerHTML = items.map((item, i) => {
+  document.getElementById('marked-q').textContent = markedSet.size;
+
+  const mapSrc = document.getElementById('map-img') ? document.getElementById('map-img').src : '';
+
+  document.getElementById('qa-content').innerHTML = items.map((item, di) => {
+    const gi = flat.indexOf(item); // グローバルインデックス
     const isEssay = item.type === 'essay';
+    const isMarked = markedSet.has(gi);
     const numCls = isEssay ? 'qa-q-num essay-num' : 'qa-q-num';
     const tag = `<span class="qa-tag ${typeTagClass[item.type]}">${typeLabel[item.type]}</span>`;
     const ansCls = isEssay ? 'qa-answer essay-ans' : 'qa-answer';
-    const mapHtml = item.map ? `<img src="${document.getElementById('map-img').src}" style="width:100%;max-width:480px;border-radius:8px;margin-top:8px;display:block;">` : '';
+    const mapHtml = item.map ? `<img src="${mapSrc}" style="width:100%;max-width:480px;border-radius:8px;margin-top:8px;display:block;">` : '';
     return `
-      <div class="qa-item${isEssay?' essay':''}">
-        <div class="qa-q"><span class="${numCls}">Q${i+1}</span>${tag}${item.q}${mapHtml}</div>
-        <button class="ans-btn" onclick="toggleAnswer(${i}, this)">答えを見る</button>
-        <div class="${ansCls}" id="ans-${i}">${item.a}</div>
+      <div class="qa-item${isEssay?' essay':''}${isMarked?' marked-card':''}" id="qa-card-${di}">
+        <div class="qa-q">
+          <button class="mark-btn${isMarked?' marked':''}" onclick="toggleMark(${gi}, ${di})" title="マーク">⭐</button>
+          <span class="${numCls}">Q${di+1}</span>${tag}${item.q}${mapHtml}
+        </div>
+        <button class="ans-btn" onclick="toggleAnswer(${di}, this)">答えを見る</button>
+        <div class="${ansCls}" id="ans-${di}">${item.a}</div>
       </div>`;
   }).join('');
+
+  updateAudioUI();
+}
+
+function toggleMark(gi, di) {
+  if (markedSet.has(gi)) {
+    markedSet.delete(gi);
+  } else {
+    markedSet.add(gi);
+  }
+  saveMarks();
+  // カードのスタイルだけ更新（再描画なし）
+  const card = document.getElementById('qa-card-' + di);
+  const btn = card ? card.querySelector('.mark-btn') : null;
+  if (card) card.classList.toggle('marked-card', markedSet.has(gi));
+  if (btn) btn.classList.toggle('marked', markedSet.has(gi));
+  document.getElementById('marked-q').textContent = markedSet.size;
 }
 
 function toggleAnswer(i, btn) {
