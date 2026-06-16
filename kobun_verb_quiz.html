@@ -24,6 +24,9 @@
   --important-border:#e8a09a;
   --progress-bg:#e0dbd0;
   --progress-fill:#5a3e28;
+  --miss:#e67e22;
+  --miss-bg:#fff8f0;
+  --miss-border:#f0c080;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-height:100vh;padding:2rem 1rem}
@@ -68,6 +71,18 @@ button{font-family:'Noto Sans JP',sans-serif;cursor:pointer;border-radius:7px;fo
 .point-title{font-weight:700;margin-bottom:.2rem}
 .nav-bottom{display:flex;align-items:center;gap:8px;justify-content:center}
 .nav-center{font-size:13px;color:var(--muted);flex:1;text-align:center}
+.btn-miss{background:transparent;color:var(--miss);border:1px solid var(--miss-border);display:none}
+.btn-miss:hover{background:var(--miss-bg)}
+.btn-miss.marked{background:var(--miss-bg);border-color:var(--miss);color:var(--miss);font-weight:700}
+.miss-badge{background:var(--miss);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.05em}
+.card.miss-card{border-color:var(--miss-border);background:var(--miss-bg)}
+.card.miss-card .underline{color:var(--miss)}
+.miss-list-wrap{margin-top:1rem}
+.miss-list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+.miss-list-title{font-size:13px;font-weight:700;color:var(--miss)}
+.miss-list{display:flex;flex-wrap:wrap;gap:6px}
+.miss-chip{background:var(--miss-bg);border:1px solid var(--miss-border);color:var(--miss);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+.miss-chip:hover{background:#ffe0b0}
 </style>
 </head>
 <body>
@@ -97,14 +112,23 @@ button{font-family:'Noto Sans JP',sans-serif;cursor:pointer;border-radius:7px;fo
     </div>
     <div class="btn-row">
       <button class="btn-check" onclick="check()">答え合わせ</button>
+      <button class="btn-miss" id="btn-miss" onclick="toggleMiss()">☆ ミスをマーク</button>
     </div>
     <div class="feedback" id="feedback"></div>
   </div>
 
   <div class="nav-bottom">
     <button class="btn-nav" id="btn-prev" onclick="go(-1)" disabled>← 前へ</button>
-    <span class="nav-center" id="nav-center">1 / 53</span>
+    <span class="nav-center" id="nav-center">1 / 58</span>
     <button class="btn-nav" id="btn-next" onclick="go(1)">次へ →</button>
+  </div>
+
+  <div class="miss-list-wrap" id="miss-list-wrap" style="display:none">
+    <div class="miss-list-header">
+      <span class="miss-list-title">★ ミスした問題</span>
+      <span style="font-size:11px;color:var(--muted)" id="miss-count"></span>
+    </div>
+    <div class="miss-list" id="miss-list"></div>
   </div>
 </div>
 
@@ -367,6 +391,7 @@ const Q=[
 ];
 
 let idx=0, answers=new Array(Q.length).fill(null);
+let missSet=new Set();
 
 function populate(sel,arr){
   sel.innerHTML='<option value="">選択…</option>';
@@ -388,10 +413,14 @@ function normalize(s){
 function render(){
   const q=Q[idx], n=Q.length;
   const card=document.getElementById('main-card');
-  card.className = q.imp ? 'card important' : 'card';
+  const isMiss=missSet.has(idx);
+  if(isMiss) card.className='card miss-card';
+  else if(q.imp) card.className='card important';
+  else card.className='card';
 
   let numHtml = `問題 ${idx+1}`;
-  if(q.imp) numHtml += ' <span class="imp-badge">⚠ 重要</span>';
+  if(isMiss) numHtml += ' <span class="miss-badge">★ ミス</span>';
+  else if(q.imp) numHtml += ' <span class="imp-badge">⚠ 重要</span>';
   document.getElementById('q-num').innerHTML=numHtml;
   document.getElementById('q-label').textContent=`問題 ${idx+1} / ${n}`;
   document.getElementById('nav-center').textContent=`${idx+1} / ${n}`;
@@ -409,12 +438,16 @@ function render(){
   populate(document.getElementById('sel-form'),FORMS);
 
   const saved=answers[idx];
+  const missBtn=document.getElementById('btn-miss');
   if(saved){
     document.getElementById('sel-gyo').value=saved.gyo||'';
     document.getElementById('sel-type').value=saved.type||'';
     document.getElementById('sel-form').value=saved.form||'';
     document.getElementById('inp-shushi').value=saved.shushi||'';
     showFeedback(saved.gyo,saved.type,saved.form,saved.shushi);
+    missBtn.style.display='inline-block';
+    missBtn.className='btn-miss'+(isMiss?' marked':'');
+    missBtn.textContent=isMiss?'★ ミス済み':'☆ ミスをマーク';
   } else {
     document.getElementById('sel-gyo').value='';
     document.getElementById('sel-type').value='';
@@ -422,6 +455,7 @@ function render(){
     document.getElementById('inp-shushi').value='';
     document.getElementById('feedback').className='feedback';
     document.getElementById('feedback').innerHTML='';
+    missBtn.style.display='none';
   }
 }
 function check(){
@@ -433,6 +467,36 @@ function check(){
   answers[idx]={gyo,type,form,shushi};
   showFeedback(gyo,type,form,shushi);
   document.getElementById('score-label').textContent=`正解 ${countCorrect()} / ${countAnswered()}`;
+  const missBtn=document.getElementById('btn-miss');
+  missBtn.style.display='inline-block';
+  missBtn.className='btn-miss'+(missSet.has(idx)?' marked':'');
+  missBtn.textContent=missSet.has(idx)?'★ ミス済み':'☆ ミスをマーク';
+}
+function toggleMiss(){
+  if(missSet.has(idx)) missSet.delete(idx);
+  else missSet.add(idx);
+  renderMissList();
+  render();
+}
+function renderMissList(){
+  const wrap=document.getElementById('miss-list-wrap');
+  const list=document.getElementById('miss-list');
+  const count=document.getElementById('miss-count');
+  if(missSet.size===0){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  count.textContent=`${missSet.size}問`;
+  const sorted=[...missSet].sort((a,b)=>a-b);
+  list.innerHTML=sorted.map(i=>{
+    const label=Q[i].sent.join('').replace(/<[^>]*>/g,'');
+    const q=Q[i];
+    const word=q.sent[q.uw];
+    return `<span class="miss-chip" onclick="jumpTo(${i})">問${i+1}「${word}」</span>`;
+  }).join('');
+}
+function jumpTo(i){
+  idx=i;
+  render();
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 function showFeedback(gyo,type,form,shushi){
   const q=Q[idx];
