@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>公共 テスト対策｜長野工業高校 1年 1学期期末考査</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+  :root {
+    --primary: #2a2560;
+    --primary-light: #3d3a8a;
+    --accent: #e8a020;
+    --bg: #f5f4f0;
+    --card-bg: #ffffff;
+    --border: #e0ddd6;
+    --text: #1a1a2e;
+    --text-muted: #666;
+    --tag-blank: #2a6dd9;
+    --tag-essay: #e07020;
+    --correct-bg: #f0fbf6;
+    --correct-border: #34c07a;
+    --essay-bg: #fff9f0;
+    --star-active: #f5b400;
+    --highlight: #fffbe6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--primary);
+    color: white;
+    padding: 14px 20px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(42,37,96,0.3);
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .header-top h1 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .subject-badge {
+    background: var(--accent);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+  }
+  .tab-btn {
+    padding: 8px 18px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .tab-btn.active {
+    color: white;
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── CHAPTER CHIPS ── */
+  .chapter-bar {
+    background: white;
+    padding: 10px 16px;
+    overflow-x: auto;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    scrollbar-width: none;
+  }
+  .chapter-bar::-webkit-scrollbar { display: none; }
+  .chapter-chip {
+    display: inline-block;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: white;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+  }
+  .chapter-chip.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  /* ── SCORE BAR ── */
+  .score-bar {
+    display: flex;
+    gap: 12px;
+    padding: 10px 16px;
+    background: white;
+    border-bottom: 1px solid var(--border);
+  }
+  .score-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 56px;
+  }
+  .score-label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+  .score-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .score-divider {
+    width: 1px;
+    background: var(--border);
+    align-self: stretch;
+  }
+
+  /* ── FILTER + TTS BAR ── */
+  .control-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--bg);
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 5px 14px;
+    border-radius: 16px;
+    border: 1.5px solid var(--border);
+    background: white;
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.18s;
+  }
+  .filter-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .tts-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+  }
+  .tts-btn {
+    padding: 5px 12px;
+    border-radius: 14px;
+    border: 1.5px solid var(--border);
+    background: white;
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.18s;
+  }
+  .tts-btn:hover { background: #f0f0f0; }
+  .tts-btn.playing {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .speed-toggle {
+    padding: 5px 10px;
+    border-radius: 14px;
+    border: 1.5px solid var(--border);
+    background: white;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main { padding: 16px; max-width: 800px; margin: 0 auto; }
+
+  /* ── QUESTION CARDS ── */
+  .card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+  .card.starred {
+    border-color: var(--star-active);
+    box-shadow: 0 0 0 1px rgba(245,180,0,0.3);
+  }
+  .card.tts-active {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(42,37,96,0.2);
+    background: var(--highlight);
+  }
+  .card-essay {
+    border-left: 4px solid var(--tag-essay);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 14px 10px;
+  }
+  .star-btn {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    line-height: 1;
+    color: var(--border);
+    transition: color 0.15s, transform 0.15s;
+    margin-top: 1px;
+  }
+  .star-btn.active { color: var(--star-active); }
+  .star-btn:hover { transform: scale(1.2); }
+
+  .card-body { flex: 1; }
+  .card-tags { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 8px;
+    letter-spacing: 0.04em;
+  }
+  .tag-blank { background: #dbeafe; color: #1d4ed8; }
+  .tag-essay { background: #fde8cc; color: #b45309; }
+
+  .question-text {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .blank {
+    display: inline-block;
+    min-width: 60px;
+    border-bottom: 2px solid var(--primary);
+    color: transparent;
+    background: #e8e7f5;
+    border-radius: 3px;
+    padding: 0 4px;
+    user-select: none;
+  }
+  .blank.revealed {
+    color: var(--primary);
+    background: #dbeafe;
+    font-weight: 700;
+  }
+
+  /* ── ANSWER AREA ── */
+  .answer-area {
+    padding: 0 14px 14px 38px;
+  }
+  .reveal-btn {
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: 1.5px solid var(--primary);
+    background: white;
+    color: var(--primary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.18s;
+  }
+  .reveal-btn:hover {
+    background: var(--primary);
+    color: white;
+  }
+  .answer-box {
+    display: none;
+    margin-top: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--correct-bg);
+    border: 1px solid var(--correct-border);
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: #1a6040;
+    font-weight: 500;
+  }
+  .answer-box.essay-answer {
+    background: var(--essay-bg);
+    border-color: var(--tag-essay);
+    color: #7c4a10;
+  }
+  .answer-box.show { display: block; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+  }
+  .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+
+  /* ── CHAPTER TITLE ── */
+  .chapter-title-card {
+    background: var(--primary);
+    color: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .chapter-title-card .ch-num {
+    font-size: 1.8rem;
+    font-weight: 700;
+    opacity: 0.4;
+    font-family: 'Georgia', serif;
+    line-height: 1;
+  }
+  .chapter-title-card .ch-name {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  .chapter-title-card .ch-count {
+    margin-left: auto;
+    font-size: 0.75rem;
+    opacity: 0.7;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <h1>公共 <span style="font-size:0.75rem;font-weight:400;opacity:0.85;">長野工業高校 1年 1学期期末考査対策</span></h1>
+    <span class="subject-badge">一問一答</span>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('quiz')">✏️ 一問一答</button>
+  </div>
+</header>
+
+<!-- Chapter chips -->
+<div class="chapter-bar" id="chapterBar"></div>
+
+<!-- Score bar -->
+<div class="score-bar">
+  <div class="score-item">
+    <span class="score-label">問</span>
+    <span class="score-value" id="scoreTotal">0</span>
+  </div>
+  <div class="score-divider"></div>
+  <div class="score-item">
+    <span class="score-label">確認済み</span>
+    <span class="score-value" id="scoreChecked">0</span>
+  </div>
+  <div class="score-divider"></div>
+  <div class="score-item">
+    <span class="score-label">⭐ マーク</span>
+    <span class="score-value" id="scoreStarred">0</span>
+  </div>
+</div>
+
+<!-- Control bar -->
+<div class="control-bar">
+  <button class="filter-btn active" id="filterAll" onclick="setFilter('all')">すべて</button>
+  <button class="filter-btn" id="filterStar" onclick="setFilter('star')">⭐ マークのみ</button>
+  <div class="tts-controls">
+    <button class="tts-btn" id="ttsPlay" onclick="ttsPlay()">▶ 読み上げ</button>
+    <button class="tts-btn" id="ttsPause" onclick="ttsPause()">⏸</button>
+    <button class="tts-btn" onclick="ttsStop()">⏹</button>
+    <button class="speed-toggle" id="speedBtn" onclick="toggleSpeed()">標準</button>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main" id="mainContent"></div>
+
+<script>
+// ════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════
+const chapterLabels = [
+  "①社会に生きる私たち",
+  "②③④個人の尊厳・多様性・キャリア",
+  "⑤⑥伝統・文化・外来文化の受容",
+  "⑦宗教とは",
+];
+
+// type: "blank" = 空所補充
+// type: "essay" = 記述
+const qaData = [
+  // ── 第1章 ──
+  [
+    // 【教科書本文・太字穴埋め】
+    {
+      type:"blank",
+      q:"人はみずからの幸福を願い、その実現のために【　】な空間をつくり、協働して生きている。",
+      a:"公共的"
+    },
+    {
+      type:"blank",
+      q:"私たちは、人間の【　】（人生の周期）のなかで、子どもからおとなへと大きく変容し、成長をとげる時期、いわゆる【　】にいる。",
+      a:"ライフサイクル／青年期"
+    },
+    {
+      type:"blank",
+      q:"かつては【　】（イニシエーション）としての成年式をすませれば、すぐに一人前のおとなとして認められ、その社会の構成員に組み入れられてきた。",
+      a:"通過儀礼"
+    },
+    {
+      type:"blank",
+      q:"身体的な成長が早くなる【　】により、青年期の始期は低年齢化が進んでいるとされる。",
+      a:"発達加速現象"
+    },
+    {
+      type:"blank",
+      q:"青年期における心の変化は、自分についての意識が強くはたらきはじめる【　】という形であらわれてくる。",
+      a:"自我のめざめ"
+    },
+    {
+      type:"blank",
+      q:"自我のめざめは、精神的な自立にともなう自己主張のあらわれであり、幼児期にあらわれる【　】に対し、青年期は【　】の時期といわれる。",
+      a:"第一反抗期／第二反抗期"
+    },
+    {
+      type:"blank",
+      q:"自我にめざめる青年期は、【　】ともよばれ、この時期に自分自身を見失う危険性もある。",
+      a:"危機の時代"
+    },
+    {
+      type:"blank",
+      q:"多くの青年は、表面的には何ごともなくおとなになっていく。これを【　】という。",
+      a:"青年期平穏説"
+    },
+    {
+      type:"blank",
+      q:"青年期は、自分の心をコントロールして合理的解決の道をさぐる【　】をとり、自己形成の課題に取り組むべき時期といえる。",
+      a:"適応行動"
+    },
+    {
+      type:"blank",
+      q:"すべてが自分の思いどおりになるわけではない。そのとき、人は【　】（フラストレーション）や【　】（コンフリクト）という状態に陥る。",
+      a:"欲求不満／葛藤"
+    },
+    {
+      type:"blank",
+      q:"自我を傷つけずに自分自身の内部で【　】のうちに心理的な解決をはかろうとする心の動きを【　】とよぶ。",
+      a:"無意識／防衛機制"
+    },
+    {
+      type:"blank",
+      q:"人生のそれぞれの時期に見あった知識や態度などを身につける必要がある。こうした年齢に応じた発達段階において達成すべき課題を【　】という。",
+      a:"発達課題"
+    },
+    {
+      type:"blank",
+      q:"青年期の発達課題は【　】（自我同一性）の確立といわれ、アメリカの心理学者エリクソンがライフサイクル論のなかで位置づけた。",
+      a:"アイデンティティ"
+    },
+    {
+      type:"blank",
+      q:"アイデンティティの確立とは、自己のなかにあるさまざまな自分をうまく結びつけながら、その核となる「一個の自分」、いわゆる【　】を見つけだし、つくりあげていくことである。",
+      a:"自我"
+    },
+    {
+      type:"blank",
+      q:"自分の特長をはっきりと自覚し、それをみがきあげていく【　】と、社会の一員として必要な知識・技能・態度などを養い、周囲の人と協働して物事を実行できる力を身につける【　】が必要である。",
+      a:"個性化／社会化"
+    },
+    {
+      type:"blank",
+      q:"他人と比べて劣っているという感情であり、それを克服しようとすることで成長できる一方、心のなかの強いわだかまりとなると自由な活動を妨げることもある感情を【　】という。",
+      a:"劣等感"
+    },
+    // 【ワーク追加問題（教科書太字と重複しないもの）】
+    {
+      type:"blank",
+      q:"幸福にかかわる二つの考え方のうち、「個人が各々の幸福を追求する」と「社会全体も幸福になる」という考え方に対し、もう一方は「個人が自分の幸福を犠牲にして【　】の幸福を優先させれば、やがて自分も幸福になる」という考え方である。",
+      a:"社会全体"
+    },
+    {
+      type:"blank",
+      q:"対立が生じた場合、多様な考え方をもつ人々が社会集団のなかで互いの利益が得られるように、何らかの決定をおこない【　】にいたる努力がなされる。",
+      a:"合意"
+    },
+    {
+      type:"blank",
+      q:"現代の日本では、青年期の【　】傾向（30歳前後まで）が見られる。しかし、18歳になれば選挙権などの権利が与えられ、成人としても認められるようになる。",
+      a:"延長"
+    },
+    {
+      type:"blank",
+      q:"青年期は、子どもとおとなの中間の時期であり、その両面の心理的特性をもつとされ、ドイツの心理学者レヴィンが【　】（境界人・周辺人）と名づけた。",
+      a:"マージナルマン"
+    },
+    {
+      type:"blank",
+      q:"社会人としての責任や義務をある程度猶予され、自由な立場でさまざまな試行錯誤をくり返すことができる自己形成の時期を、アメリカの心理学者エリクソンは【　】と名づけた。",
+      a:"モラトリアム"
+    },
+    {
+      type:"blank",
+      q:"青年と法律：【　】歳になると罪を犯すと処罰の対象となる（刑法第41条）。",
+      a:"14"
+    },
+    {
+      type:"blank",
+      q:"青年と法律：【　】歳になるとおとなとして扱われ（民法第4条）、結婚・投票・裁判員選任も可能になる。",
+      a:"18"
+    },
+    {
+      type:"blank",
+      q:"防衛機制のうち、いやなことを忘れようとする働きを【　】という。",
+      a:"抑圧"
+    },
+    {
+      type:"blank",
+      q:"防衛機制のうち、自分の行動が正当であることを証明しようとする働きを【　】という。",
+      a:"合理化"
+    },
+    {
+      type:"blank",
+      q:"防衛機制のうち、実際とは逆の態度や行動の型を誇張する働きを【　】という。",
+      a:"反動形成"
+    },
+    {
+      type:"blank",
+      q:"防衛機制のうち、病気や空想の世界に逃げこむ働きを【　】という。",
+      a:"逃避"
+    },
+    {
+      type:"blank",
+      q:"就職後も完全には自立せず、親と同居する青年を何というか。",
+      a:"パラサイトシングル"
+    },
+    {
+      type:"blank",
+      q:"青年期を「第二の誕生」と表現した人物は誰か。",
+      a:"ルソー"
+    },
+    {
+      type:"blank",
+      q:"欲求階層説を唱えたアメリカの心理学者は誰か。",
+      a:"マズロー"
+    },
+  ],
+  // ── 第2章（個人の尊厳と自主・自律）＋第3章（多様性と共通性）＋第4章（キャリア形成と自己実現）──
+  [
+    // 【第2章：教科書本文・太字穴埋め】
+    {
+      type:"blank",
+      q:"自己探求の目標は、豊かな【　】（パーソナリティ）の形成にある。個性には、生まれながらにもっている【　】にかかわる側面と、生後、周囲との関係のなかでつくられる【　】にかかわる側面がある。",
+      a:"個性／遺伝／環境"
+    },
+    {
+      type:"blank",
+      q:"人間は【　】をもち、主体的な努力によって、いつでも新しい自分をつくることができる。",
+      a:"意志"
+    },
+    {
+      type:"blank",
+      q:"人間とは【　】をもつ存在であり、みずからを成長させながら、社会のなかで主体的に生きていくための人生観や世界観、価値観の基礎をつちかっていこう。",
+      a:"自律的な意志"
+    },
+    {
+      type:"blank",
+      q:"「男は仕事、女は家事・育児」という性別役割分担の意識が、女性の社会参画を困難にしてきた要因の一つとする見方がある。このような【　】によって生まれた意識が、男女差別や社会的排除につながる場合もある。",
+      a:"ジェンダー"
+    },
+    {
+      type:"blank",
+      q:"【　】（Sexual Orientation and Gender Identity）の考え方から、より多様な性のあり方を認めるべきではないかという意見もある。",
+      a:"SOGI"
+    },
+    {
+      type:"blank",
+      q:"いわゆる【　】などは性的な少数者（マイノリティ）として、法的に迫害されたり、社会的に差別されたりしてきた。",
+      a:"LGBT"
+    },
+    {
+      type:"blank",
+      q:"性の自己決定権を個人の尊厳として認め、私たち一人ひとりが、互いの意見を言いあうだけでなく、互いの根拠や意味を問いあう【　】などを通して、多様な性のありようを理解し、共感することができれば、私たち自身の考えの幅を広げることにもつながる。",
+      a:"対話"
+    },
+    {
+      type:"blank",
+      q:"性別に加え、人種・年齢・障害などにもかかわりなく、すべての人々を孤独や孤立、排除や摩擦から援護し、健康で文化的な生活の実現につなげるよう、社会の構成員としてつつみ支えあう【　】（社会的包摂）という考え方が提唱されている。",
+      a:"ソーシャル・インクルージョン"
+    },
+    {
+      type:"blank",
+      q:"性的な少数者（【　】）として、法的に迫害されたり、社会的に差別されたりしてきた。",
+      a:"マイノリティ"
+    },
+    // 【第3章：教科書本文・太字穴埋め】
+    {
+      type:"blank",
+      q:"人種・性別・年齢・障害などの違いを【　】（ダイバーシティ）として受け止め、社会的存在として、お互いに認めあうことが大切である。",
+      a:"多様性"
+    },
+    {
+      type:"blank",
+      q:"価値観の多様性を象徴するものの一つとして、【　】（ユース・カルチャー）があげられる。",
+      a:"若者文化"
+    },
+    {
+      type:"blank",
+      q:"若者文化は、生活文化や伝統を否定する【　】（カウンター・カルチャー）として強調されてきた。",
+      a:"対抗文化"
+    },
+    {
+      type:"blank",
+      q:"「空気を読む」ことが行動の基準になっているといわれる日本人特有の【　】によく似ている。",
+      a:"恥の文化"
+    },
+    {
+      type:"blank",
+      q:"インターネット上の「炎上」は、同じ意見をもつウチの集団に対して所属感が強く、ソトの集団に対して無関心や敵意を示す【　】を背景として起きていると捉えることもできる。",
+      a:"ムラ意識"
+    },
+    {
+      type:"blank",
+      q:"それぞれがもつ文化の間には、優劣や上下といった序列は存在しない。このような考え方を【　】という。",
+      a:"文化相対主義"
+    },
+    {
+      type:"blank",
+      q:"自分の文化を基準として、ほかの文化を否定したり、低く評価したりする【　】（エスノセントリズム）は、争いの原因となる。",
+      a:"自民族中心主義"
+    },
+    {
+      type:"blank",
+      q:"お互いの文化の違いを認めあい、社会のなかで複数の文化がそれぞれ対等に共存することをめざす【　】（マルチカルチュラリズム）の考え方に立つことによって、本当の意味での異文化との共生が可能になる。",
+      a:"多文化主義"
+    },
+    // 【第4章：教科書本文・太字穴埋め】
+    {
+      type:"blank",
+      q:"私たちは、自分の人生設計のため、何らかの【　】に就き、収入を得なければならない。",
+      a:"職業"
+    },
+    {
+      type:"blank",
+      q:"職業は、何よりもまず【　】を与えてくれるが、それだけのものではない。",
+      a:"経済的自立"
+    },
+    {
+      type:"blank",
+      q:"自分の適性にあった職業は、生涯の【　】となり、創造の喜びや他の人の役に立っているという満足感を与えてくれる。",
+      a:"生きがい"
+    },
+    {
+      type:"blank",
+      q:"職業は自分をいかす【　】の道であることを忘れてはならない。",
+      a:"自己実現"
+    },
+    {
+      type:"blank",
+      q:"私たちは、職業をとおして多くの人と協働し、社会的分業の一部を担うことによって、【　】をすることができる。",
+      a:"社会貢献"
+    },
+    {
+      type:"blank",
+      q:"若年労働者の雇用問題、【　】（NEET）の存在も社会問題となっている。",
+      a:"フリーター・ニート"
+    },
+    {
+      type:"blank",
+      q:"自分に向いた職業は何かをきわめるために、職場体験活動などのいわゆる【　】などを積極的に活用して、自分自身を見つめてみよう。",
+      a:"インターンシップ"
+    },
+    {
+      type:"blank",
+      q:"社会とのかかわりを深めるためには、【　】なども絶好の機会となるであろう。",
+      a:"ボランティア活動"
+    },
+    {
+      type:"blank",
+      q:"変化の激しい現代社会では、生涯を通じて、主体的に学習に取り組んでいくという【　】が求められている。",
+      a:"生涯学習"
+    },
+    {
+      type:"blank",
+      q:"こうした将来にわたる自分の生き方を考えながら人生設計をおこなう【　】が求められている。",
+      a:"キャリアデザイン"
+    },
+    {
+      type:"blank",
+      q:"15〜34歳で、家事も通学もせず、アルバイト中心で働いている者を何というか。",
+      a:"フリーター"
+    },
+    {
+      type:"blank",
+      q:"15〜34歳で、通学も就職も職業訓練も受けず、働く意志がない者を何というか。",
+      a:"ニート"
+    },
+    // 【ワーク追加問題（太字と重複しないもの）】
+    {
+      type:"blank",
+      q:"ワークの整理：個性（パーソナリティ）＝【　】的な面＋環境的な面＋意志（＝主体的努力）。人間とは【　】的な意志をもつ存在である。",
+      a:"遺伝／自律"
+    },
+    {
+      type:"blank",
+      q:"青年期の位置づけとして、青年期は「【　】」とよばれるように、新しい自分をつくりあげる機会ももっている（ルソー『エミール』より）。",
+      a:"第二の誕生"
+    },
+  ],
+  // ── 第5章（伝統や文化とのかかわり）＋第6章（日本における外来文化の受容）──
+  [
+    // 【第5章：教科書本文・太字穴埋め】
+    {
+      type:"blank",
+      q:"【　】とは、一般的にある社会集団のなかに共通して見られる言語や宗教的行事などをさす。また、私たちの生活そのものである衣食住をはじめ、人間が自然に手を加えて形成してきた生活様式のすべてをさして文化とする場合もある。",
+      a:"文化"
+    },
+    {
+      type:"blank",
+      q:"文化のなかでも、長い歴史を通じて形成されてきた文化を【　】とよぶ。",
+      a:"伝統文化"
+    },
+    {
+      type:"blank",
+      q:"文化は、それぞれの集団が【　】（気候・地形・地質などの自然環境と人間の文化）にあわせたり、他の集団との交流をくり返したりしながら、つくり上げられてきたものでもある。",
+      a:"風土"
+    },
+
+    {
+      type:"blank",
+      q:"古代日本の人々は、【　】ということばが示すように、自然界のあらゆる事物や現象に精霊が宿っていると考え、それらを神として崇拝の対象にしていた。",
+      a:"八百万の神"
+    },
+    {
+      type:"blank",
+      q:"社会の秩序を乱す行為や神聖なものをけがす行為を【　】として忌み嫌った。これらを宗教的な呪力で払いのける儀礼が【　】（祓え）であり、清流などに身を浸して罪や穢れを洗い流す儀礼は【　】とよばれ、現在もおこなわれている。",
+      a:"罪や穢れ／祓い／禊"
+    },
+    {
+      type:"blank",
+      q:"古代日本の人々は【　】（清明心）という透きとおった心のあり方を導んだ。これは神と接するときの嘘・偽りのない心のありさまであり、後世に見られる正直や【　】、武士道における潔さなどの心のあり方の原型となった。",
+      a:"清き明き心／誠"
+    },
+    {
+      type:"blank",
+      q:"歴史の表舞台に登場しない無名の人々（【　】）によって継承されてきた生活文化こそが日本社会の基礎をなす伝統文化であり、これを手がかりに日本文化の本質が見いだされると考えたのは【　】である。",
+      a:"常民／柳田国男"
+    },
+    {
+      type:"blank",
+      q:"祭りは、神とともにする行事であり、日常的な【　】の行事ではなく、非日常的な【　】の行事といえる。",
+      a:"ケ／ハレ"
+    },
+    {
+      type:"blank",
+      q:"毎年、同じ時期におこなう伝統的な行事を【　】という。日本人の年中行事は、四季の推移や農作物の種まき・収穫の時期を示す農事暦などと深いかかわりがある。",
+      a:"年中行事"
+    },
+    {
+      type:"blank",
+      q:"日本的にアレンジして定着させるところに、時代をこえた日本人の特性や【　】があらわれている。",
+      a:"文化の重層性"
+    },
+    {
+      type:"blank",
+      q:"自然の風情や人間の喜怒哀楽を理解できる人を【　】を知る人として高く評価した。",
+      a:"もののあはれ"
+    },
+    // 【第6章：教科書本文・太字穴埋め】
+    {
+      type:"blank",
+      q:"調和を重視する精神性を表すことばに、聖徳太子（厩戸皇子）の「和を以て貴しと為す」というものがある。このことばは官吏の心得である【　】のはじめに置かれている。",
+      a:"憲法十七条"
+    },
+    {
+      type:"blank",
+      q:"江戸時代になると、儒教のなかでも正学とされ武士の間で広くなっていた【　】に対し、伊藤仁斎は『論語』『孟子』の本来の意味に立ち返る【　】を提唱した。",
+      a:"朱子学／古義学"
+    },
+    {
+      type:"blank",
+      q:"荻生徂徠は、朱子学などの後世の解釈によらない、古の聖人が定めた【　】を重視した。",
+      a:"先王之道"
+    },
+    {
+      type:"blank",
+      q:"江戸時代末期には、日本の伝統的な精神を尊重しつつ、西洋の科学技術を受け入れようとする【　】の考え方も生まれた。",
+      a:"和魂洋才"
+    },
+    {
+      type:"blank",
+      q:"明治時代になると、【　】は、国民の一人ひとりが合理的精神を身につけ、【　】の精神をもつことが、近代的な独立国家としての日本を実現する前提になると説いた。",
+      a:"福沢諭吉／独立自尊"
+    },
+    {
+      type:"blank",
+      q:"福沢諭吉は、自然法思想に基づく【　】を説いた。",
+      a:"天賦人権論"
+    },
+    {
+      type:"blank",
+      q:"日本古来の伝統的なものの考え方や文化を探究した学問に【　】がある。",
+      a:"国学"
+    },
+    {
+      type:"blank",
+      q:"【　】は、『古事記』が伝える神々のことばや行動に、私心のない理想的な生き方（惟神の道・古道）があると考えた。そして、生まれながらの素直で自然な心（【　】）を重視し、儒教や仏教の影響を受けて道理や理屈をこねまわす心（漢意）を排除すべきであると説いた。",
+      a:"本居宣長／真心"
+    },
+    {
+      type:"blank",
+      q:"本居宣長は、真心を重視し、儒教や仏教の影響を受けて道理や理屈をこねまわす心（【　】）を排除すべきであると説いた。",
+      a:"漢意"
+    },
+    {
+      type:"blank",
+      q:"民間の伝承や習俗を研究対象とした【　】も、日本の伝統文化を知る動きである。",
+      a:"民俗学"
+    },
+    {
+      type:"blank",
+      q:"日本人のなかでも信仰者が多い仏教は、外来思想として日本に伝わると、古代国家では【　】として、政治的な意味あいからも重要な宗教として重視された。",
+      a:"鎮護国家思想"
+    },
+    {
+      type:"blank",
+      q:"日本古来の神々の信仰と仏教の信仰が融合する【　】が広まり、神は、仏が衆生を救うために仮の姿として出現したものであるとする【　】も世に流布していった。",
+      a:"神仏習合／本地垂迹説"
+    },
+    {
+      type:"blank",
+      q:"鎌倉仏教の開祖が説く教えはわかりやすく、誰にでもできる【　】（易行）を特色としていたため、やがて日本独自の仏教として、人々の心に浸透していった。",
+      a:"行"
+    },
+    {
+      type:"blank",
+      q:"浄土宗の開祖は【　】であり、教義は極楽往生のため、ひたすら念仏だけを称えるという専修念仏を説く。",
+      a:"法然"
+    },
+    {
+      type:"blank",
+      q:"浄土真宗の開祖は【　】であり、念仏さえも阿弥陀仏のはからいという絶対他力の立場に立つ。悪人正機説を説く。",
+      a:"親鸞"
+    },
+    {
+      type:"blank",
+      q:"臨済宗の開祖は【　】であり、戒律を守り、坐禅の修行によって心身をみがくことを重視する。",
+      a:"栄西"
+    },
+    {
+      type:"blank",
+      q:"曹洞宗の開祖は【　】であり、ひたすら坐禅に打ちこむ只管打坐を説く。",
+      a:"道元"
+    },
+    {
+      type:"blank",
+      q:"日蓮宗の開祖は【　】であり、極楽ではなく現世での救済を主張し、法華経至上主義を説く。",
+      a:"日蓮"
+    },
+    // 【ワーク追加問題（太字と重複しないもの）】
+    {
+      type:"blank",
+      q:"日本文化の重層性を示す図では、最も基層に【　】（アニミズム・自然崇拝）があり、最上層に【　】（合理性・近代化）が積み重なっている。",
+      a:"伝統意識／西洋思想"
+    },
+    {
+      type:"blank",
+      q:"荻生徂徠は中国古代の文章・言語に立ち返ることを唱え、【　】を提唱した。",
+      a:"古文辞学"
+    },
+    {
+      type:"blank",
+      q:"清き明き心（清明心）は後世に見られる【　】や誠、武士道における潔さなどの心のあり方の原型となった。",
+      a:"正直"
+    },
+    {
+      type:"blank",
+      q:"【　】は、風土と文化とのかかわりを考察した哲学者であり、人間とは「【　】」であると捉えた。",
+      a:"和辻哲郎／間柄的存在"
+    },
+    {
+      type:"blank",
+      q:"和辻哲郎の「風土論」では、風土を三つの型に分類した。日本や東南アジアのような高温多湿の【　】型、北アフリカ・中東のような乾燥した【　】型、ヨーロッパのような【　】型がある。",
+      a:"モンスーン／砂漠／牧場"
+    },
+    {
+      type:"blank",
+      q:"現在では日本独自のものと思われている文化にも外来文化の影響が見られる。たとえば2月14日の【　】や10月31日の【　】なども、日本的にアレンジして定着した外来文化の例である。",
+      a:"バレンタイン／ハロウィーン"
+    },
+    {
+      type:"blank",
+      q:"日本人のなかでも信仰者が多い外来思想の一つに【　】がある。たとえば、「挨拶」「会釈」ということばは、いずれも仏教を語源としている。",
+      a:"仏教"
+    },
+    {
+      type:"blank",
+      q:"日本文化の重層性の図において、農耕文化の上に位置し、易行・民衆の宗教として広まった層は【　】である。",
+      a:"仏教思想"
+    },
+    {
+      type:"blank",
+      q:"日本文化の重層性の図において、最も基層に位置する伝統意識の内容は【　】・自然崇拝である。",
+      a:"アニミズム"
+    },
+    {
+      type:"blank",
+      q:"浄土宗の開祖・法然は、極楽往生のため、ひたすら【　】だけを称えるという専修念仏を説いた。浄土真宗の開祖・親鸞は、【　】さえも阿弥陀仏のはからいという絶対他力の立場に立つ。",
+      a:"念仏／念仏"
+    },
+    {
+      type:"blank",
+      q:"臨済宗の開祖・栄西は【　】の修行によって心身をみがくことを重視し、曹洞宗の開祖・道元はひたすら【　】に打ちこむ只管打坐を説いた。",
+      a:"坐禅／坐禅"
+    },
+    {
+      type:"blank",
+      q:"日蓮宗の開祖・日蓮は、極楽ではなく現世での救済を主張し、【　】のみを信奉する法華経至上主義を説いた。",
+      a:"法華経"
+    },
+  ],
+  // ── 第7章（宗教とは）──
+  [
+    // 【教科書本文・太字穴埋め】
+    {
+      type:"blank",
+      q:"【　】は、有限な存在である私たちに、生きることの意味や価値を与えるものとして、必要とされてきた。",
+      a:"宗教"
+    },
+    {
+      type:"blank",
+      q:"宗教には大きく二つある。一つは、それぞれの民族の伝統文化や生活に根ざした【　】で、ユダヤ教、ヒンドゥー教あるいは日本の神道などがある。",
+      a:"民族宗教"
+    },
+    {
+      type:"blank",
+      q:"もう一つは、国家や民族をこえて、世界各地に多数の信者をもつ【　】で、キリスト教、イスラーム（イスラム教）、仏教は【　】といわれる。",
+      a:"世界宗教／三大世界宗教"
+    },
+    {
+      type:"blank",
+      q:"キリスト教は、唯一神ヤハウェを崇拝する【　】を母胎として成立した。",
+      a:"ユダヤ教"
+    },
+    {
+      type:"blank",
+      q:"イエスは、律法の目的は罪の意識に苦しむ人間を救う【　】（アガペー）にあると説いた。",
+      a:"神の愛"
+    },
+    {
+      type:"blank",
+      q:"イエスの教えの核心は、心から神を愛し（神への愛）、無償の愛を周囲の人々に実践すること（【　】）にある。",
+      a:"隣人愛"
+    },
+    {
+      type:"blank",
+      q:"イエスの教えは、民衆になぐさめと希望を与えるよい知らせ（【　】）でもあった。",
+      a:"福音"
+    },
+    {
+      type:"blank",
+      q:"イスラーム（イスラム教）は、7世紀前半、アラビア半島のメッカの商人【　】によって唱えられた【　】である。",
+      a:"ムハンマド／一神教"
+    },
+    {
+      type:"blank",
+      q:"イスラームとは、唯一神【　】への絶対的帰依を意味する。",
+      a:"アッラー"
+    },
+    {
+      type:"blank",
+      q:"ムハンマドは、神の教えを人々に伝える最後の預言者であるとされ、その教えは最も重要な聖典『【　】（コーラン）』にアラビア語で記されている。",
+      a:"クルアーン"
+    },
+    {
+      type:"blank",
+      q:"イスラームの基本となるものは、信仰箇条や義務を示した【　】である。",
+      a:"六信・五行"
+    },
+    {
+      type:"blank",
+      q:"『クルアーン』に基づく【　】とよばれるイスラーム法もある。",
+      a:"シャリーア"
+    },
+    {
+      type:"blank",
+      q:"【　】を開いたゴータマ・シッダッタ（ゴータマ・【　】）は、人間は真理（ダルマ・法）の前には平等であるとして、苦からの解脱（苦しみから解放され、安らかな境地に達すること）を説いた。",
+      a:"仏教／ブッダ"
+    },
+    {
+      type:"blank",
+      q:"あらゆるものは依存しあい、独立して存在するものはないとする【　】、諸行無常や諸法無我の思想につながっていった。",
+      a:"縁起の法"
+    },
+    {
+      type:"blank",
+      q:"【　】とは、この世のあらゆるものは常に変化し続けるという真理である。",
+      a:"諸行無常"
+    },
+    {
+      type:"blank",
+      q:"【　】とは、この世のあらゆるものは依存しあい、独立した実体をもつものはないという真理である。",
+      a:"諸法無我"
+    },
+    {
+      type:"blank",
+      q:"命あるものは依存しあって生きているため、他者をいつくしみ、あわれむ心である【　】の心を大切にすべきであると説いた。",
+      a:"慈悲"
+    },
+    {
+      type:"blank",
+      q:"仏教は大別して、厳しい修行などにより【　】という最高の段階に到達した修行者になることを目標とする上座仏教と、人々を救済する菩薩となることを目標とする大乗仏教に分かれた。",
+      a:"阿羅漢"
+    },
+    {
+      type:"blank",
+      q:"仏教は大別して、厳しい修行などにより阿羅漢という最高の段階に到達した修行者になることを目標とする【　】と、人々を救済する菩薩となることを目標とする【　】に分かれた。",
+      a:"上座仏教／大乗仏教"
+    },
+    {
+      type:"blank",
+      q:"大乗仏教では、すべての生き物はブッダ（真理を悟った者）となる可能性をそなえているという【　】という考えが説かれた。",
+      a:"一切衆生悉有仏性"
+    },
+    // 【ワーク穴埋め：太字でないが穴埋め箇所のもの】
+    {
+      type:"blank",
+      q:"ユダヤ教はユダヤ人の宗教であり、モーセの【　】などの律法を重視していた。",
+      a:"十戒"
+    },
+    {
+      type:"blank",
+      q:"紀元前後頃のユダヤ教の指導層は形式的な【　】に陥り、民衆を断罪していた。",
+      a:"律法主義"
+    },
+    {
+      type:"blank",
+      q:"イエスは、当時のユダヤ教の指導者層を烈烈に批判したことから、【　】の刑に処せられた。",
+      a:"十字架"
+    },
+    {
+      type:"blank",
+      q:"やがてイエスは死後に【　】したとする信仰が広まり、ペテロを中心に初期の教団が形成され、キリスト教が成立した。",
+      a:"復活"
+    },
+    {
+      type:"blank",
+      q:"大乗仏教では、人々を救済する【　】となることを目標とし、すべての生き物はブッダとなる可能性をそなえているとする。",
+      a:"菩薩"
+    },
+    {
+      type:"blank",
+      q:"宗教は、有限な存在である私たちに、【　】の意味や価値を与えるものとして、必要とされてきた。",
+      a:"生きること"
+    },
+    {
+      type:"blank",
+      q:"キリスト教は、唯一神【　】を崇拝するユダヤ教を母胎として成立した。",
+      a:"ヤハウェ"
+    },
+    {
+      type:"blank",
+      q:"イスラームの五行のうち、①「アッラーをおいて神はなく、ムハンマドは神の使徒である」と証言することを【　】という。",
+      a:"信仰告白"
+    },
+    {
+      type:"blank",
+      q:"イスラームの五行のうち、②1日5回メッカに向かっておこなうことを【　】という。",
+      a:"礼拝"
+    },
+    {
+      type:"blank",
+      q:"イスラームの五行のうち、③イスラームの救貧税を【　】（きしゃ）という。",
+      a:"喜捨"
+    },
+    {
+      type:"blank",
+      q:"イスラームの五行のうち、④ラマダーン（断食月）の日中におこなうことを【　】という。",
+      a:"断食"
+    },
+    {
+      type:"blank",
+      q:"イスラームの五行のうち、⑤一生に一度、メッカのモスクにおこなうことを【　】という。",
+      a:"巡礼"
+    },
+    {
+      type:"blank",
+      q:"シャリーア（イスラーム法）は、『クルアーン』（アッラーの言葉）と【　】（ムハンマドの言葉・行事）を根拠としている。",
+      a:"スンナ"
+    },
+    {
+      type:"blank",
+      q:"仏教における【　】とは、苦しみから解放されて悟りを得ることであり、生・老・病・死などの苦（一切皆苦）を乗り越えて自由な心を得ることをいう。",
+      a:"解脱"
+    },
+    {
+      type:"blank",
+      q:"仏教の慈悲の心のうち、「慈」とは他者の【　】を取りのぞきたいと願う心であり、「悲」とは他者に【　】を与えたいと願う心である。",
+      a:"苦／楽"
+    },
+  ]
+];
+
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+let currentChapter = 0;
+let filterMode = 'all'; // 'all' | 'star'
+let checkedSet = new Set();
+let ttsQueue = [];
+let ttsIndex = 0;
+let ttsPlaying = false;
+let ttsPaused = false;
+let ttsSpeed = 1.0;
+let currentUtterance = null;
+let ttsActiveCard = null;
+
+// localStorage keys
+const LS_STARS = 'koukyou_stars_v1';
+const LS_CHECKED = 'koukyou_checked_v1';
+
+function loadStars() {
+  try { return JSON.parse(localStorage.getItem(LS_STARS) || '{}'); } catch { return {}; }
+}
+function saveStars(stars) {
+  localStorage.setItem(LS_STARS, JSON.stringify(stars));
+}
+function starKey(chapterIdx, qIdx) { return `${chapterIdx}_${qIdx}`; }
+
+// ════════════════════════════════════════════
+// CHAPTER BAR
+// ════════════════════════════════════════════
+function buildChapterBar() {
+  const bar = document.getElementById('chapterBar');
+  bar.innerHTML = '';
+  chapterLabels.forEach((label, i) => {
+    const chip = document.createElement('button');
+    chip.className = 'chapter-chip' + (i === currentChapter ? ' active' : '');
+    chip.textContent = label;
+    chip.onclick = () => { currentChapter = i; ttsStop(); render(); };
+    bar.appendChild(chip);
+  });
+}
+
+// ════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════
+function render() {
+  buildChapterBar();
+  const stars = loadStars();
+  const qs = qaData[currentChapter] || [];
+
+  // Filter
+  const visible = qs.map((q, i) => ({ q, i })).filter(({ i }) => {
+    if (filterMode === 'star') return !!stars[starKey(currentChapter, i)];
+    return true;
+  });
+
+  // Score
+  document.getElementById('scoreTotal').textContent = visible.length;
+  document.getElementById('scoreChecked').textContent = [...checkedSet].filter(k => {
+    const [c] = k.split('_'); return parseInt(c) === currentChapter;
+  }).length;
+  const starCount = Object.keys(stars).filter(k => k.startsWith(currentChapter + '_')).length;
+  document.getElementById('scoreStarred').textContent = starCount;
+
+  const main = document.getElementById('mainContent');
+  if (visible.length === 0) {
+    main.innerHTML = `<div class="empty-state"><div class="icon">⭐</div><p>マークした問題がありません</p></div>`;
+    return;
+  }
+
+  // Chapter title
+  let html = `<div class="chapter-title-card">
+    <span class="ch-num">${currentChapter + 1}</span>
+    <span class="ch-name">${chapterLabels[currentChapter].replace(/^[①-⑦]/, '')}</span>
+    <span class="ch-count">${visible.length}問</span>
+  </div>`;
+
+  visible.forEach(({ q, i }) => {
+    const key = starKey(currentChapter, i);
+    const isStarred = !!stars[key];
+    const isChecked = checkedSet.has(`${currentChapter}_${i}`);
+    const isEssay = q.type === 'essay';
+
+    // Format question text: 【　】→ blank spans
+    let qText = q.q.replace(/【　】/g, `<span class="blank" data-card="${currentChapter}_${i}">　　　</span>`);
+
+    const tagHtml = isEssay
+      ? `<span class="tag tag-essay">記述</span>`
+      : `<span class="tag tag-blank">空所</span>`;
+
+    const answerBoxClass = isEssay ? 'answer-box essay-answer' + (isChecked ? ' show' : '') : 'answer-box' + (isChecked ? ' show' : '');
+
+    html += `<div class="card${isStarred ? ' starred' : ''}${isEssay ? ' card-essay' : ''}" id="card_${currentChapter}_${i}" data-idx="${i}">
+      <div class="card-header">
+        <button class="star-btn${isStarred ? ' active' : ''}" onclick="toggleStar(${currentChapter},${i})" title="マーク">★</button>
+        <div class="card-body">
+          <div class="card-tags">${tagHtml}</div>
+          <div class="question-text">${qText}</div>
+        </div>
+      </div>
+      <div class="answer-area">
+        <button class="reveal-btn" onclick="revealAnswer(${currentChapter},${i})">答えを確認</button>
+        <div class="${answerBoxClass}" id="ans_${currentChapter}_${i}">${escHtml(q.a)}</div>
+      </div>
+    </div>`;
+  });
+
+  main.innerHTML = html;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ════════════════════════════════════════════
+// ANSWER REVEAL
+// ════════════════════════════════════════════
+function revealAnswer(chapter, idx) {
+  const ansBox = document.getElementById(`ans_${chapter}_${idx}`);
+  if (!ansBox) return;
+  ansBox.classList.add('show');
+  // Reveal blanks
+  const card = document.getElementById(`card_${chapter}_${idx}`);
+  const blanks = card.querySelectorAll(`.blank[data-card="${chapter}_${idx}"]`);
+  const answers = qaData[chapter][idx].a.split('／');
+  blanks.forEach((b, bi) => {
+    b.classList.add('revealed');
+    b.textContent = answers[bi] || answers[0];
+  });
+  checkedSet.add(`${chapter}_${idx}`);
+  updateScores();
+}
+
+function updateScores() {
+  const stars = loadStars();
+  const qs = qaData[currentChapter] || [];
+  const visible = qs.map((q, i) => ({ q, i })).filter(({ i }) => {
+    if (filterMode === 'star') return !!stars[starKey(currentChapter, i)];
+    return true;
+  });
+  document.getElementById('scoreTotal').textContent = visible.length;
+  document.getElementById('scoreChecked').textContent = [...checkedSet].filter(k => {
+    const [c] = k.split('_'); return parseInt(c) === currentChapter;
+  }).length;
+  const starCount = Object.keys(stars).filter(k => k.startsWith(currentChapter + '_')).length;
+  document.getElementById('scoreStarred').textContent = starCount;
+}
+
+// ════════════════════════════════════════════
+// STAR
+// ════════════════════════════════════════════
+function toggleStar(chapter, idx) {
+  const stars = loadStars();
+  const key = starKey(chapter, idx);
+  if (stars[key]) delete stars[key];
+  else stars[key] = 1;
+  saveStars(stars);
+  render();
+}
+
+// ════════════════════════════════════════════
+// FILTER
+// ════════════════════════════════════════════
+function setFilter(mode) {
+  filterMode = mode;
+  document.getElementById('filterAll').classList.toggle('active', mode === 'all');
+  document.getElementById('filterStar').classList.toggle('active', mode === 'star');
+  ttsStop();
+  render();
+}
+
+// ════════════════════════════════════════════
+// TTS
+// ════════════════════════════════════════════
+function buildTtsQueue() {
+  const stars = loadStars();
+  const qs = qaData[currentChapter] || [];
+  ttsQueue = qs.map((q, i) => ({ q, i })).filter(({ i }) => {
+    if (filterMode === 'star') return !!stars[starKey(currentChapter, i)];
+    return true;
+  });
+}
+
+function ttsPlay() {
+  if (!('speechSynthesis' in window)) { alert('このブラウザは読み上げ非対応です'); return; }
+  if (ttsPaused && ttsPlaying) {
+    window.speechSynthesis.resume();
+    ttsPaused = false;
+    document.getElementById('ttsPlay').classList.add('playing');
+    return;
+  }
+  ttsStop();
+  buildTtsQueue();
+  ttsIndex = 0;
+  ttsPlaying = true;
+  ttsPaused = false;
+  document.getElementById('ttsPlay').classList.add('playing');
+  speakNext();
+}
+
+function speakNext() {
+  if (!ttsPlaying || ttsIndex >= ttsQueue.length) {
+    ttsStop(); return;
+  }
+  const { q, i } = ttsQueue[ttsIndex];
+  // highlight card
+  if (ttsActiveCard) ttsActiveCard.classList.remove('tts-active');
+  ttsActiveCard = document.getElementById(`card_${currentChapter}_${i}`);
+  if (ttsActiveCard) {
+    ttsActiveCard.classList.add('tts-active');
+    ttsActiveCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  // speak question
+  const qText = q.q.replace(/【　】/g, '　');
+  speakText(qText, () => {
+    // 3 second pause then answer
+    setTimeout(() => {
+      if (!ttsPlaying) return;
+      // auto reveal
+      revealAnswer(currentChapter, i);
+      speakText(q.a, () => {
+        ttsIndex++;
+        setTimeout(speakNext, 800);
+      });
+    }, 3000);
+  });
+}
+
+function speakText(text, onEnd) {
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ja-JP';
+  u.rate = ttsSpeed;
+  u.onend = onEnd;
+  currentUtterance = u;
+  window.speechSynthesis.speak(u);
+}
+
+function ttsPause() {
+  if (ttsPlaying && !ttsPaused) {
+    window.speechSynthesis.pause();
+    ttsPaused = true;
+    document.getElementById('ttsPlay').classList.remove('playing');
+  }
+}
+
+function ttsStop() {
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  ttsPlaying = false;
+  ttsPaused = false;
+  if (ttsActiveCard) { ttsActiveCard.classList.remove('tts-active'); ttsActiveCard = null; }
+  document.getElementById('ttsPlay').classList.remove('playing');
+}
+
+function toggleSpeed() {
+  if (ttsSpeed === 1.0) {
+    ttsSpeed = 0.5;
+    document.getElementById('speedBtn').textContent = '0.5×';
+  } else {
+    ttsSpeed = 1.0;
+    document.getElementById('speedBtn').textContent = '標準';
+  }
+}
+
+function switchTab(tab) {}
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+render();
+</script>
+</body>
+</html>
