@@ -1344,19 +1344,22 @@ function speakNext() {
     ttsActiveCard.classList.add('tts-active');
     ttsActiveCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
-  // speak question
-  const qText = q.q.replace(/【　】/g, '　');
-  speakText(qText, () => {
-    // 3 second pause then answer
-    setTimeout(() => {
-      if (!ttsPlaying) return;
-      // auto reveal
-      revealAnswer(currentChapter, i);
-      speakText(q.a, () => {
-        ttsIndex++;
-        setTimeout(speakNext, 800);
-      });
-    }, 3000);
+  // 【　】を「、もんだい、」に置換して読み上げ
+  const qText = q.q.replace(/【　】/g, '、もんだい、');
+  // まず「もんだい」と予告してから問題文を読む
+  speakText('もんだい。', () => {
+    if (!ttsPlaying) return;
+    speakText(qText, () => {
+      // 3秒待機してから答えを表示・読み上げ
+      setTimeout(() => {
+        if (!ttsPlaying) return;
+        revealAnswer(currentChapter, i);
+        speakText('こたえ。' + q.a, () => {
+          ttsIndex++;
+          setTimeout(speakNext, 1000);
+        });
+      }, 3000);
+    });
   });
 }
 
