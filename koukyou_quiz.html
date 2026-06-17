@@ -1332,6 +1332,61 @@ function ttsPlay() {
   speakNext();
 }
 
+// ── Web Audio API で「ピロン」効果音を生成 ──
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playBlankSound(onEnd) {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);        // ラ（高め）
+    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.12); // ミに下がる
+    gain.gain.setValueAtTime(0.35, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.25);
+    osc.onended = () => { setTimeout(onEnd, 80); };
+  } catch(e) { onEnd(); }
+}
+
+// 問題文を【　】で分割し、テキスト読み上げ→効果音→テキスト…と順番に処理
+function speakQuestionWithBlanks(text, onEnd) {
+  const parts = text.split(/【　】/);
+  let idx = 0;
+  function next() {
+    if (!ttsPlaying) return;
+    if (idx >= parts.length) { onEnd(); return; }
+    const part = parts[idx].trim();
+    idx++;
+    if (part === '') {
+      // 空パート（文頭・文末の空欄）→効果音だけ
+      if (idx < parts.length) {
+        playBlankSound(next);
+      } else {
+        onEnd();
+      }
+    } else {
+      speakText(part, () => {
+        if (!ttsPlaying) return;
+        // まだ後に空欄がある？
+        if (idx < parts.length) {
+          playBlankSound(next);
+        } else {
+          onEnd();
+        }
+      });
+    }
+  }
+  next();
+}
+
 function speakNext() {
   if (!ttsPlaying || ttsIndex >= ttsQueue.length) {
     ttsStop(); return;
@@ -1344,22 +1399,17 @@ function speakNext() {
     ttsActiveCard.classList.add('tts-active');
     ttsActiveCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
-  // 【　】を「、もんだい、」に置換して読み上げ
-  const qText = q.q.replace(/【　】/g, '、もんだい、');
-  // まず「もんだい」と予告してから問題文を読む
-  speakText('もんだい。', () => {
-    if (!ttsPlaying) return;
-    speakText(qText, () => {
-      // 3秒待機してから答えを表示・読み上げ
-      setTimeout(() => {
-        if (!ttsPlaying) return;
-        revealAnswer(currentChapter, i);
-        speakText('こたえ。' + q.a, () => {
-          ttsIndex++;
-          setTimeout(speakNext, 1000);
-        });
-      }, 3000);
-    });
+  // 問題文を空欄で区切りながら読み上げ（空欄部分はピロン効果音）
+  speakQuestionWithBlanks(q.q, () => {
+    // 3秒待機してから答えを表示・読み上げ
+    setTimeout(() => {
+      if (!ttsPlaying) return;
+      revealAnswer(currentChapter, i);
+      speakText('こたえ。' + q.a, () => {
+        ttsIndex++;
+        setTimeout(speakNext, 1000);
+      });
+    }, 3000);
   });
 }
 
