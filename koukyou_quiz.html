@@ -1346,13 +1346,14 @@ function playBlankSound(onEnd) {
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, ctx.currentTime);        // ラ（高め）
-    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.12); // ミに下がる
-    gain.gain.setValueAtTime(0.35, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+    osc.frequency.value = 1047; // チーン（C6・鈴の音）
+    gain.gain.setValueAtTime(0.5, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
     osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.25);
+    osc.stop(ctx.currentTime + 1.3);
+    // 余韻が落ち着いてから次へ（0.6秒後）
     osc.onended = () => { setTimeout(onEnd, 80); };
+    setTimeout(onEnd, 650);
   } catch(e) { onEnd(); }
 }
 
