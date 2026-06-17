@@ -1351,9 +1351,8 @@ function playBlankSound(onEnd) {
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 1.3);
-    // 余韻が落ち着いてから次へ（0.6秒後）
-    osc.onended = () => { setTimeout(onEnd, 80); };
-    setTimeout(onEnd, 650);
+    // onEndはsetTimeoutのみで1回だけ呼ぶ（osc.onendedとの二重呼び出しを防ぐ）
+    setTimeout(onEnd, 700);
   } catch(e) { onEnd(); }
 }
 
