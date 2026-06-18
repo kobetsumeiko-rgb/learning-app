@@ -410,6 +410,45 @@
 
 <script>
 // ════════════════════════════════════════════
+// 使用期限チェック
+// ════════════════════════════════════════════
+(function() {
+  const deadline = new Date('2025-06-23T00:00:00');
+  const today = new Date();
+  if (today >= deadline) {
+    document.addEventListener('DOMContentLoaded', function() {
+      document.body.innerHTML = `
+        <div style="
+          display:flex; flex-direction:column; align-items:center; justify-content:center;
+          min-height:100vh; background:#f5f4f0;
+          font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+          padding:32px; text-align:center;
+        ">
+          <div style="
+            background:white; border-radius:16px; padding:40px 32px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.08); max-width:360px; width:100%;
+          ">
+            <div style="font-size:3rem; margin-bottom:16px;">📚</div>
+            <h1 style="font-size:1.1rem; font-weight:700; color:#2a2560; margin-bottom:12px;">
+              使用期限が終了しました
+            </h1>
+            <p style="font-size:0.85rem; color:#666; line-height:1.8; margin-bottom:20px;">
+              このアプリは<br>
+              <strong style="color:#2a2560;">長野工業高校 1年 1学期期末考査</strong><br>
+              の対策用として提供していました。<br>
+              考査終了につき、現在はご利用いただけません。
+            </p>
+            <p style="font-size:0.78rem; color:#aaa;">
+              テストお疲れさまでした！
+            </p>
+          </div>
+        </div>
+      `;
+    });
+  }
+})();
+
+// ════════════════════════════════════════════
 // DATA
 // ════════════════════════════════════════════
 const chapterLabels = [
