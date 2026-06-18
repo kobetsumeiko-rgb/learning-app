@@ -358,6 +358,80 @@
     opacity: 0.7;
     white-space: nowrap;
   }
+
+  /* ── PRINT STYLES ── */
+  @media print {
+    /* ヘッダー・コントロール類を非表示 */
+    header, .chapter-bar, .score-bar, .control-bar,
+    .reveal-btn, .answer-box, .star-btn { display: none !important; }
+
+    body { background: white; }
+
+    .main {
+      padding: 8px;
+      max-width: 100%;
+    }
+
+    /* 章タイトルカード */
+    .chapter-title-card {
+      background: white !important;
+      color: #2a2560 !important;
+      border: 2px solid #2a2560;
+      padding: 8px 14px;
+      margin-bottom: 10px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .chapter-title-card .ch-num { color: #2a2560 !important; opacity: 1; }
+
+    /* カード */
+    .card {
+      border: 1px solid #999;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      page-break-inside: avoid;
+    }
+    .card.starred { border-color: #999 !important; box-shadow: none !important; }
+    .card-essay { border-left: 3px solid #e07020 !important; }
+
+    /* タグ */
+    .tag-blank { background: #dbeafe !important; color: #1d4ed8 !important;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tag-essay { background: #fde8cc !important; color: #b45309 !important;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* 空欄：背景なし・下線のみ・文字は透明のまま */
+    .blank {
+      background: transparent !important;
+      border-bottom: 1.5px solid #333 !important;
+      border-radius: 0 !important;
+      min-width: 80px !important;
+      color: transparent !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    /* 答えを開いた後の空欄（revealed）は答えを印刷しない */
+    .blank.revealed {
+      background: transparent !important;
+      color: transparent !important;
+      border-bottom: 1.5px solid #333 !important;
+    }
+
+    /* 問題番号を自動付与 */
+    .card { counter-increment: question; }
+    .card-body::before {
+      content: "Q" counter(question) "　";
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: #2a2560;
+    }
+    .main { counter-reset: question; }
+
+    /* フォントサイズ調整 */
+    .question-text { font-size: 0.88rem; line-height: 1.8; }
+    .card-tags { margin-bottom: 4px; }
+    .card-header { padding: 10px 10px 6px; }
+  }
 </style>
 </head>
 <body>
