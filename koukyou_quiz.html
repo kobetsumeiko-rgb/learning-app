@@ -471,6 +471,7 @@
 <div class="control-bar">
   <button class="filter-btn active" id="filterAll" onclick="setFilter('all')">すべて</button>
   <button class="filter-btn" id="filterStar" onclick="setFilter('star')">⭐ マークのみ</button>
+  <button class="filter-btn" id="toggleAllBtn" onclick="toggleAllAnswers()">📖 全問表示</button>
   <div class="tts-controls">
     <button class="tts-btn" id="ttsPlay" onclick="ttsPlay()">▶ 読み上げ</button>
     <button class="tts-btn" id="ttsPause" onclick="ttsPause()">⏸</button>
@@ -1342,7 +1343,7 @@ function buildChapterBar() {
     const chip = document.createElement('button');
     chip.className = 'chapter-chip' + (i === currentChapter ? ' active' : '');
     chip.textContent = label;
-    chip.onclick = () => { currentChapter = i; ttsStop(); render(); };
+    chip.onclick = () => { currentChapter = i; ttsStop(); allRevealed = false; const btn = document.getElementById('toggleAllBtn'); if(btn){btn.textContent='📖 全問表示'; btn.classList.remove('active');} render(); };
     bar.appendChild(chip);
   });
 }
@@ -1473,6 +1474,9 @@ function setFilter(mode) {
   document.getElementById('filterAll').classList.toggle('active', mode === 'all');
   document.getElementById('filterStar').classList.toggle('active', mode === 'star');
   ttsStop();
+  allRevealed = false;
+  const btn = document.getElementById('toggleAllBtn');
+  if(btn){ btn.textContent='📖 全問表示'; btn.classList.remove('active'); }
   render();
 }
 
@@ -1600,6 +1604,47 @@ function ttsPause() {
     window.speechSynthesis.pause();
     ttsPaused = true;
     document.getElementById('ttsPlay').classList.remove('playing');
+  }
+}
+
+// ════════════════════════════════════════════
+// TOGGLE ALL ANSWERS
+// ════════════════════════════════════════════
+let allRevealed = false;
+
+function toggleAllAnswers() {
+  const btn = document.getElementById('toggleAllBtn');
+  const qs = qaData[currentChapter] || [];
+  const stars = loadStars();
+  const visible = qs.map((q, i) => ({ q, i })).filter(({ i }) => {
+    if (filterMode === 'star') return !!stars[starKey(currentChapter, i)];
+    return true;
+  });
+
+  if (!allRevealed) {
+    // 全問表示
+    visible.forEach(({ i }) => revealAnswer(currentChapter, i));
+    btn.textContent = '📕 全問隠す';
+    btn.classList.add('active');
+    allRevealed = true;
+  } else {
+    // 全問隠す
+    visible.forEach(({ i }) => {
+      const ansBox = document.getElementById(`ans_${currentChapter}_${i}`);
+      const card = document.getElementById(`card_${currentChapter}_${i}`);
+      if (ansBox) ansBox.classList.remove('show');
+      if (card) {
+        card.querySelectorAll(`.blank`).forEach(b => {
+          b.classList.remove('revealed');
+          b.textContent = '　　　';
+        });
+      }
+      checkedSet.delete(`${currentChapter}_${i}`);
+    });
+    btn.textContent = '📖 全問表示';
+    btn.classList.remove('active');
+    allRevealed = false;
+    updateScores();
   }
 }
 
