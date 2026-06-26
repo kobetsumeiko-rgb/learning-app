@@ -221,6 +221,30 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 .data-btn.export { background: #f0f0ea; color: #444; }
 .data-btn.danger { background: #FFF0EC; color: #D85A30; }
 .empty { text-align: center; color: #aaa; padding: 40px 0; font-size: 14px; }
+
+.manual-add-box {
+  background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 16px;
+}
+.manual-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+}
+.manual-row label {
+  font-size: 13px; color: #666; width: 90px; flex-shrink: 0; font-weight: 500;
+}
+.manual-row select, .manual-row input[type=date], .manual-row input[type=time] {
+  flex: 1; padding: 9px 12px; border-radius: 8px; border: 1px solid #ddd;
+  font-size: 14px; background: #f5f5f0; color: #1a1a1a; outline: none;
+}
+.manual-row select:focus, .manual-row input:focus { border-color: #1D9E75; background: #fff; }
+.manual-preview {
+  background: #E1F5EE; border: 1px solid #9FE1CB; border-radius: 8px;
+  padding: 10px 14px; margin-bottom: 12px; font-size: 13px; color: #085041; line-height: 1.6;
+}
+.manual-add-btn {
+  width: 100%; padding: 12px; border-radius: 10px; background: #1D9E75;
+  color: #fff; border: none; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+.manual-add-btn:active { opacity: 0.8; }
 </style>
 </head>
 <body>
@@ -314,6 +338,29 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
     <div class="admin-section" id="section-active" style="display:none">
       <h3>⚠️ 在室中の修正チェックアウト</h3>
       <div id="active-student-list"></div>
+    </div>
+    <div class="admin-section">
+      <h3>📝 記録を手動で追加</h3>
+      <div class="manual-add-box">
+        <div class="manual-row">
+          <label>生徒名</label>
+          <select id="manual-name"></select>
+        </div>
+        <div class="manual-row">
+          <label>日付</label>
+          <input type="date" id="manual-date">
+        </div>
+        <div class="manual-row">
+          <label>チェックイン</label>
+          <input type="time" id="manual-ci">
+        </div>
+        <div class="manual-row">
+          <label>チェックアウト</label>
+          <input type="time" id="manual-co">
+        </div>
+        <div id="manual-preview" class="manual-preview" style="display:none"></div>
+        <button class="manual-add-btn" onclick="addManualSession()">この内容で記録を追加</button>
+      </div>
     </div>
     <div class="admin-section">
       <h3>生徒リスト</h3>
@@ -413,6 +460,15 @@ function thisMonthStart() {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
 }
 
+function getBadge(ms) {
+  const h = ms / 3600000;
+  if (h >= 100) return { icon: '🔮', label: '伝説',   bg: '#EEEDFE', color: '#3C3489' };
+  if (h >= 50)  return { icon: '🌟', label: '超激レア', bg: '#FFF9C4', color: '#855c00' };
+  if (h >= 30)  return { icon: '✨', label: '激レア',  bg: '#E6F1FB', color: '#185FA5' };
+  if (h >= 10)  return { icon: '⭐', label: 'レア',    bg: '#FFF9C4', color: '#855c00' };
+  return { icon: '🌍', label: 'ノーマル', bg: '#F1EFE8', color: '#444441' };
+}
+
 function getInitials(name) {
   const p = name.trim().split(/\s+/);
   return p.length >= 2 ? p[0][0] + p[1][0] : name.slice(0, 2);
@@ -452,10 +508,17 @@ function renderStudentGrid(filter = '') {
     const card = document.createElement('div');
     card.className = 'student-card' + (isIn ? ' checked-in' : '');
     const elapsed = isIn ? Date.now() - state.active[name] : 0;
+    const totalMs = state.sessions.filter(s => s.name === name).reduce((a,s) => a+(s.duration||0), 0)
+                  + (state.active[name] ? Date.now()-state.active[name] : 0);
+    const badge = getBadge(totalMs);
     card.innerHTML = `
-      <div class="avatar${isIn ? ' in' : ''}">${getInitials(name)}</div>
+      <div style="position:relative;width:52px;margin:0 auto 10px">
+        <div class="avatar${isIn ? ' in' : ''}">${getInitials(name)}</div>
+        ${badge ? `<span style="position:absolute;bottom:-3px;right:-6px;font-size:18px;line-height:1">${badge.icon}</span>` : ''}
+      </div>
       <div class="s-name">${name}</div>
-      ${isIn ? `<div class="status-badge">✓ 在室中</div><div class="elapsed" id="el-${name.replace(/\s/g,'-')}">${formatDuration(elapsed)}</div>` : ''}
+      ${badge ? `<div style="font-size:10px;background:${badge.bg};color:${badge.color};padding:2px 7px;border-radius:20px;display:inline-block;margin-top:3px;font-weight:600">${badge.label}</div>` : ''}
+      ${isIn ? `<div class="status-badge" style="display:block;margin-top:4px">✓ 在室中</div><div class="elapsed" id="el-${name.replace(/\s/g,'-')}">${formatDuration(elapsed)}</div>` : ''}
     `;
     card.onclick = () => openModal(name);
     grid.appendChild(card);
@@ -579,10 +642,15 @@ function renderRanking() {
   sorted.forEach(([name, { ms }], i) => {
     const item = document.createElement('div'); item.className = 'rank-item';
     const nc = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    const badge = getBadge(ms);
+    const isMvp = i === 0;
+    const badgeHtml = isMvp
+      ? `<span style="font-size:15px">👑</span><span style="font-size:11px;background:#9FE1CB;color:#04342C;padding:1px 7px;border-radius:20px;font-weight:500">MVP</span>`
+      : badge ? `<span style="font-size:15px">${badge.icon}</span><span style="font-size:11px;background:${badge.bg};color:${badge.color};padding:1px 7px;border-radius:20px;font-weight:500">${badge.label}</span>` : '';
     item.innerHTML = `
       <div class="rank-num ${nc}">${i < 3 ? medals[i] : (i + 1)}</div>
       <div class="rank-info">
-        <div class="rank-name">${name}${state.active[name] ? '<span class="in-badge">在室中</span>' : ''}</div>
+        <div class="rank-name" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">${name}${state.active[name] ? '<span class="in-badge">在室中</span>' : ''}${badgeHtml}</div>
         <div class="rank-hours">${formatDuration(ms)}</div>
       </div>
       <div class="rank-bar-wrap"><div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.round(ms/max*100)}%"></div></div></div>
@@ -635,6 +703,7 @@ function renderAggregate() {
 
 function renderAdmin() {
   renderActiveForAdmin();
+  initManualForm();
   const container = document.getElementById('admin-student-list');
   container.innerHTML = '';
   state.students.forEach((name, i) => {
@@ -712,6 +781,71 @@ function deleteSession(idx) {
   if (!confirm(`この記録を削除しますか？\n${s.name}  ${ds}  ${formatDuration(s.duration)}`)) return;
   state.sessions.splice(idx, 1);
   saveData();
+  refreshCurrentTab();
+}
+
+function initManualForm() {
+  const sel = document.getElementById('manual-name');
+  if (!sel) return;
+  sel.innerHTML = '';
+  state.students.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  document.getElementById('manual-date').value = todayStr();
+  sel.onchange = updateManualPreview;
+  document.getElementById('manual-ci').onchange = updateManualPreview;
+  document.getElementById('manual-co').onchange = updateManualPreview;
+}
+
+function updateManualPreview() {
+  const preview = document.getElementById('manual-preview');
+  const name = document.getElementById('manual-name').value;
+  const date = document.getElementById('manual-date').value;
+  const ci = document.getElementById('manual-ci').value;
+  const co = document.getElementById('manual-co').value;
+  if (!name || !date || !ci || !co) { preview.style.display = 'none'; return; }
+  const ciMs = new Date(date + 'T' + ci).getTime();
+  const coMs = new Date(date + 'T' + co).getTime();
+  if (coMs <= ciMs) {
+    preview.style.display = 'block';
+    preview.style.background = '#FFF0EC';
+    preview.style.borderColor = '#F5CFA0';
+    preview.style.color = '#D85A30';
+    preview.textContent = '⚠️ チェックアウト時刻はチェックイン時刻より後にしてください';
+    return;
+  }
+  const dur = coMs - ciMs;
+  const d = new Date(ciMs);
+  const dateStr = d.toLocaleDateString('ja-JP', {year:'numeric', month:'numeric', day:'numeric'});
+  preview.style.display = 'block';
+  preview.style.background = '#E1F5EE';
+  preview.style.borderColor = '#9FE1CB';
+  preview.style.color = '#085041';
+  preview.innerHTML = `<strong>${name}</strong><br>${dateStr}　${ci} チェックイン → ${co} チェックアウト<br>滞在時間：<strong>${formatDuration(dur)}</strong>`;
+}
+
+function addManualSession() {
+  const name = document.getElementById('manual-name').value;
+  const date = document.getElementById('manual-date').value;
+  const ci = document.getElementById('manual-ci').value;
+  const co = document.getElementById('manual-co').value;
+  if (!name || !date || !ci || !co) { alert('すべての項目を入力してください'); return; }
+  const ciMs = new Date(date + 'T' + ci).getTime();
+  const coMs = new Date(date + 'T' + co).getTime();
+  if (coMs <= ciMs) { alert('チェックアウト時刻はチェックイン時刻より後にしてください'); return; }
+  const duration = coMs - ciMs;
+  const d = new Date(ciMs);
+  const dateStr = d.toLocaleDateString('ja-JP', {year:'numeric', month:'numeric', day:'numeric'});
+  if (!confirm(`以下の内容で記録を追加しますか？\n\n${name}\n${dateStr}　${ci} → ${co}\n滞在時間：${formatDuration(duration)}`)) return;
+  state.sessions.push({ name, checkIn: ciMs, checkOut: coMs, duration });
+  saveData();
+  // フォームリセット
+  document.getElementById('manual-ci').value = '';
+  document.getElementById('manual-co').value = '';
+  document.getElementById('manual-preview').style.display = 'none';
+  alert('✅ 記録を追加しました');
   refreshCurrentTab();
 }
 
