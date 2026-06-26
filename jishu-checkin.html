@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>自習室チェックイン</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif; background: #f5f5f0; min-height: 100vh; }
+
+.top-bar {
+  background: #fff; border-bottom: 1px solid #e8e8e8;
+  padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 10;
+}
+.top-bar h1 { font-size: 17px; font-weight: 600; color: #1a1a1a; }
+.top-bar .clock { font-size: 15px; color: #666; font-variant-numeric: tabular-nums; }
+
+.tab-bar {
+  display: flex; background: #fff; border-bottom: 1px solid #e8e8e8;
+  padding: 0 16px; position: sticky; top: 53px; z-index: 10;
+}
+.tab {
+  padding: 13px 16px; font-size: 14px; cursor: pointer;
+  color: #888; border-bottom: 2px solid transparent; white-space: nowrap;
+}
+.tab.active { color: #1a1a1a; border-bottom-color: #1D9E75; font-weight: 600; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.summary-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 14px 16px 4px; }
+.s-card { background: #f0f0ea; border-radius: 10px; padding: 12px; text-align: center; }
+.s-card .label { font-size: 11px; color: #666; margin-bottom: 4px; }
+.s-card .val { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+
+.search-box { padding: 10px 16px; background: #fff; border-bottom: 1px solid #e8e8e8; margin-top: 8px; }
+.search-box input {
+  width: 100%; padding: 9px 14px; border-radius: 10px;
+  border: 1px solid #ddd; font-size: 15px; background: #f5f5f0; color: #1a1a1a; outline: none;
+}
+.search-box input:focus { border-color: #1D9E75; }
+
+.student-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px; padding: 14px 16px;
+}
+.student-card {
+  background: #fff; border: 1px solid #e8e8e8; border-radius: 14px;
+  padding: 16px 10px; text-align: center; cursor: pointer;
+  transition: transform 0.1s; -webkit-tap-highlight-color: transparent;
+}
+.student-card:active { transform: scale(0.96); }
+.student-card.checked-in { border: 2px solid #1D9E75; background: #f0faf5; }
+.avatar {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 600; margin: 0 auto 10px;
+  color: #185FA5; background: #E6F1FB;
+}
+.avatar.in { background: #9FE1CB; color: #085041; }
+.s-name { font-size: 13px; font-weight: 600; color: #1a1a1a; line-height: 1.3; }
+.status-badge {
+  display: inline-block; margin-top: 6px; font-size: 10px;
+  padding: 2px 8px; border-radius: 20px; background: #9FE1CB; color: #085041; font-weight: 600;
+}
+.elapsed { font-size: 11px; color: #0F6E56; margin-top: 4px; font-weight: 600; }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-overlay.show { opacity: 1; pointer-events: auto; }
+.modal {
+  background: #fff; border-radius: 20px; padding: 32px 24px;
+  width: 300px; text-align: center; transform: scale(0.9); transition: transform 0.2s;
+}
+.modal-overlay.show .modal { transform: scale(1); }
+.modal-avatar {
+  width: 76px; height: 76px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 700; margin: 0 auto 16px;
+  color: #185FA5; background: #E6F1FB;
+}
+.modal-avatar.in { background: #9FE1CB; color: #085041; }
+.modal h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #1a1a1a; }
+.modal p { font-size: 14px; color: #666; margin-bottom: 20px; }
+.modal .dur { font-size: 28px; font-weight: 700; color: #1a1a1a; margin: 8px 0 20px; }
+.btn-row { display: flex; gap: 10px; }
+.btn {
+  flex: 1; padding: 14px; border-radius: 12px; font-size: 16px;
+  font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { opacity: 0.75; }
+.btn-cancel { background: #f0f0ea; color: #666; }
+.btn-checkin { background: #1D9E75; color: #fff; }
+.btn-checkout { background: #D85A30; color: #fff; }
+
+.period-bar {
+  background: #fff; border-bottom: 1px solid #e8e8e8;
+  padding: 10px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.period-bar label { font-size: 13px; color: #666; white-space: nowrap; }
+.period-bar input[type=date] {
+  padding: 7px 10px; border-radius: 8px; border: 1px solid #ddd;
+  font-size: 13px; background: #f5f5f0; color: #1a1a1a; cursor: pointer;
+}
+.period-bar .sep { color: #aaa; font-size: 13px; }
+.preset-btns { display: flex; gap: 6px; margin-left: auto; }
+.preset-btn {
+  padding: 6px 10px; border-radius: 8px; border: 1px solid #ddd;
+  font-size: 12px; cursor: pointer; background: #f5f5f0; color: #666; font-weight: 500;
+  -webkit-tap-highlight-color: transparent;
+}
+.preset-btn.active { background: #E1F5EE; color: #085041; border-color: #1D9E75; }
+
+.rank-list { padding: 12px 16px; }
+.rank-item {
+  display: flex; align-items: center; gap: 12px; background: #fff;
+  border: 1px solid #e8e8e8; border-radius: 14px; padding: 13px 14px; margin-bottom: 8px;
+}
+.rank-num { font-size: 18px; font-weight: 700; min-width: 34px; text-align: center; }
+.rank-num.gold { color: #BA7517; }
+.rank-num.silver { color: #888780; }
+.rank-num.bronze { color: #993C1D; }
+.rank-info { flex: 1; min-width: 0; }
+.rank-name { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+.rank-hours { font-size: 12px; color: #666; margin-top: 2px; }
+.rank-bar-wrap { width: 72px; }
+.rank-bar { height: 6px; border-radius: 3px; background: #e8e8e8; overflow: hidden; }
+.rank-bar-fill { height: 100%; background: #1D9E75; border-radius: 3px; }
+.in-badge {
+  font-size: 10px; background: #9FE1CB; color: #085041;
+  padding: 1px 6px; border-radius: 10px; font-weight: 600;
+  vertical-align: middle; margin-left: 4px;
+}
+
+.history-list { padding: 0 16px 16px; }
+.history-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 0; border-bottom: 1px solid #f0f0ea; font-size: 13px;
+}
+.history-item .h-name { font-weight: 600; flex: 1; color: #1a1a1a; }
+.history-item .h-date { color: #888; font-size: 12px; }
+.history-item .h-dur { font-weight: 600; color: #1a1a1a; min-width: 56px; text-align: right; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #1D9E75; flex-shrink: 0; }
+
+.admin-panel { padding: 16px; }
+.admin-section { margin-bottom: 24px; }
+.admin-section h3 { font-size: 12px; color: #888; letter-spacing: 0.06em; margin-bottom: 10px; font-weight: 600; }
+.admin-row {
+  display: flex; align-items: center; gap: 10px; background: #fff;
+  border: 1px solid #e8e8e8; border-radius: 10px; padding: 10px 14px; margin-bottom: 6px;
+}
+.admin-row span { flex: 1; font-size: 14px; color: #1a1a1a; }
+.admin-row .meta { font-size: 12px; color: #888; }
+.mini-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; background: #E6F1FB; color: #185FA5; flex-shrink: 0;
+}
+.del-btn { background: none; border: none; cursor: pointer; color: #ccc; font-size: 20px; padding: 2px 4px; line-height: 1; }
+.del-btn:hover { color: #D85A30; }
+.add-row { display: flex; gap: 8px; margin-top: 8px; }
+.add-row input {
+  flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid #ddd;
+  font-size: 14px; background: #fff; color: #1a1a1a; outline: none;
+}
+.add-row input:focus { border-color: #1D9E75; }
+.add-row button {
+  padding: 10px 18px; border-radius: 10px; background: #1D9E75;
+  color: #fff; border: none; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.period-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.aggregate-table {
+  background: #fff; border: 1px solid #e8e8e8; border-radius: 12px;
+  overflow: hidden; margin-bottom: 10px;
+}
+.aggregate-table table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+.aggregate-table th {
+  background: #f5f5f0; padding: 10px 14px; text-align: left;
+  font-weight: 600; color: #666; border-bottom: 1px solid #e8e8e8; font-size: 12px;
+}
+.aggregate-table td { padding: 11px 14px; border-bottom: 1px solid #f5f5f0; color: #1a1a1a; }
+.aggregate-table tr:last-child td { border-bottom: none; }
+.agg-hours { font-weight: 600; text-align: right; }
+.agg-cnt { color: #888; text-align: right; }
+.data-btns { display: flex; gap: 10px; }
+.data-btn {
+  flex: 1; padding: 12px; border-radius: 10px;
+  font-size: 14px; font-weight: 600; cursor: pointer; border: none;
+}
+.data-btn.export { background: #f0f0ea; color: #444; }
+.data-btn.danger { background: #FFF0EC; color: #D85A30; }
+.empty { text-align: center; color: #aaa; padding: 40px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>📚 自習室チェックイン</h1>
+  <span class="clock" id="clock">--:--</span>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('checkin')">チェックイン</div>
+  <div class="tab" onclick="switchTab('ranking')">ランキング</div>
+  <div class="tab" onclick="switchTab('history')">記録</div>
+  <div class="tab" onclick="switchTab('admin')">管理</div>
+</div>
+
+<div id="tab-checkin" class="tab-content active">
+  <div class="summary-cards">
+    <div class="s-card"><div class="label">現在利用中</div><div class="val" id="cnt-in">0</div></div>
+    <div class="s-card"><div class="label">本日の利用者</div><div class="val" id="cnt-today">0</div></div>
+    <div class="s-card"><div class="label">本日の合計</div><div class="val" id="cnt-hours">0h</div></div>
+  </div>
+  <div class="search-box">
+    <input type="text" id="search-input" placeholder="名前で絞り込み..." oninput="filterStudents()">
+  </div>
+  <div class="student-grid" id="student-grid"></div>
+</div>
+
+<div id="tab-ranking" class="tab-content">
+  <div class="period-bar">
+    <label>期間</label>
+    <input type="date" id="rank-from" onchange="renderRanking()">
+    <span class="sep">〜</span>
+    <input type="date" id="rank-to" onchange="renderRanking()">
+    <div class="preset-btns">
+      <button class="preset-btn" onclick="setPreset('rank','week',this)">今週</button>
+      <button class="preset-btn" onclick="setPreset('rank','month',this)">今月</button>
+      <button class="preset-btn active" onclick="setPreset('rank','all',this)">全期間</button>
+    </div>
+  </div>
+  <div class="rank-list" id="rank-list"></div>
+</div>
+
+<div id="tab-history" class="tab-content">
+  <div class="period-bar">
+    <label>期間</label>
+    <input type="date" id="hist-from" onchange="renderHistory()">
+    <span class="sep">〜</span>
+    <input type="date" id="hist-to" onchange="renderHistory()">
+    <div class="preset-btns">
+      <button class="preset-btn" onclick="setPreset('hist','week',this)">今週</button>
+      <button class="preset-btn" onclick="setPreset('hist','month',this)">今月</button>
+      <button class="preset-btn active" onclick="setPreset('hist','all',this)">全期間</button>
+    </div>
+  </div>
+  <div class="history-list" id="history-list"></div>
+</div>
+
+<div id="tab-admin" class="tab-content">
+  <div class="admin-panel">
+    <div class="admin-section">
+      <h3>期間別集計</h3>
+      <div class="period-bar" style="border:1px solid #e8e8e8;border-radius:10px;margin-bottom:12px;background:#fff;">
+        <label>集計期間</label>
+        <input type="date" id="agg-from" onchange="renderAggregate()">
+        <span class="sep">〜</span>
+        <input type="date" id="agg-to" onchange="renderAggregate()">
+        <div class="preset-btns">
+          <button class="preset-btn" onclick="setPreset('agg','week',this)">今週</button>
+          <button class="preset-btn" onclick="setPreset('agg','month',this)">今月</button>
+          <button class="preset-btn active" onclick="setPreset('agg','all',this)">全期間</button>
+        </div>
+      </div>
+      <div class="period-summary">
+        <div class="s-card"><div class="label">総利用回数</div><div class="val" id="agg-cnt">0</div></div>
+        <div class="s-card"><div class="label">総利用時間</div><div class="val" id="agg-total">0h</div></div>
+      </div>
+      <div class="aggregate-table">
+        <table>
+          <thead><tr>
+            <th style="width:36px"></th>
+            <th>生徒名</th>
+            <th style="text-align:right;width:52px">回数</th>
+            <th style="text-align:right;width:88px">累計時間</th>
+          </tr></thead>
+          <tbody id="agg-tbody"></tbody>
+        </table>
+      </div>
+      <button class="data-btn export" onclick="exportAggregateCSV()" style="width:100%">⬇️ この集計をCSV出力</button>
+    </div>
+    <div class="admin-section">
+      <h3>生徒リスト</h3>
+      <div id="admin-student-list"></div>
+      <div class="add-row">
+        <input type="text" id="new-student-name" placeholder="生徒名を入力" />
+        <button onclick="addStudent()">追加</button>
+      </div>
+    </div>
+    <div class="admin-section">
+      <h3>データ管理</h3>
+      <div class="data-btns">
+        <button class="data-btn export" onclick="exportAllCSV()">⬇️ 全記録CSV出力</button>
+        <button class="data-btn danger" onclick="confirmReset()">🗑 リセット</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-avatar" id="modal-avatar"></div>
+    <h2 id="modal-name"></h2>
+    <p id="modal-sub"></p>
+    <div class="dur" id="modal-dur" style="display:none"></div>
+    <div class="btn-row">
+      <button class="btn btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn" id="modal-action-btn" onclick="doAction()"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'juku_checkin_v1';
+
+function loadData() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) return JSON.parse(d);
+  } catch(e) {}
+  return {
+    students: [
+      '相澤 千尋',
+      '阿部 恵',
+      '荒井 春輝',
+      '伊藤 祐基',
+      '伊藤 優莉',
+      '今藤 ほのか',
+      '尾芦 涼真',
+      '太田 結翔',
+      '海沼 瑞香',
+      '笠井 望',
+      '笠井 美希',
+      '黒柳 颯真',
+      '剱持 春人',
+      '小林 依知可',
+      '小林 泰晴',
+      '小林 巧実',
+      '小林 千華',
+      '小林 美李',
+      '小林 鷹聖',
+      '小林 龍世',
+      '後藤 花梨',
+      '酒井 文芽',
+      '佐藤 秀宥',
+      '嶌田 柊吾',
+      '島田 陽太',
+      '瀧澤 春太朗',
+      '長崎 聖也',
+      '原 貴一',
+      '松本 怜',
+      '宮下 英晃',
+      '宮本 光史郎',
+      '山岸 華穂',
+      '山崎 愛結',
+      '湯川 智仁',
+      '米澤 咲希子'
+    ],
+    sessions: [],
+    active: {}
+  };
+}
+function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+let state = loadData();
+let selectedStudent = null;
+let activeTab = 'checkin';
+
+function toDateStr(d) { return d.toISOString().slice(0, 10); }
+function todayStr() { return toDateStr(new Date()); }
+function thisWeekStart() {
+  const d = new Date(); const day = d.getDay();
+  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1)); return toDateStr(d);
+}
+function thisMonthStart() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
+}
+
+function getInitials(name) {
+  const p = name.trim().split(/\s+/);
+  return p.length >= 2 ? p[0][0] + p[1][0] : name.slice(0, 2);
+}
+function formatDuration(ms) {
+  const m = Math.floor(ms / 60000); const h = Math.floor(m / 60);
+  return h > 0 ? h + '時間' + (m % 60) + '分' : (m % 60) + '分';
+}
+function formatDurationH(ms) { return (ms / 3600000).toFixed(1) + 'h'; }
+
+function updateClock() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+}
+
+function updateSummary() {
+  const inCnt = Object.keys(state.active).length;
+  const today = todayStr();
+  const todaySessions = state.sessions.filter(s => new Date(s.checkIn).toISOString().slice(0,10) === today);
+  const todayPeople = new Set([...todaySessions.map(s => s.name), ...Object.keys(state.active)]).size;
+  let totalMs = todaySessions.reduce((a, s) => a + (s.duration || 0), 0);
+  Object.values(state.active).forEach(ci => totalMs += Date.now() - ci);
+  document.getElementById('cnt-in').textContent = inCnt;
+  document.getElementById('cnt-today').textContent = todayPeople;
+  document.getElementById('cnt-hours').textContent = formatDurationH(totalMs);
+}
+
+function filterStudents() {
+  renderStudentGrid(document.getElementById('search-input').value.toLowerCase());
+}
+
+function renderStudentGrid(filter = '') {
+  const grid = document.getElementById('student-grid');
+  grid.innerHTML = '';
+  state.students.filter(n => n.toLowerCase().includes(filter)).forEach(name => {
+    const isIn = !!state.active[name];
+    const card = document.createElement('div');
+    card.className = 'student-card' + (isIn ? ' checked-in' : '');
+    const elapsed = isIn ? Date.now() - state.active[name] : 0;
+    card.innerHTML = `
+      <div class="avatar${isIn ? ' in' : ''}">${getInitials(name)}</div>
+      <div class="s-name">${name}</div>
+      ${isIn ? `<div class="status-badge">✓ 在室中</div><div class="elapsed" id="el-${name.replace(/\s/g,'-')}">${formatDuration(elapsed)}</div>` : ''}
+    `;
+    card.onclick = () => openModal(name);
+    grid.appendChild(card);
+  });
+  updateSummary();
+}
+
+function updateElapsed() {
+  Object.keys(state.active).forEach(name => {
+    const el = document.getElementById('el-' + name.replace(/\s/g, '-'));
+    if (el) el.textContent = formatDuration(Date.now() - state.active[name]);
+  });
+  updateSummary();
+}
+
+function openModal(name) {
+  selectedStudent = name;
+  const isIn = !!state.active[name];
+  const avatar = document.getElementById('modal-avatar');
+  avatar.className = 'modal-avatar' + (isIn ? ' in' : '');
+  avatar.textContent = getInitials(name);
+  document.getElementById('modal-name').textContent = name;
+  const durEl = document.getElementById('modal-dur');
+  const btn = document.getElementById('modal-action-btn');
+  if (isIn) {
+    document.getElementById('modal-sub').textContent = '現在在室中です。チェックアウトしますか？';
+    durEl.style.display = 'block';
+    durEl.textContent = formatDuration(Date.now() - state.active[name]);
+    btn.className = 'btn btn-checkout'; btn.textContent = 'チェックアウト';
+  } else {
+    document.getElementById('modal-sub').textContent = '自習室に入りますか？';
+    durEl.style.display = 'none';
+    btn.className = 'btn btn-checkin'; btn.textContent = 'チェックイン';
+  }
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('show');
+  selectedStudent = null;
+}
+
+function doAction() {
+  const name = selectedStudent; if (!name) return;
+  const now = Date.now();
+  if (state.active[name]) {
+    state.sessions.push({ name, checkIn: state.active[name], checkOut: now, duration: now - state.active[name] });
+    delete state.active[name];
+  } else {
+    state.active[name] = now;
+  }
+  saveData();
+  document.getElementById('modal-overlay').classList.remove('show');
+  selectedStudent = null;
+  refreshCurrentTab();
+}
+
+function refreshCurrentTab() {
+  if (activeTab === 'checkin') renderStudentGrid(document.getElementById('search-input').value.toLowerCase());
+  if (activeTab === 'ranking') renderRanking();
+  if (activeTab === 'history') renderHistory();
+  if (activeTab === 'admin') { renderAggregate(); renderAdmin(); }
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['checkin','ranking','history','admin'][i] === tab);
+  });
+  document.querySelectorAll('.tab-content').forEach((c, i) => {
+    c.classList.toggle('active', ['checkin','ranking','history','admin'][i] === tab);
+  });
+  refreshCurrentTab();
+}
+
+function getFilteredSessions(fromId, toId) {
+  const from = document.getElementById(fromId)?.value;
+  const to = document.getElementById(toId)?.value;
+  return state.sessions.filter(s => {
+    const d = new Date(s.checkIn).toISOString().slice(0, 10);
+    if (from && d < from) return false;
+    if (to && d > to) return false;
+    return true;
+  });
+}
+
+function setPreset(prefix, type, btn) {
+  const tabId = prefix === 'rank' ? 'tab-ranking' : prefix === 'hist' ? 'tab-history' : 'tab-admin';
+  document.querySelectorAll('#' + tabId + ' .preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const f = document.getElementById(prefix + '-from');
+  const t = document.getElementById(prefix + '-to');
+  if (type === 'week') { f.value = thisWeekStart(); t.value = todayStr(); }
+  else if (type === 'month') { f.value = thisMonthStart(); t.value = todayStr(); }
+  else { f.value = ''; t.value = ''; }
+  if (prefix === 'rank') renderRanking();
+  else if (prefix === 'hist') renderHistory();
+  else renderAggregate();
+}
+
+function computeTotals(sessions) {
+  const totals = {};
+  state.students.forEach(n => totals[n] = { ms: 0, cnt: 0 });
+  sessions.forEach(s => {
+    if (totals[s.name] !== undefined) { totals[s.name].ms += s.duration || 0; totals[s.name].cnt++; }
+  });
+  return totals;
+}
+
+function renderRanking() {
+  const sessions = getFilteredSessions('rank-from', 'rank-to');
+  const totals = computeTotals(sessions);
+  Object.keys(state.active).forEach(n => { if (totals[n]) totals[n].ms += Date.now() - state.active[n]; });
+  const sorted = Object.entries(totals).filter(([, v]) => v.ms > 0).sort((a, b) => b[1].ms - a[1].ms);
+  const max = sorted[0]?.[1].ms || 1;
+  const list = document.getElementById('rank-list');
+  list.innerHTML = '';
+  if (!sorted.length) { list.innerHTML = '<p class="empty">記録がありません</p>'; return; }
+  const medals = ['🥇','🥈','🥉'];
+  sorted.forEach(([name, { ms }], i) => {
+    const item = document.createElement('div'); item.className = 'rank-item';
+    const nc = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    item.innerHTML = `
+      <div class="rank-num ${nc}">${i < 3 ? medals[i] : (i + 1)}</div>
+      <div class="rank-info">
+        <div class="rank-name">${name}${state.active[name] ? '<span class="in-badge">在室中</span>' : ''}</div>
+        <div class="rank-hours">${formatDuration(ms)}</div>
+      </div>
+      <div class="rank-bar-wrap"><div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.round(ms/max*100)}%"></div></div></div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function renderHistory() {
+  const sessions = getFilteredSessions('hist-from', 'hist-to');
+  const sorted = [...sessions].sort((a, b) => b.checkOut - a.checkOut).slice(0, 100);
+  const list = document.getElementById('history-list');
+  list.innerHTML = '';
+  if (!sorted.length) { list.innerHTML = '<p class="empty">記録がありません</p>'; return; }
+  sorted.forEach(s => {
+    const item = document.createElement('div'); item.className = 'history-item';
+    const d = new Date(s.checkIn);
+    const ds = d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' }) + ' ' +
+               d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+    item.innerHTML = `<div class="dot"></div><div class="h-name">${s.name}</div><div class="h-date">${ds}</div><div class="h-dur">${formatDuration(s.duration)}</div>`;
+    list.appendChild(item);
+  });
+}
+
+function renderAggregate() {
+  const sessions = getFilteredSessions('agg-from', 'agg-to');
+  const totals = computeTotals(sessions);
+  const sorted = Object.entries(totals).sort((a, b) => b[1].ms - a[1].ms);
+  const totalMs = sorted.reduce((a, [, v]) => a + v.ms, 0);
+  const totalCnt = sorted.reduce((a, [, v]) => a + v.cnt, 0);
+  document.getElementById('agg-cnt').textContent = totalCnt;
+  document.getElementById('agg-total').textContent = formatDurationH(totalMs);
+  const tbody = document.getElementById('agg-tbody');
+  tbody.innerHTML = '';
+  const medals = ['🥇','🥈','🥉'];
+  let rank = 0;
+  sorted.forEach(([name, { ms, cnt }], i) => {
+    if (ms > 0) rank = i + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align:center;font-size:15px">${ms > 0 && rank <= 3 ? medals[rank - 1] : ms > 0 ? rank : ''}</td>
+      <td>${name}</td>
+      <td class="agg-cnt">${cnt > 0 ? cnt + '回' : '—'}</td>
+      <td class="agg-hours">${ms > 0 ? formatDuration(ms) : '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderAdmin() {
+  const container = document.getElementById('admin-student-list');
+  container.innerHTML = '';
+  state.students.forEach((name, i) => {
+    const total = state.sessions.filter(s => s.name === name).reduce((a, s) => a + (s.duration || 0), 0);
+    const act = state.active[name] ? Date.now() - state.active[name] : 0;
+    const row = document.createElement('div'); row.className = 'admin-row';
+    row.innerHTML = `
+      <div class="mini-avatar">${getInitials(name)}</div>
+      <span>${name}</span>
+      <span class="meta">${formatDurationH(total + act)}</span>
+      <button class="del-btn" onclick="removeStudent(${i})" title="削除">×</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function addStudent() {
+  const inp = document.getElementById('new-student-name');
+  const name = inp.value.trim();
+  if (!name || state.students.includes(name)) return;
+  state.students.push(name); saveData(); inp.value = ''; renderAdmin();
+}
+
+function removeStudent(i) {
+  const name = state.students[i];
+  if (!confirm(name + ' を削除しますか？\n（記録データは残ります）')) return;
+  delete state.active[name]; state.students.splice(i, 1); saveData(); renderAdmin();
+}
+
+function downloadCSV(rows, filename) {
+  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename + '.csv'; a.click();
+}
+
+function exportAllCSV() {
+  const rows = [['名前', 'チェックイン日', 'チェックイン時刻', 'チェックアウト時刻', '滞在時間(分)']];
+  [...state.sessions].sort((a, b) => b.checkIn - a.checkIn).forEach(s => {
+    const ci = new Date(s.checkIn); const co = new Date(s.checkOut);
+    rows.push([
+      s.name,
+      ci.toLocaleDateString('ja-JP'),
+      ci.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+      co.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+      Math.round(s.duration / 60000)
+    ]);
+  });
+  downloadCSV(rows, '自習室記録_全期間');
+}
+
+function exportAggregateCSV() {
+  const sessions = getFilteredSessions('agg-from', 'agg-to');
+  const totals = computeTotals(sessions);
+  const sorted = Object.entries(totals).filter(([, v]) => v.ms > 0).sort((a, b) => b[1].ms - a[1].ms);
+  const from = document.getElementById('agg-from').value || '開始';
+  const to = document.getElementById('agg-to').value || todayStr();
+  const rows = [['順位', '生徒名', '利用回数', '累計時間(分)', '累計時間']];
+  sorted.forEach(([name, { ms, cnt }], i) => {
+    rows.push([i + 1, name, cnt, Math.round(ms / 60000), formatDuration(ms)]);
+  });
+  downloadCSV(rows, '自習室集計_' + from + '〜' + to);
+}
+
+function confirmReset() {
+  if (!confirm('全ての記録をリセットしますか？\nこの操作は元に戻せません。')) return;
+  state.sessions = []; state.active = {}; saveData();
+  renderStudentGrid(); renderAggregate(); renderAdmin();
+}
+
+updateClock();
+setInterval(updateClock, 1000);
+setInterval(updateElapsed, 15000);
+renderStudentGrid();
+</script>
+</body>
+</html>
