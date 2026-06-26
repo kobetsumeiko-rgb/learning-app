@@ -146,6 +146,33 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 .history-item .h-dur { font-weight: 600; color: #1a1a1a; min-width: 56px; text-align: right; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: #1D9E75; flex-shrink: 0; }
 
+.history-item .h-del {
+  background: none; border: none; cursor: pointer; color: #ddd;
+  font-size: 18px; padding: 2px 4px; line-height: 1; flex-shrink: 0;
+}
+.history-item .h-del:hover { color: #D85A30; }
+
+.force-co-row {
+  background: #FFF8F0; border: 1px solid #F5CFA0;
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+}
+.force-co-row .row-top {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.force-co-row .row-top .name { flex: 1; font-size: 14px; font-weight: 600; color: #1a1a1a; }
+.force-co-row .row-top .ci-time { font-size: 12px; color: #888; }
+.force-co-row .row-bottom { display: flex; align-items: center; gap: 8px; }
+.force-co-row .row-bottom label { font-size: 13px; color: #666; white-space: nowrap; }
+.force-co-row .row-bottom input[type=time] {
+  flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd;
+  font-size: 15px; background: #fff; color: #1a1a1a; outline: none;
+}
+.force-co-row .row-bottom input[type=time]:focus { border-color: #D85A30; }
+.force-co-row .row-bottom button {
+  padding: 8px 14px; border-radius: 8px; background: #D85A30;
+  color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+
 .admin-panel { padding: 16px; }
 .admin-section { margin-bottom: 24px; }
 .admin-section h3 { font-size: 12px; color: #888; letter-spacing: 0.06em; margin-bottom: 10px; font-weight: 600; }
@@ -283,6 +310,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
         </table>
       </div>
       <button class="data-btn export" onclick="exportAggregateCSV()" style="width:100%">⬇️ この集計をCSV出力</button>
+    </div>
+    <div class="admin-section" id="section-active" style="display:none">
+      <h3>⚠️ 在室中の修正チェックアウト</h3>
+      <div id="active-student-list"></div>
     </div>
     <div class="admin-section">
       <h3>生徒リスト</h3>
@@ -571,7 +602,8 @@ function renderHistory() {
     const d = new Date(s.checkIn);
     const ds = d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' }) + ' ' +
                d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-    item.innerHTML = `<div class="dot"></div><div class="h-name">${s.name}</div><div class="h-date">${ds}</div><div class="h-dur">${formatDuration(s.duration)}</div>`;
+    const idx = state.sessions.indexOf(s);
+    item.innerHTML = `<div class="dot"></div><div class="h-name">${s.name}</div><div class="h-date">${ds}</div><div class="h-dur">${formatDuration(s.duration)}</div><button class="h-del" onclick="deleteSession(${idx})" title="この記録を削除">×</button>`;
     list.appendChild(item);
   });
 }
@@ -602,6 +634,7 @@ function renderAggregate() {
 }
 
 function renderAdmin() {
+  renderActiveForAdmin();
   const container = document.getElementById('admin-student-list');
   container.innerHTML = '';
   state.students.forEach((name, i) => {
@@ -616,6 +649,70 @@ function renderAdmin() {
     `;
     container.appendChild(row);
   });
+}
+
+function renderActiveForAdmin() {
+  const section = document.getElementById('section-active');
+  const container = document.getElementById('active-student-list');
+  const activeNames = Object.keys(state.active);
+  if (!activeNames.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  container.innerHTML = '';
+  activeNames.forEach(name => {
+    const ci = new Date(state.active[name]);
+    const ciStr = ci.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+    const nowStr = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+    const div = document.createElement('div');
+    div.className = 'force-co-row';
+    const safeId = name.replace(/\s/g, '-');
+    div.innerHTML = `
+      <div class="row-top">
+        <div class="mini-avatar">${getInitials(name)}</div>
+        <div class="name">${name}</div>
+        <div class="ci-time">チェックイン ${ciStr}</div>
+      </div>
+      <div class="row-bottom">
+        <label>チェックアウト時刻</label>
+        <input type="time" id="force-time-${safeId}" value="${nowStr}">
+        <button onclick="forceCheckout('${name}')">修正CO</button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function forceCheckout(name) {
+  const safeId = name.replace(/\s/g, '-');
+  const timeVal = document.getElementById('force-time-' + safeId)?.value;
+  if (!timeVal) return;
+  const ci = state.active[name];
+  if (!ci) return;
+  const ciDate = new Date(ci);
+  const [h, m] = timeVal.split(':').map(Number);
+  const coDate = new Date(ciDate);
+  coDate.setHours(h, m, 0, 0);
+  if (coDate <= ciDate) {
+    alert('チェックアウト時刻はチェックイン時刻より後にしてください。\nチェックイン：' + ciDate.toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'}));
+    return;
+  }
+  const duration = coDate.getTime() - ci;
+  if (!confirm(`${name}\nチェックイン：${ciDate.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}\nチェックアウト：${timeVal}\n滞在時間：${formatDuration(duration)}\n\nこの内容で記録しますか？`)) return;
+  state.sessions.push({ name, checkIn: ci, checkOut: coDate.getTime(), duration });
+  delete state.active[name];
+  saveData();
+  refreshCurrentTab();
+}
+
+function deleteSession(idx) {
+  const s = state.sessions[idx];
+  if (!s) return;
+  const ci = new Date(s.checkIn);
+  const ds = ci.toLocaleDateString('ja-JP', {month:'numeric',day:'numeric'}) + ' ' +
+             ci.toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'});
+  if (!confirm(`この記録を削除しますか？\n${s.name}  ${ds}  ${formatDuration(s.duration)}`)) return;
+  state.sessions.splice(idx, 1);
+  saveData();
+  refreshCurrentTab();
 }
 
 function addStudent() {
