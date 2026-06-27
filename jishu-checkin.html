@@ -221,6 +221,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 .data-btn.export { background: #f0f0ea; color: #444; }
 .data-btn.danger { background: #FFF0EC; color: #D85A30; }
 .empty { text-align: center; color: #aaa; padding: 40px 0; font-size: 14px; }
+.edit-btn {
+  background: none; border: none; cursor: pointer; color: #ccc;
+  font-size: 16px; padding: 2px 4px; line-height: 1;
+}
+.edit-btn:hover { color: #1D9E75; }
 
 .manual-add-box {
   background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 16px;
@@ -714,6 +719,7 @@ function renderAdmin() {
       <div class="mini-avatar">${getInitials(name)}</div>
       <span>${name}</span>
       <span class="meta">${formatDurationH(total + act)}</span>
+      <button class="edit-btn" onclick="editStudent(${i})" title="名前を編集">✏️</button>
       <button class="del-btn" onclick="removeStudent(${i})" title="削除">×</button>
     `;
     container.appendChild(row);
@@ -849,11 +855,38 @@ function addManualSession() {
   refreshCurrentTab();
 }
 
+function editStudent(i) {
+  const oldName = state.students[i];
+  const newName = prompt('新しい名前を入力してください', oldName);
+  if (!newName || newName.trim() === '') return;
+  const trimmed = newName.trim();
+  if (trimmed === oldName) return;
+  if (state.students.includes(trimmed)) { alert('その名前はすでに登録されています'); return; }
+  // 生徒リストを更新
+  state.students[i] = trimmed;
+  // 在室中の場合も更新
+  if (state.active[oldName] !== undefined) {
+    state.active[trimmed] = state.active[oldName];
+    delete state.active[oldName];
+  }
+  // 過去の記録を全て置き換え
+  state.sessions.forEach(s => { if (s.name === oldName) s.name = trimmed; });
+  sortStudents();
+  saveData();
+  refreshCurrentTab();
+}
+
+function sortStudents() {
+  state.students.sort((a, b) => a.localeCompare(b, 'ja'));
+}
+
 function addStudent() {
   const inp = document.getElementById('new-student-name');
   const name = inp.value.trim();
   if (!name || state.students.includes(name)) return;
-  state.students.push(name); saveData(); inp.value = ''; renderAdmin();
+  state.students.push(name);
+  sortStudents();
+  saveData(); inp.value = ''; renderAdmin();
 }
 
 function removeStudent(i) {
