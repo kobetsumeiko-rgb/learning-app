@@ -345,7 +345,31 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
       <div id="active-student-list"></div>
     </div>
     <div class="admin-section">
-      <h3>📝 記録を手動で追加</h3>
+      <h3>📚 授業時間を加算</h3>
+      <div class="manual-add-box">
+        <div class="manual-row">
+          <label>生徒名</label>
+          <select id="lesson-name"></select>
+        </div>
+        <div class="manual-row">
+          <label>日付</label>
+          <input type="date" id="lesson-date">
+        </div>
+        <div class="manual-row">
+          <label>授業時間</label>
+          <div style="display:flex;align-items:center;gap:8px;flex:1">
+            <input type="number" id="lesson-hours" min="0" max="12" value="0" style="width:60px;padding:9px 8px;border-radius:8px;border:1px solid #ddd;font-size:14px;text-align:center">
+            <span style="font-size:13px;color:#666">時間</span>
+            <input type="number" id="lesson-mins" min="0" max="59" step="5" value="0" style="width:60px;padding:9px 8px;border-radius:8px;border:1px solid #ddd;font-size:14px;text-align:center">
+            <span style="font-size:13px;color:#666">分</span>
+          </div>
+        </div>
+        <div id="lesson-preview" class="manual-preview" style="display:none"></div>
+        <button class="manual-add-btn" onclick="addLessonTime()" style="background:#185FA5">この内容で授業時間を加算</button>
+      </div>
+    </div>
+    <div class="admin-section">
+      <h3>📝 自習記録を手動で追加</h3>
       <div class="manual-add-box">
         <div class="manual-row">
           <label>生徒名</label>
@@ -571,7 +595,7 @@ function doAction() {
   const name = selectedStudent; if (!name) return;
   const now = Date.now();
   if (state.active[name]) {
-    state.sessions.push({ name, checkIn: state.active[name], checkOut: now, duration: now - state.active[name] });
+    state.sessions.push({ name, checkIn: state.active[name], checkOut: now, duration: now - state.active[name], type: 'study' });
     delete state.active[name];
   } else {
     state.active[name] = now;
@@ -676,7 +700,10 @@ function renderHistory() {
     const ds = d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' }) + ' ' +
                d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
     const idx = state.sessions.indexOf(s);
-    item.innerHTML = `<div class="dot"></div><div class="h-name">${s.name}</div><div class="h-date">${ds}</div><div class="h-dur">${formatDuration(s.duration)}</div><button class="h-del" onclick="deleteSession(${idx})" title="この記録を削除">×</button>`;
+    const typeLabel = s.type === 'lesson'
+      ? '<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px">授業</span>'
+      : '<span style="font-size:10px;background:#E1F5EE;color:#085041;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px">自習</span>';
+    item.innerHTML = `<div class="dot" style="${s.type === 'lesson' ? 'background:#185FA5' : ''}"></div><div class="h-name">${s.name}${typeLabel}</div><div class="h-date">${ds}</div><div class="h-dur">${formatDuration(s.duration)}</div><button class="h-del" onclick="deleteSession(${idx})" title="この記録を削除">×</button>`;
     list.appendChild(item);
   });
 }
@@ -708,6 +735,7 @@ function renderAggregate() {
 
 function renderAdmin() {
   renderActiveForAdmin();
+  initLessonForm();
   initManualForm();
   const container = document.getElementById('admin-student-list');
   container.innerHTML = '';
@@ -772,7 +800,7 @@ function forceCheckout(name) {
   }
   const duration = coDate.getTime() - ci;
   if (!confirm(`${name}\nチェックイン：${ciDate.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}\nチェックアウト：${timeVal}\n滞在時間：${formatDuration(duration)}\n\nこの内容で記録しますか？`)) return;
-  state.sessions.push({ name, checkIn: ci, checkOut: coDate.getTime(), duration });
+  state.sessions.push({ name, checkIn: ci, checkOut: coDate.getTime(), duration, type: 'study' });
   delete state.active[name];
   saveData();
   refreshCurrentTab();
@@ -787,6 +815,65 @@ function deleteSession(idx) {
   if (!confirm(`この記録を削除しますか？\n${s.name}  ${ds}  ${formatDuration(s.duration)}`)) return;
   state.sessions.splice(idx, 1);
   saveData();
+  refreshCurrentTab();
+}
+
+function initLessonForm() {
+  const sel = document.getElementById('lesson-name');
+  if (!sel) return;
+  sel.innerHTML = '';
+  state.students.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  document.getElementById('lesson-date').value = todayStr();
+  ['lesson-hours','lesson-mins'].forEach(id => {
+    document.getElementById(id).oninput = updateLessonPreview;
+  });
+  sel.onchange = updateLessonPreview;
+}
+
+function updateLessonPreview() {
+  const preview = document.getElementById('lesson-preview');
+  const name = document.getElementById('lesson-name').value;
+  const date = document.getElementById('lesson-date').value;
+  const h = parseInt(document.getElementById('lesson-hours').value) || 0;
+  const m = parseInt(document.getElementById('lesson-mins').value) || 0;
+  const totalMin = h * 60 + m;
+  if (!name || !date || totalMin <= 0) { preview.style.display = 'none'; return; }
+  const d = new Date(date);
+  const dateStr = d.toLocaleDateString('ja-JP', {year:'numeric', month:'numeric', day:'numeric'});
+  preview.style.display = 'block';
+  preview.style.background = '#E6F1FB';
+  preview.style.borderColor = '#A8C9F0';
+  preview.style.color = '#185FA5';
+  preview.innerHTML = `<strong>${name}</strong><br>${dateStr}　授業時間 <strong>${h > 0 ? h+'時間' : ''}${m > 0 ? m+'分' : ''}</strong> を加算`;
+}
+
+function addLessonTime() {
+  const name = document.getElementById('lesson-name').value;
+  const date = document.getElementById('lesson-date').value;
+  const h = parseInt(document.getElementById('lesson-hours').value) || 0;
+  const m = parseInt(document.getElementById('lesson-mins').value) || 0;
+  const totalMin = h * 60 + m;
+  if (!name || !date) { alert('生徒名と日付を入力してください'); return; }
+  if (totalMin <= 0) { alert('授業時間を入力してください'); return; }
+  const duration = totalMin * 60000;
+  const d = new Date(date);
+  const dateStr = d.toLocaleDateString('ja-JP', {year:'numeric', month:'numeric', day:'numeric'});
+  if (!confirm(`以下の内容で授業時間を加算しますか？
+
+${name}
+${dateStr}　${h > 0 ? h+'時間' : ''}${m > 0 ? m+'分' : ''}`)) return;
+  // 日付の正午を基準時刻として記録
+  const baseMs = new Date(date + 'T12:00:00').getTime();
+  state.sessions.push({ name, checkIn: baseMs, checkOut: baseMs + duration, duration, type: 'lesson' });
+  saveData();
+  document.getElementById('lesson-hours').value = 0;
+  document.getElementById('lesson-mins').value = 0;
+  document.getElementById('lesson-preview').style.display = 'none';
+  alert('✅ 授業時間を加算しました');
   refreshCurrentTab();
 }
 
@@ -845,7 +932,7 @@ function addManualSession() {
   const d = new Date(ciMs);
   const dateStr = d.toLocaleDateString('ja-JP', {year:'numeric', month:'numeric', day:'numeric'});
   if (!confirm(`以下の内容で記録を追加しますか？\n\n${name}\n${dateStr}　${ci} → ${co}\n滞在時間：${formatDuration(duration)}`)) return;
-  state.sessions.push({ name, checkIn: ciMs, checkOut: coMs, duration });
+  state.sessions.push({ name, checkIn: ciMs, checkOut: coMs, duration, type: 'study' });
   saveData();
   // フォームリセット
   document.getElementById('manual-ci').value = '';
