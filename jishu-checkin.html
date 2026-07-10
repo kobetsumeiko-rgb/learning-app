@@ -250,6 +250,48 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
   color: #fff; border: none; font-size: 15px; font-weight: 600; cursor: pointer;
 }
 .manual-add-btn:active { opacity: 0.8; }
+
+/* バッジ進化アニメーション */
+@keyframes badgeShake {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-8deg) scale(1.04); }
+  75% { transform: rotate(8deg) scale(1.04); }
+}
+@keyframes badgeFadeOut {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
+@keyframes badgeFlash {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.5); opacity: 0.9; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes badgePopIn {
+  0% { transform: scale(0.2) rotate(-15deg); opacity: 0; }
+  60% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes badgeParticle {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--px), var(--py)) scale(0.3); opacity: 0; }
+}
+.badge-evo-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center; z-index: 200;
+}
+.badge-evo-stage {
+  width: 260px; height: 260px; position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.badge-evo-icon { font-size: 96px; line-height: 1; }
+.badge-evo-caption {
+  position: absolute; bottom: -56px; left: 0; right: 0;
+  text-align: center; color: #fff; font-size: 16px; font-weight: 600;
+}
+.badge-evo-sub {
+  position: absolute; bottom: -84px; left: 0; right: 0;
+  text-align: center; color: rgba(255,255,255,0.75); font-size: 12px;
+}
 </style>
 </head>
 <body>
@@ -498,6 +540,92 @@ function getBadge(ms) {
   return { icon: '🌍', label: 'ノーマル', bg: '#F1EFE8', color: '#444441' };
 }
 
+// バッジのランクが上がった時ほど、演出を長く・派手にする
+const EVOLUTION_INTENSITY = {
+  'レア':      { shakes: 6,  particles: 8,  scale: 1.05 },
+  '激レア':    { shakes: 8,  particles: 12, scale: 1.10 },
+  '超激レア':  { shakes: 10, particles: 16, scale: 1.15 },
+  '伝説':      { shakes: 12, particles: 20, scale: 1.25 },
+};
+
+// oldBadge → newBadge への進化演出を全画面オーバーレイで再生する
+function playBadgeEvolution(oldBadge, newBadge) {
+  const intensity = EVOLUTION_INTENSITY[newBadge.label] || { shakes: 6, particles: 8, scale: 1.05 };
+
+  const overlay = document.createElement('div');
+  overlay.className = 'badge-evo-overlay';
+
+  const stage = document.createElement('div');
+  stage.className = 'badge-evo-stage';
+
+  const oldIcon = document.createElement('div');
+  oldIcon.className = 'badge-evo-icon';
+  oldIcon.textContent = oldBadge.icon;
+  oldIcon.style.animation = `badgeShake 0.15s ease-in-out ${intensity.shakes}`;
+
+  const caption = document.createElement('div');
+  caption.className = 'badge-evo-caption';
+  caption.textContent = `${newBadge.label}に進化しました`;
+  caption.style.opacity = '0';
+
+  const sub = document.createElement('div');
+  sub.className = 'badge-evo-sub';
+  sub.textContent = 'タップで閉じる';
+  sub.style.opacity = '0';
+
+  stage.appendChild(oldIcon);
+  stage.appendChild(caption);
+  stage.appendChild(sub);
+  overlay.appendChild(stage);
+  document.body.appendChild(overlay);
+
+  const shakeDuration = intensity.shakes * 150;
+
+  setTimeout(() => {
+    oldIcon.style.animation = 'badgeFadeOut 0.25s ease-out forwards';
+  }, shakeDuration);
+
+  setTimeout(() => {
+    const flash = document.createElement('div');
+    flash.style.cssText = `
+      position:absolute; width:140px; height:140px; border-radius:50%;
+      background: rgba(255,255,255,0.9);
+      animation: badgeFlash 0.5s ease-out forwards;
+    `;
+    stage.appendChild(flash);
+
+    for (let i = 0; i < intensity.particles; i++) {
+      const angle = (i / intensity.particles) * Math.PI * 2;
+      const dist = 100 + Math.random() * 30;
+      const dot = document.createElement('div');
+      dot.style.cssText = `
+        position:absolute; top:50%; left:50%; width:10px; height:10px;
+        border-radius:50%; background:#fff;
+        --px:${Math.cos(angle) * dist}px; --py:${Math.sin(angle) * dist}px;
+        animation: badgeParticle 0.7s ease-out forwards;
+      `;
+      stage.appendChild(dot);
+    }
+  }, shakeDuration + 250);
+
+  setTimeout(() => {
+    const newIcon = document.createElement('div');
+    newIcon.className = 'badge-evo-icon';
+    newIcon.textContent = newBadge.icon;
+    newIcon.style.transform = `scale(${intensity.scale})`;
+    newIcon.style.animation = 'badgePopIn 0.4s ease-out forwards';
+    stage.appendChild(newIcon);
+    caption.style.transition = 'opacity 0.3s ease-in';
+    sub.style.transition = 'opacity 0.3s ease-in';
+    caption.style.opacity = '1';
+    sub.style.opacity = '1';
+  }, shakeDuration + 700);
+
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', close);
+  setTimeout(close, shakeDuration + 700 + 3000);
+}
+
 function getInitials(name) {
   const p = name.trim().split(/\s+/);
   return p.length >= 2 ? p[0][0] + p[1][0] : name.slice(0, 2);
@@ -594,9 +722,17 @@ function closeModal(e) {
 function doAction() {
   const name = selectedStudent; if (!name) return;
   const now = Date.now();
+  let evolvedFrom = null, evolvedTo = null;
   if (state.active[name]) {
-    state.sessions.push({ name, checkIn: state.active[name], checkOut: now, duration: now - state.active[name], type: 'study' });
+    // チェックアウト前の累計時間（今回のセッションを含まない）
+    const oldTotalMs = state.sessions.filter(s => s.name === name).reduce((a, s) => a + (s.duration || 0), 0);
+    const duration = now - state.active[name];
+    state.sessions.push({ name, checkIn: state.active[name], checkOut: now, duration, type: 'study' });
     delete state.active[name];
+    const newTotalMs = oldTotalMs + duration;
+    const oldBadge = getBadge(oldTotalMs);
+    const newBadge = getBadge(newTotalMs);
+    if (newBadge.label !== oldBadge.label) { evolvedFrom = oldBadge; evolvedTo = newBadge; }
   } else {
     state.active[name] = now;
   }
@@ -604,6 +740,7 @@ function doAction() {
   document.getElementById('modal-overlay').classList.remove('show');
   selectedStudent = null;
   refreshCurrentTab();
+  if (evolvedTo) playBadgeEvolution(evolvedFrom, evolvedTo);
 }
 
 function refreshCurrentTab() {
