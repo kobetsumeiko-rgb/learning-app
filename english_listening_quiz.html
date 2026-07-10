@@ -569,6 +569,8 @@ function renderCatTabs() {
 function getQuestions() { return DATA[grade][cat]; }
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
 
+function isDialog() { return cat === "会話文"; }
+
 function loadQ() {
   const qs = getQuestions();
   currentQ = qs[qIdx % qs.length];
@@ -577,25 +579,43 @@ function loadQ() {
   document.getElementById('qNum').textContent = `問題 ${(qIdx % qs.length)+1} / ${qs.length}`;
   const btn = document.getElementById('listenBtn');
   btn.className = 'listen-btn';
-  document.getElementById('listenTxt').textContent = 'タップして音声を再生';
   document.getElementById('resultMsg').textContent = '';
   document.getElementById('resultMsg').className = 'result-msg';
   document.getElementById('answerReveal').style.display = 'none';
   document.getElementById('pointBox').style.display = 'none';
 
-  // 4択をシャッフルし、そのうちランダム1つの英文を音声用に選ぶ
-  const shuffled = shuffle(currentQ.choices);
-  currentQ._shuffled = shuffled;
-  // 音声で流す英文：シャッフル後の先頭をランダムに選ぶ（毎回変わる）
-  currentSpeakEN = shuffled[Math.floor(Math.random() * shuffled.length)].en;
-
-  const container = document.getElementById('choices');
-  container.innerHTML = shuffled.map((c, i) =>
-    `<button class="choice" data-idx="${i}">${c.ja}</button>`
-  ).join('');
-  container.querySelectorAll('.choice').forEach(btn => {
-    btn.addEventListener('click', () => answer(btn, parseInt(btn.dataset.idx)));
-  });
+  if (isDialog()) {
+    // ===== 会話文モード =====
+    document.getElementById('listenTxt').textContent = 'Aの音声を再生 🔊';
+    currentSpeakEN = currentQ.dialog;
+    currentQ._shuffled = shuffle(currentQ.choices);
+    const container = document.getElementById('choices');
+    container.innerHTML = currentQ._shuffled.map((c, i) =>
+      `<div class="dialog-choice-row">
+        <button class="choice dialog-play-btn" data-idx="${i}" id="playBtn${i}">🔊 選択肢 ${i+1} を再生</button>
+        <button class="choice dialog-select-btn" data-idx="${i}">　${i+1} を選ぶ</button>
+      </div>`
+    ).join('');
+    container.querySelectorAll('.dialog-select-btn').forEach(b => {
+      b.addEventListener('click', () => answerDialog(b, parseInt(b.dataset.idx)));
+    });
+    container.querySelectorAll('.dialog-play-btn').forEach(b => {
+      b.addEventListener('click', () => speakChoice(parseInt(b.dataset.idx)));
+    });
+  } else {
+    // ===== 通常モード =====
+    document.getElementById('listenTxt').textContent = 'タップして音声を再生 🔊';
+    const shuffled = shuffle(currentQ.choices);
+    currentQ._shuffled = shuffled;
+    currentSpeakEN = shuffled[Math.floor(Math.random() * shuffled.length)].en;
+    const container = document.getElementById('choices');
+    container.innerHTML = shuffled.map((c, i) =>
+      `<button class="choice" data-idx="${i}">${c.ja}</button>`
+    ).join('');
+    container.querySelectorAll('.choice').forEach(btn => {
+      btn.addEventListener('click', () => answer(btn, parseInt(btn.dataset.idx)));
+    });
+  }
   updateScore();
 }
 
@@ -616,10 +636,18 @@ function speak() {
 
 function speakChoice(idx) {
   synth.cancel();
-  const text = currentQ._shuffled[idx];
+  const text = currentQ._shuffled[idx]; // 会話文モードではchoicesが文字列配列
   const utt = new SpeechSynthesisUtterance(text);
   utt.lang = 'en-US';
   utt.rate = speakRate;
+  utt.onstart = () => {
+    document.querySelectorAll('.dialog-play-btn').forEach((b,i) => {
+      b.style.opacity = i === idx ? '1' : '0.5';
+    });
+  };
+  utt.onend = () => {
+    document.querySelectorAll('.dialog-play-btn').forEach(b => b.style.opacity = '1');
+  };
   synth.speak(utt);
 }
 
