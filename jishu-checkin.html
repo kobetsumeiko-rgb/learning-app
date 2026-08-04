@@ -250,48 +250,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
   color: #fff; border: none; font-size: 15px; font-weight: 600; cursor: pointer;
 }
 .manual-add-btn:active { opacity: 0.8; }
-
-/* バッジ進化アニメーション */
-@keyframes badgeShake {
-  0%, 100% { transform: rotate(0deg) scale(1); }
-  25% { transform: rotate(-8deg) scale(1.04); }
-  75% { transform: rotate(8deg) scale(1.04); }
-}
-@keyframes badgeFadeOut {
-  0% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.5); }
-}
-@keyframes badgeFlash {
-  0% { transform: scale(0.3); opacity: 0; }
-  50% { transform: scale(1.5); opacity: 0.9; }
-  100% { transform: scale(2.4); opacity: 0; }
-}
-@keyframes badgePopIn {
-  0% { transform: scale(0.2) rotate(-15deg); opacity: 0; }
-  60% { transform: scale(1.2) rotate(5deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
-}
-@keyframes badgeParticle {
-  0% { transform: translate(0, 0) scale(1); opacity: 1; }
-  100% { transform: translate(var(--px), var(--py)) scale(0.3); opacity: 0; }
-}
-.badge-evo-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-  display: flex; align-items: center; justify-content: center; z-index: 200;
-}
-.badge-evo-stage {
-  width: 260px; height: 260px; position: relative;
-  display: flex; align-items: center; justify-content: center;
-}
-.badge-evo-icon { font-size: 96px; line-height: 1; }
-.badge-evo-caption {
-  position: absolute; bottom: -56px; left: 0; right: 0;
-  text-align: center; color: #fff; font-size: 16px; font-weight: 600;
-}
-.badge-evo-sub {
-  position: absolute; bottom: -84px; left: 0; right: 0;
-  text-align: center; color: rgba(255,255,255,0.75); font-size: 12px;
-}
 </style>
 </head>
 <body>
@@ -385,6 +343,34 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
     <div class="admin-section" id="section-active" style="display:none">
       <h3>⚠️ 在室中の修正チェックアウト</h3>
       <div id="active-student-list"></div>
+    </div>
+    <div class="admin-section">
+      <h3>⚠️ 累計時間を減算（補正）</h3>
+      <div class="manual-add-box" style="border-color:#F5CFA0;background:#FFF8F0">
+        <div class="manual-row">
+          <label>生徒名</label>
+          <select id="deduct-name"></select>
+        </div>
+        <div class="manual-row">
+          <label>日付</label>
+          <input type="date" id="deduct-date">
+        </div>
+        <div class="manual-row">
+          <label>減算する時間</label>
+          <div style="display:flex;align-items:center;gap:8px;flex:1">
+            <input type="number" id="deduct-hours" min="0" max="24" value="0" style="width:60px;padding:9px 8px;border-radius:8px;border:1px solid #ddd;font-size:14px;text-align:center">
+            <span style="font-size:13px;color:#666">時間</span>
+            <input type="number" id="deduct-mins" min="0" max="59" step="5" value="0" style="width:60px;padding:9px 8px;border-radius:8px;border:1px solid #ddd;font-size:14px;text-align:center">
+            <span style="font-size:13px;color:#666">分</span>
+          </div>
+        </div>
+        <div class="manual-row">
+          <label>理由</label>
+          <input type="text" id="deduct-reason" placeholder="例：スマホ使用のため" style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid #ddd;font-size:14px">
+        </div>
+        <div id="deduct-preview" class="manual-preview" style="display:none"></div>
+        <button class="manual-add-btn" onclick="addDeduction()" style="background:#D85A30">この内容で累計時間を減算</button>
+      </div>
     </div>
     <div class="admin-section">
       <h3>📚 授業時間を加算</h3>
@@ -540,92 +526,6 @@ function getBadge(ms) {
   return { icon: '🌍', label: 'ノーマル', bg: '#F1EFE8', color: '#444441' };
 }
 
-// バッジのランクが上がった時ほど、演出を長く・派手にする
-const EVOLUTION_INTENSITY = {
-  'レア':      { shakes: 6,  particles: 8,  scale: 1.05 },
-  '激レア':    { shakes: 8,  particles: 12, scale: 1.10 },
-  '超激レア':  { shakes: 10, particles: 16, scale: 1.15 },
-  '伝説':      { shakes: 12, particles: 20, scale: 1.25 },
-};
-
-// oldBadge → newBadge への進化演出を全画面オーバーレイで再生する
-function playBadgeEvolution(oldBadge, newBadge) {
-  const intensity = EVOLUTION_INTENSITY[newBadge.label] || { shakes: 6, particles: 8, scale: 1.05 };
-
-  const overlay = document.createElement('div');
-  overlay.className = 'badge-evo-overlay';
-
-  const stage = document.createElement('div');
-  stage.className = 'badge-evo-stage';
-
-  const oldIcon = document.createElement('div');
-  oldIcon.className = 'badge-evo-icon';
-  oldIcon.textContent = oldBadge.icon;
-  oldIcon.style.animation = `badgeShake 0.15s ease-in-out ${intensity.shakes}`;
-
-  const caption = document.createElement('div');
-  caption.className = 'badge-evo-caption';
-  caption.textContent = `${newBadge.label}に進化しました`;
-  caption.style.opacity = '0';
-
-  const sub = document.createElement('div');
-  sub.className = 'badge-evo-sub';
-  sub.textContent = 'タップで閉じる';
-  sub.style.opacity = '0';
-
-  stage.appendChild(oldIcon);
-  stage.appendChild(caption);
-  stage.appendChild(sub);
-  overlay.appendChild(stage);
-  document.body.appendChild(overlay);
-
-  const shakeDuration = intensity.shakes * 150;
-
-  setTimeout(() => {
-    oldIcon.style.animation = 'badgeFadeOut 0.25s ease-out forwards';
-  }, shakeDuration);
-
-  setTimeout(() => {
-    const flash = document.createElement('div');
-    flash.style.cssText = `
-      position:absolute; width:140px; height:140px; border-radius:50%;
-      background: rgba(255,255,255,0.9);
-      animation: badgeFlash 0.5s ease-out forwards;
-    `;
-    stage.appendChild(flash);
-
-    for (let i = 0; i < intensity.particles; i++) {
-      const angle = (i / intensity.particles) * Math.PI * 2;
-      const dist = 100 + Math.random() * 30;
-      const dot = document.createElement('div');
-      dot.style.cssText = `
-        position:absolute; top:50%; left:50%; width:10px; height:10px;
-        border-radius:50%; background:#fff;
-        --px:${Math.cos(angle) * dist}px; --py:${Math.sin(angle) * dist}px;
-        animation: badgeParticle 0.7s ease-out forwards;
-      `;
-      stage.appendChild(dot);
-    }
-  }, shakeDuration + 250);
-
-  setTimeout(() => {
-    const newIcon = document.createElement('div');
-    newIcon.className = 'badge-evo-icon';
-    newIcon.textContent = newBadge.icon;
-    newIcon.style.transform = `scale(${intensity.scale})`;
-    newIcon.style.animation = 'badgePopIn 0.4s ease-out forwards';
-    stage.appendChild(newIcon);
-    caption.style.transition = 'opacity 0.3s ease-in';
-    sub.style.transition = 'opacity 0.3s ease-in';
-    caption.style.opacity = '1';
-    sub.style.opacity = '1';
-  }, shakeDuration + 700);
-
-  const close = () => overlay.remove();
-  overlay.addEventListener('click', close);
-  setTimeout(close, shakeDuration + 700 + 3000);
-}
-
 function getInitials(name) {
   const p = name.trim().split(/\s+/);
   return p.length >= 2 ? p[0][0] + p[1][0] : name.slice(0, 2);
@@ -722,17 +622,9 @@ function closeModal(e) {
 function doAction() {
   const name = selectedStudent; if (!name) return;
   const now = Date.now();
-  let evolvedFrom = null, evolvedTo = null;
   if (state.active[name]) {
-    // チェックアウト前の累計時間（今回のセッションを含まない）
-    const oldTotalMs = state.sessions.filter(s => s.name === name).reduce((a, s) => a + (s.duration || 0), 0);
-    const duration = now - state.active[name];
-    state.sessions.push({ name, checkIn: state.active[name], checkOut: now, duration, type: 'study' });
+    state.sessions.push({ name, checkIn: state.active[name], checkOut: now, duration: now - state.active[name], type: 'study' });
     delete state.active[name];
-    const newTotalMs = oldTotalMs + duration;
-    const oldBadge = getBadge(oldTotalMs);
-    const newBadge = getBadge(newTotalMs);
-    if (newBadge.label !== oldBadge.label) { evolvedFrom = oldBadge; evolvedTo = newBadge; }
   } else {
     state.active[name] = now;
   }
@@ -740,7 +632,6 @@ function doAction() {
   document.getElementById('modal-overlay').classList.remove('show');
   selectedStudent = null;
   refreshCurrentTab();
-  if (evolvedTo) playBadgeEvolution(evolvedFrom, evolvedTo);
 }
 
 function refreshCurrentTab() {
@@ -837,10 +728,22 @@ function renderHistory() {
     const ds = d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' }) + ' ' +
                d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
     const idx = state.sessions.indexOf(s);
-    const typeLabel = s.type === 'lesson'
-      ? '<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px">授業</span>'
-      : '<span style="font-size:10px;background:#E1F5EE;color:#085041;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px">自習</span>';
-    item.innerHTML = `<div class="dot" style="${s.type === 'lesson' ? 'background:#185FA5' : ''}"></div><div class="h-name">${s.name}${typeLabel}</div><div class="h-date">${ds}</div><div class="h-dur">${formatDuration(s.duration)}</div><button class="h-del" onclick="deleteSession(${idx})" title="この記録を削除">×</button>`;
+    let typeLabel, dotColor, durLabel;
+    if (s.type === 'lesson') {
+      typeLabel = '<span style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px">授業</span>';
+      dotColor = '#185FA5';
+      durLabel = formatDuration(s.duration);
+    } else if (s.type === 'deduct') {
+      const reasonTxt = s.reason ? `（${s.reason}）` : '';
+      typeLabel = `<span style="font-size:10px;background:#FFF0EC;color:#D85A30;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px">補正${reasonTxt}</span>`;
+      dotColor = '#D85A30';
+      durLabel = '<span style="color:#D85A30">−' + formatDuration(-s.duration) + '</span>';
+    } else {
+      typeLabel = '<span style="font-size:10px;background:#E1F5EE;color:#085041;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px">自習</span>';
+      dotColor = '#1D9E75';
+      durLabel = formatDuration(s.duration);
+    }
+    item.innerHTML = `<div class="dot" style="background:${dotColor}"></div><div class="h-name">${s.name}${typeLabel}</div><div class="h-date">${ds}</div><div class="h-dur">${durLabel}</div><button class="h-del" onclick="deleteSession(${idx})" title="この記録を削除">×</button>`;
     list.appendChild(item);
   });
 }
@@ -872,6 +775,7 @@ function renderAggregate() {
 
 function renderAdmin() {
   renderActiveForAdmin();
+  initDeductForm();
   initLessonForm();
   initManualForm();
   const container = document.getElementById('admin-student-list');
@@ -952,6 +856,85 @@ function deleteSession(idx) {
   if (!confirm(`この記録を削除しますか？\n${s.name}  ${ds}  ${formatDuration(s.duration)}`)) return;
   state.sessions.splice(idx, 1);
   saveData();
+  refreshCurrentTab();
+}
+
+function initDeductForm() {
+  const sel = document.getElementById('deduct-name');
+  if (!sel) return;
+  sel.innerHTML = '';
+  state.students.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  document.getElementById('deduct-date').value = todayStr();
+  ['deduct-hours','deduct-mins'].forEach(id => {
+    document.getElementById(id).oninput = updateDeductPreview;
+  });
+  sel.onchange = updateDeductPreview;
+}
+
+function updateDeductPreview() {
+  const preview = document.getElementById('deduct-preview');
+  const name = document.getElementById('deduct-name').value;
+  const date = document.getElementById('deduct-date').value;
+  const h = parseInt(document.getElementById('deduct-hours').value) || 0;
+  const m = parseInt(document.getElementById('deduct-mins').value) || 0;
+  const totalMin = h * 60 + m;
+  if (!name || !date || totalMin <= 0) { preview.style.display = 'none'; return; }
+  const d = new Date(date);
+  const dateStr = d.toLocaleDateString('ja-JP', {year:'numeric', month:'numeric', day:'numeric'});
+  const reason = document.getElementById('deduct-reason').value;
+  preview.style.display = 'block';
+  preview.style.background = '#FFF0EC';
+  preview.style.borderColor = '#F5CFA0';
+  preview.style.color = '#D85A30';
+  preview.innerHTML = `<strong>${name}</strong><br>${dateStr}　<strong>${h > 0 ? h+'時間' : ''}${m > 0 ? m+'分' : ''}</strong> を減算${reason ? `（${reason}）` : ''}`;
+}
+
+function addDeduction() {
+  const name = document.getElementById('deduct-name').value;
+  const date = document.getElementById('deduct-date').value;
+  const h = parseInt(document.getElementById('deduct-hours').value) || 0;
+  const m = parseInt(document.getElementById('deduct-mins').value) || 0;
+  const reason = document.getElementById('deduct-reason').value.trim();
+  const totalMin = h * 60 + m;
+  if (!name || !date) { alert('生徒名と日付を入力してください'); return; }
+  if (totalMin <= 0) { alert('減算する時間を入力してください'); return; }
+  const duration = totalMin * 60000;
+  // 現在の累計時間を確認
+  const currentMs = state.sessions.filter(s => s.name === name).reduce((a,s) => a + (s.duration||0), 0)
+                  + (state.active[name] ? Date.now() - state.active[name] : 0);
+  if (duration > currentMs) {
+    alert(`累計時間（${formatDuration(currentMs)}）を超えて減算することはできません`);
+    return;
+  }
+  const d = new Date(date);
+  const dateStr = d.toLocaleDateString('ja-JP', {year:'numeric', month:'numeric', day:'numeric'});
+  if (!confirm(`以下の内容で累計時間を減算しますか？
+
+${name}
+${dateStr}　${h > 0 ? h+'時間' : ''}${m > 0 ? m+'分' : ''}を減算${reason ? `
+理由：${reason}` : ''}
+
+現在の累計：${formatDuration(currentMs)}
+補正後の累計：${formatDuration(currentMs - duration)}`)) return;
+  const baseMs = new Date(date + 'T12:00:00').getTime();
+  state.sessions.push({
+    name,
+    checkIn: baseMs,
+    checkOut: baseMs,
+    duration: -duration,
+    type: 'deduct',
+    reason: reason || ''
+  });
+  saveData();
+  document.getElementById('deduct-hours').value = 0;
+  document.getElementById('deduct-mins').value = 0;
+  document.getElementById('deduct-reason').value = '';
+  document.getElementById('deduct-preview').style.display = 'none';
+  alert('✅ 累計時間を減算しました');
   refreshCurrentTab();
 }
 
