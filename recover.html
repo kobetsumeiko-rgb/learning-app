@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>データ復旧</title>
+<style>
+body { font-family: -apple-system, sans-serif; padding: 20px; background: #f5f5f0; }
+h1 { font-size: 20px; margin-bottom: 20px; }
+.card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.card h2 { font-size: 15px; margin-bottom: 10px; color: #444; }
+.found { color: #1D9E75; font-weight: 600; }
+.notfound { color: #D85A30; }
+pre { font-size: 11px; background: #f5f5f0; padding: 10px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto; }
+button { padding: 12px 20px; border-radius: 10px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; margin: 6px 4px; }
+.btn-green { background: #1D9E75; color: #fff; }
+.btn-blue { background: #185FA5; color: #fff; }
+.status { font-size: 14px; margin-top: 10px; padding: 10px; border-radius: 8px; }
+.status.ok { background: #E1F5EE; color: #085041; }
+.status.ng { background: #FFF0EC; color: #D85A30; }
+</style>
+</head>
+<body>
+<h1>📦 チェックインデータ復旧ツール</h1>
+
+<div class="card">
+  <h2>ステップ1：データを探す</h2>
+  <button class="btn-green" onclick="findData()">🔍 データを探す</button>
+  <div id="search-result"></div>
+</div>
+
+<div class="card" id="step2" style="display:none">
+  <h2>ステップ2：データの内容を確認</h2>
+  <div id="data-preview"></div>
+</div>
+
+<div class="card" id="step3" style="display:none">
+  <h2>ステップ3：Cloudflareに保存</h2>
+  <p style="font-size:13px;color:#666;margin-bottom:12px">見つかったデータをCloudflareに送信します。</p>
+  <button class="btn-blue" onclick="uploadToCloudflare()">☁️ Cloudflareに保存する</button>
+  <div id="upload-result"></div>
+</div>
+
+<script>
+const WORKER_URL = 'https://notion-proxy.kobetsu-meiko.workers.dev';
+const KEYS_TO_TRY = [
+  'juku_checkin_v1_amorisan',
+  'juku_checkin_v1_yashiro',
+  'juku_checkin_v1_aokijima',
+  'juku_checkin_v1',
+];
+const ROOM_MAP = {
+  'juku_checkin_v1_amorisan': 'amorisan',
+  'juku_checkin_v1_yashiro': 'yashiro',
+  'juku_checkin_v1_aokijima': 'aokijima',
+  'juku_checkin_v1': 'amorisan', // 旧版は安茂里として扱う
+};
+
+let foundData = {};
+
+function findData() {
+  foundData = {};
+  const resultEl = document.getElementById('search-result');
+  let html = '';
+  let anyFound = false;
+
+  KEYS_TO_TRY.forEach(key => {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      try {
+        const data = JSON.parse(raw);
+        foundData[key] = data;
+        anyFound = true;
+        const room = ROOM_MAP[key];
+        const sessionCount = (data.sessions || []).length;
+        const studentCount = (data.students || []).length;
+        const activeCount = Object.keys(data.active || {}).length;
+        html += `<div class="status ok">✅ <strong>${key}</strong> が見つかりました！<br>
+          生徒数：${studentCount}名　記録数：${sessionCount}件　在室中：${activeCount}名</div>`;
+      } catch(e) {
+        html += `<div class="status ng">⚠️ ${key}：データが壊れています</div>`;
+      }
+    } else {
+      html += `<div class="status ng" style="background:#f5f5f0;color:#aaa">— ${key}：なし</div>`;
+    }
+  });
+
+  resultEl.innerHTML = html;
+
+  if (anyFound) {
+    showPreview();
+    document.getElementById('step2').style.display = 'block';
+    document.getElementById('step3').style.display = 'block';
+  } else {
+    resultEl.innerHTML += '<div class="status ng" style="margin-top:10px">❌ データが見つかりませんでした。このブラウザ・端末にはデータが保存されていません。</div>';
+  }
+}
+
+function showPreview() {
+  const el = document.getElementById('data-preview');
+  let html = '';
+  Object.entries(foundData).forEach(([key, data]) => {
+    const sessions = data.sessions || [];
+    const recentSessions = sessions.slice(-5).reverse();
+    html += `<p style="font-size:13px;font-weight:600;margin-bottom:6px">${key}（直近5件の記録）</p>`;
+    if (recentSessions.length === 0) {
+      html += '<p style="font-size:13px;color:#aaa">記録なし</p>';
+    } else {
+      recentSessions.forEach(s => {
+        const ci = new Date(s.checkIn).toLocaleString('ja-JP');
+        const dur = Math.round((s.duration || 0) / 60000);
+        html += `<div style="font-size:12px;padding:6px 0;border-bottom:1px solid #f0f0ea">${s.name}　${ci}　${dur}分（${s.type || '自習'}）</div>`;
+      });
+    }
+    html += '<br>';
+  });
+  el.innerHTML = html;
+}
+
+async function uploadToCloudflare() {
+  const resultEl = document.getElementById('upload-result');
+  resultEl.innerHTML = '<div class="status ok">送信中...</div>';
+
+  let successCount = 0;
+  let errorCount = 0;
+
+  for (const [key, data] of Object.entries(foundData)) {
+    const room = ROOM_MAP[key];
+    try {
+      const res = await fetch(`${WORKER_URL}/checkin/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room, data })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        successCount++;
+        resultEl.innerHTML = `<div class="status ok">✅ ${room} のデータを保存しました（${successCount}件完了）</div>`;
+      } else {
+        errorCount++;
+      }
+    } catch(e) {
+      errorCount++;
+      resultEl.innerHTML = `<div class="status ng">❌ エラー：${e.message}</div>`;
+    }
+  }
+
+  if (successCount > 0 && errorCount === 0) {
+    resultEl.innerHTML = `<div class="status ok">🎉 完了！${successCount}教室分のデータをCloudflareに保存しました。<br>チェックインアプリを開いて確認してください。</div>`;
+  } else if (errorCount > 0) {
+    resultEl.innerHTML += `<div class="status ng">⚠️ ${errorCount}件でエラーが発生しました。</div>`;
+  }
+}
+</script>
+</body>
+</html>
