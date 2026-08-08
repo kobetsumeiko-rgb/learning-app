@@ -222,6 +222,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 .data-btn.danger { background: #FFF0EC; color: #D85A30; }
 .empty { text-align: center; color: #aaa; padding: 40px 0; font-size: 14px; }
 
+.student-card.banned {
+  opacity: 0.45; pointer-events: none;
+  border: 2px solid #D85A30 !important;
+  background: #FFF0EC !important;
+}
+.banned-badge {
+  font-size: 10px; background: #D85A30; color: #fff;
+  padding: 2px 7px; border-radius: 10px; display: inline-block;
+  margin-top: 4px; font-weight: 600;
+}
+.ban-row {
+  background: #FFF8F0; border: 1px solid #F5CFA0;
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+}
+.ban-row .ban-name { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
+.ban-row .ban-meta { font-size: 12px; color: #888; margin-bottom: 8px; }
+.unban-btn {
+  padding: 6px 14px; border-radius: 8px; background: #1D9E75;
+  color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+
 /* 教室選択画面 */
 .room-select-screen {
   position: fixed; inset: 0; background: #1D9E75;
@@ -489,6 +510,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
       </div>
     </div>
     <div class="admin-section">
+      <h3>🚫 チェックイン一時停止</h3>
+      <div id="ban-list-section"></div>
+      <div class="manual-add-box" style="margin-top:10px">
+        <div class="manual-row">
+          <label>生徒名</label>
+          <select id="ban-name"></select>
+        </div>
+        <div class="manual-row">
+          <label>停止理由</label>
+          <input type="text" id="ban-reason" placeholder="例：スマホ使用のため" style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid #ddd;font-size:14px">
+        </div>
+        <div class="manual-row">
+          <label>解除予定日</label>
+          <input type="date" id="ban-until">
+        </div>
+        <button class="manual-add-btn" onclick="banStudent()" style="background:#D85A30">この生徒のチェックインを停止する</button>
+      </div>
+    </div>
+    <div class="admin-section">
       <h3>生徒リスト</h3>
       <div id="admin-student-list"></div>
       <div class="add-row">
@@ -752,16 +792,22 @@ function renderStudentGrid(filter = '') {
     const totalMs = state.sessions.filter(s => s.name === name).reduce((a,s) => a+(s.duration||0), 0)
                   + (state.active[name] ? Date.now()-state.active[name] : 0);
     const badge = getBadge(totalMs);
+    const banned = isBanned(name);
+    if (banned) card.classList.add('banned');
+    const banInfo = (state.banned || {})[name];
     card.innerHTML = `
       <div style="position:relative;width:52px;margin:0 auto 10px">
         <div class="avatar${isIn ? ' in' : ''}">${getInitials(name)}</div>
-        ${badge ? `<span style="position:absolute;bottom:-3px;right:-6px;font-size:18px;line-height:1">${badge.icon}</span>` : ''}
+        ${badge && !banned ? `<span style="position:absolute;bottom:-3px;right:-6px;font-size:18px;line-height:1">${badge.icon}</span>` : ''}
       </div>
       <div class="s-name">${name}</div>
-      ${badge ? `<div style="font-size:10px;background:${badge.bg};color:${badge.color};padding:2px 7px;border-radius:20px;display:inline-block;margin-top:3px;font-weight:600">${badge.label}</div>` : ''}
-      ${isIn ? `<div class="status-badge" style="display:block;margin-top:4px">✓ 在室中</div><div class="elapsed" id="el-${name.replace(/\s/g,'-')}">${formatDuration(elapsed)}</div>` : ''}
+      ${banned
+        ? `<div class="banned-badge">🚫 停止中</div>${banInfo?.until ? `<div style="font-size:10px;color:#D85A30;margin-top:3px">${banInfo.until}まで</div>` : ''}`
+        : badge ? `<div style="font-size:10px;background:${badge.bg};color:${badge.color};padding:2px 7px;border-radius:20px;display:inline-block;margin-top:3px;font-weight:600">${badge.label}</div>` : ''
+      }
+      ${isIn && !banned ? `<div class="status-badge" style="display:block;margin-top:4px">✓ 在室中</div><div class="elapsed" id="el-${name.replace(/\s/g,'-')}">${formatDuration(elapsed)}</div>` : ''}
     `;
-    card.onclick = () => openModal(name);
+    if (!banned) card.onclick = () => openModal(name);
     grid.appendChild(card);
   });
   updateSummary();
@@ -959,6 +1005,8 @@ function renderAggregate() {
 
 function renderAdmin() {
   renderActiveForAdmin();
+  initBanForm();
+  renderBanList();
   initDeductForm();
   initLessonForm();
   initManualForm();
@@ -1042,6 +1090,92 @@ function deleteSession(idx) {
   state.sessions.splice(idx, 1);
   saveData();
   refreshCurrentTab();
+}
+
+// ===== チェックイン一時停止 =====
+
+function getBannedList() {
+  return state.banned || {};
+}
+
+function isBanned(name) {
+  const banned = getBannedList();
+  if (!banned[name]) return false;
+  const until = banned[name].until;
+  if (until && new Date(until + 'T23:59:59') < new Date()) {
+    // 解除日を過ぎていたら自動解除
+    delete state.banned[name];
+    saveData();
+    return false;
+  }
+  return true;
+}
+
+function initBanForm() {
+  const sel = document.getElementById('ban-name');
+  if (!sel) return;
+  sel.innerHTML = '';
+  state.students.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  // 解除予定日のデフォルトを1週間後に
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  document.getElementById('ban-until').value = d.toISOString().slice(0, 10);
+}
+
+function renderBanList() {
+  const el = document.getElementById('ban-list-section');
+  if (!el) return;
+  const banned = getBannedList();
+  const entries = Object.entries(banned);
+  if (entries.length === 0) {
+    el.innerHTML = '<p style="font-size:13px;color:#aaa;margin-bottom:8px">現在停止中の生徒はいません</p>';
+    return;
+  }
+  el.innerHTML = entries.map(([name, info]) => `
+    <div class="ban-row">
+      <div class="ban-name">🚫 ${name}</div>
+      <div class="ban-meta">
+        理由：${info.reason || '未記入'}　／　解除予定：${info.until || '未定'}
+      </div>
+      <button class="unban-btn" onclick="unbanStudent('${name}')">✅ 停止を解除する</button>
+    </div>
+  `).join('');
+}
+
+function banStudent() {
+  const name = document.getElementById('ban-name').value;
+  const reason = document.getElementById('ban-reason').value.trim();
+  const until = document.getElementById('ban-until').value;
+  if (!name) return;
+  if (!confirm(`${name} のチェックインを停止しますか？
+理由：${reason || '未記入'}
+解除予定：${until || '未定'}`)) return;
+  if (!state.banned) state.banned = {};
+  state.banned[name] = { reason, until, bannedAt: new Date().toISOString() };
+  // 在室中なら強制チェックアウト
+  if (state.active[name]) {
+    const now = Date.now();
+    state.sessions.push({ name, checkIn: state.active[name], checkOut: now, duration: now - state.active[name], type: 'study' });
+    delete state.active[name];
+  }
+  saveData();
+  document.getElementById('ban-reason').value = '';
+  alert(`✅ ${name} のチェックインを停止しました`);
+  refreshCurrentTab();
+  renderBanList();
+}
+
+function unbanStudent(name) {
+  if (!confirm(`${name} の停止を解除しますか？`)) return;
+  if (state.banned) delete state.banned[name];
+  saveData();
+  alert(`✅ ${name} の停止を解除しました`);
+  refreshCurrentTab();
+  renderBanList();
 }
 
 function initDeductForm() {
