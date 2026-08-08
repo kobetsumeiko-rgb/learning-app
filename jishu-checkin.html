@@ -530,6 +530,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 const STORAGE_KEY = 'juku_checkin_v1';
 const ROOM_KEY = 'juku_room_v1';
 const ADMIN_PASSWORD = '1234'; // ← パスワードはここを変更してください
+const WORKER_URL = 'https://notion-proxy.kobetsu-meiko.workers.dev';
 
 const ROOMS = {
   amorisan: { name: '安茂里駅前教室', short: '安茂里' },
@@ -540,58 +541,53 @@ const ROOMS = {
 
 let currentRoom = null;  // 'amorisan' | 'yashiro' | 'aokijima' | 'all'
 let pwCallback = null;   // パスワード確認後に実行する関数
+let isSaving = false;    // 保存中フラグ
 
-function loadData(room) {
-  try {
-    const key = STORAGE_KEY + '_' + room;
-    const d = localStorage.getItem(key);
-    if (d) return JSON.parse(d);
-  } catch(e) {}
+// デフォルトの生徒リスト（教室ごとに初回のみ使用）
+const DEFAULT_STUDENTS_AMORISAN = [
+  '相澤 千尋','阿部 恵','荒井 春輝','伊藤 祐基','伊藤 優莉',
+  '今藤 ほのか','尾芦 涼真','太田 結翔','海沼 瑞香','笠井 望',
+  '笠井 美希','黒柳 颯真','剱持 春人','小林 依知可','小林 泰晴',
+  '小林 巧実','小林 千華','小林 美李','小林 鷹聖','小林 龍世',
+  '後藤 花梨','酒井 文芽','佐藤 秀宥','嶌田 柊吾','島田 陽太',
+  '瀧澤 春太朗','長崎 聖也','原 貴一','松本 怜','宮下 英晃',
+  '宮本 光史郎','山岸 華穂','山崎 愛結','湯川 智仁','米澤 咲希子'
+];
+
+function defaultData(room) {
   return {
-    students: [
-      '相澤 千尋',
-      '阿部 恵',
-      '荒井 春輝',
-      '伊藤 祐基',
-      '伊藤 優莉',
-      '今藤 ほのか',
-      '尾芦 涼真',
-      '太田 結翔',
-      '海沼 瑞香',
-      '笠井 望',
-      '笠井 美希',
-      '黒柳 颯真',
-      '剱持 春人',
-      '小林 依知可',
-      '小林 泰晴',
-      '小林 巧実',
-      '小林 千華',
-      '小林 美李',
-      '小林 鷹聖',
-      '小林 龍世',
-      '後藤 花梨',
-      '酒井 文芽',
-      '佐藤 秀宥',
-      '嶌田 柊吾',
-      '島田 陽太',
-      '瀧澤 春太朗',
-      '長崎 聖也',
-      '原 貴一',
-      '松本 怜',
-      '宮下 英晃',
-      '宮本 光史郎',
-      '山岸 華穂',
-      '山崎 愛結',
-      '湯川 智仁',
-      '米澤 咲希子'
-    ],
+    students: room === 'amorisan' ? [...DEFAULT_STUDENTS_AMORISAN] : [],
     sessions: [],
     active: {}
   };
 }
-function saveData() {
+
+async function loadData(room) {
+  try {
+    const res = await fetch(`${WORKER_URL}/checkin/data?room=${room}`);
+    const json = await res.json();
+    if (json.data) return json.data;
+  } catch(e) {
+    console.error('loadData error:', e);
+  }
+  return defaultData(room);
+}
+
+async function saveData() {
   if (!currentRoom || currentRoom === 'all') return;
-  localStorage.setItem(STORAGE_KEY + '_' + currentRoom, JSON.stringify(state));
+  if (isSaving) return;
+  isSaving = true;
+  try {
+    await fetch(`${WORKER_URL}/checkin/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room: currentRoom, data: state })
+    });
+  } catch(e) {
+    console.error('saveData error:', e);
+  } finally {
+    isSaving = false;
+  }
 }
 
 let state = { students: [], sessions: [], active: {} };
@@ -622,14 +618,16 @@ function selectRoom(room) {
   setRoom(room);
 }
 
-function setRoom(room) {
+async function setRoom(room) {
   currentRoom = room;
   localStorage.setItem(ROOM_KEY, room);
+  // ローディング表示
+  document.getElementById('room-select-screen').innerHTML =
+    '<h1 style="color:#fff;font-size:20px">読み込み中...</h1>';
   if (room === 'all') {
-    // 全教室モード：全教室のデータをマージして表示
-    state = mergeAllRooms();
+    state = await mergeAllRooms();
   } else {
-    state = loadData(room);
+    state = await loadData(room);
   }
   document.getElementById('room-select-screen').style.display = 'none';
   document.getElementById('room-badge').textContent = ROOMS[room].short;
@@ -637,20 +635,25 @@ function setRoom(room) {
   renderStudentGrid();
 }
 
-function mergeAllRooms() {
-  // 全教室のデータをマージ（読み取り専用ではなく全操作可能）
-  const rooms = ['amorisan', 'yashiro', 'aokijima'];
-  const merged = { students: [], sessions: [], active: {} };
-  rooms.forEach(r => {
-    const d = loadData(r);
-    merged.students = merged.students.concat(d.students);
-    merged.sessions = merged.sessions.concat(d.sessions.map(s => ({...s, room: r})));
-    Object.assign(merged.active, Object.fromEntries(
-      Object.entries(d.active).map(([k,v]) => [k, v])
-    ));
-  });
-  merged.students.sort((a, b) => a.localeCompare(b, 'ja'));
-  return merged;
+async function mergeAllRooms() {
+  try {
+    const res = await fetch(`${WORKER_URL}/checkin/all`);
+    const json = await res.json();
+    const merged = { students: [], sessions: [], active: {} };
+    const rooms = ['amorisan', 'yashiro', 'aokijima'];
+    rooms.forEach(r => {
+      const d = json.data[r];
+      if (!d) return;
+      merged.students = merged.students.concat(d.students || []);
+      merged.sessions = merged.sessions.concat((d.sessions || []).map(s => ({...s, room: r})));
+      Object.assign(merged.active, d.active || {});
+    });
+    merged.students.sort((a, b) => a.localeCompare(b, 'ja'));
+    return merged;
+  } catch(e) {
+    console.error('mergeAllRooms error:', e);
+    return { students: [], sessions: [], active: {} };
+  }
 }
 
 function changeRoom() {
@@ -1326,17 +1329,17 @@ function confirmReset() {
 }
 
 // 保存済み教室があれば自動的に設定
-const savedRoom = localStorage.getItem(ROOM_KEY);
-if (savedRoom && ROOMS[savedRoom]) {
-  setRoom(savedRoom);
-} else {
-  // 初回：教室選択画面を表示
-  document.getElementById('room-select-screen').style.display = 'flex';
-}
-
-updateClock();
-setInterval(updateClock, 1000);
-setInterval(updateElapsed, 15000);
+(async () => {
+  const savedRoom = localStorage.getItem(ROOM_KEY);
+  if (savedRoom && ROOMS[savedRoom]) {
+    await setRoom(savedRoom);
+  } else {
+    document.getElementById('room-select-screen').style.display = 'flex';
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+  setInterval(updateElapsed, 15000);
+})();
 </script>
 </body>
 </html>
