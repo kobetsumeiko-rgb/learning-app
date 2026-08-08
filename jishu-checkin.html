@@ -221,6 +221,48 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 .data-btn.export { background: #f0f0ea; color: #444; }
 .data-btn.danger { background: #FFF0EC; color: #D85A30; }
 .empty { text-align: center; color: #aaa; padding: 40px 0; font-size: 14px; }
+
+/* 教室選択画面 */
+.room-select-screen {
+  position: fixed; inset: 0; background: #1D9E75;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 200; padding: 2rem;
+}
+.room-select-screen h1 { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+.room-select-screen p { font-size: 14px; color: #9FE1CB; margin-bottom: 32px; }
+.room-btn {
+  width: 100%; max-width: 320px; padding: 18px; border-radius: 14px;
+  background: #fff; border: none; font-size: 18px; font-weight: 700;
+  color: #1a1a1a; cursor: pointer; margin-bottom: 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+.room-btn:active { opacity: 0.85; }
+
+/* パスワード画面 */
+.pw-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center; z-index: 150;
+}
+.pw-overlay.hidden { display: none; }
+.pw-box {
+  background: #fff; border-radius: 20px; padding: 28px 24px;
+  width: 300px; text-align: center;
+}
+.pw-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #1a1a1a; }
+.pw-box p { font-size: 13px; color: #888; margin-bottom: 16px; }
+.pw-box input {
+  width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd;
+  font-size: 18px; text-align: center; letter-spacing: 4px;
+  margin-bottom: 14px; outline: none;
+}
+.pw-box input:focus { border-color: #1D9E75; }
+.pw-error { font-size: 13px; color: #D85A30; margin-bottom: 10px; display: none; }
+
+/* 教室バッジ（top-bar内） */
+.room-badge {
+  font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+  background: #E1F5EE; color: #085041;
+}
 .edit-btn {
   background: none; border: none; cursor: pointer; color: #ccc;
   font-size: 16px; padding: 2px 4px; line-height: 1;
@@ -254,16 +296,43 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 </head>
 <body>
 
-<div class="top-bar">
+<!-- 教室選択画面 -->
+<div class="room-select-screen" id="room-select-screen">
   <h1>📚 自習室チェックイン</h1>
-  <span class="clock" id="clock">--:--</span>
+  <p>この端末の教室を選択してください</p>
+  <button class="room-btn" onclick="selectRoom('amorisan')">🏫 安茂里駅前教室</button>
+  <button class="room-btn" onclick="selectRoom('yashiro')">🏫 屋代教室</button>
+  <button class="room-btn" onclick="selectRoom('aokijima')">🏫 長野青木島教室</button>
+  <button class="room-btn" onclick="selectRoom('all')" style="background:#f0f0ea;color:#888;font-size:15px;padding:14px;margin-top:8px">💻 全教室（管理者用）</button>
+</div>
+
+<!-- パスワード入力画面 -->
+<div class="pw-overlay hidden" id="pw-overlay">
+  <div class="pw-box">
+    <h3>🔐 管理者認証</h3>
+    <p id="pw-desc">パスワードを入力してください</p>
+    <input type="password" id="pw-input" placeholder="••••" maxlength="8" onkeydown="if(event.key==='Enter')checkPassword()">
+    <div class="pw-error" id="pw-error">パスワードが違います</div>
+    <div class="btn-row">
+      <button class="btn btn-cancel" onclick="closePwOverlay()">キャンセル</button>
+      <button class="btn btn-checkin" onclick="checkPassword()">確認</button>
+    </div>
+  </div>
+</div>
+
+<div class="top-bar">
+  <h1>📚 自習室</h1>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span class="room-badge" id="room-badge">—</span>
+    <span class="clock" id="clock">--:--</span>
+  </div>
 </div>
 
 <div class="tab-bar">
   <div class="tab active" onclick="switchTab('checkin')">チェックイン</div>
   <div class="tab" onclick="switchTab('ranking')">ランキング</div>
   <div class="tab" onclick="switchTab('history')">記録</div>
-  <div class="tab" onclick="switchTab('admin')">管理</div>
+  <div class="tab" onclick="openAdminTab()">管理</div>
 </div>
 
 <div id="tab-checkin" class="tab-content active">
@@ -434,6 +503,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
         <button class="data-btn danger" onclick="confirmReset()">🗑 リセット</button>
       </div>
     </div>
+    <div class="admin-section">
+      <h3>教室設定</h3>
+      <div style="background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:14px;font-size:14px;color:#444;margin-bottom:10px">
+        現在の教室：<strong id="current-room-label">—</strong>
+      </div>
+      <button class="data-btn export" onclick="changeRoom()" style="width:100%">🏫 教室を変更する</button>
+    </div>
   </div>
 </div>
 
@@ -452,10 +528,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 
 <script>
 const STORAGE_KEY = 'juku_checkin_v1';
+const ROOM_KEY = 'juku_room_v1';
+const ADMIN_PASSWORD = '1234'; // ← パスワードはここを変更してください
 
-function loadData() {
+const ROOMS = {
+  amorisan: { name: '安茂里駅前教室', short: '安茂里' },
+  yashiro:  { name: '屋代教室',       short: '屋代' },
+  aokijima: { name: '長野青木島教室', short: '青木島' },
+  all:      { name: '全教室（管理者）', short: '全教室' }
+};
+
+let currentRoom = null;  // 'amorisan' | 'yashiro' | 'aokijima' | 'all'
+let pwCallback = null;   // パスワード確認後に実行する関数
+
+function loadData(room) {
   try {
-    const d = localStorage.getItem(STORAGE_KEY);
+    const key = STORAGE_KEY + '_' + room;
+    const d = localStorage.getItem(key);
     if (d) return JSON.parse(d);
   } catch(e) {}
   return {
@@ -500,9 +589,12 @@ function loadData() {
     active: {}
   };
 }
-function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function saveData() {
+  if (!currentRoom || currentRoom === 'all') return;
+  localStorage.setItem(STORAGE_KEY + '_' + currentRoom, JSON.stringify(state));
+}
 
-let state = loadData();
+let state = { students: [], sessions: [], active: {} };
 let selectedStudent = null;
 let activeTab = 'checkin';
 
@@ -517,6 +609,95 @@ function thisMonthStart() {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
 }
 
+// ===== 教室・パスワード管理 =====
+
+function selectRoom(room) {
+  if (room === 'all') {
+    // 全教室は管理者パスワードが必要
+    openPwOverlay('管理者パスワードを入力してください', () => {
+      setRoom(room);
+    });
+    return;
+  }
+  setRoom(room);
+}
+
+function setRoom(room) {
+  currentRoom = room;
+  localStorage.setItem(ROOM_KEY, room);
+  if (room === 'all') {
+    // 全教室モード：全教室のデータをマージして表示
+    state = mergeAllRooms();
+  } else {
+    state = loadData(room);
+  }
+  document.getElementById('room-select-screen').style.display = 'none';
+  document.getElementById('room-badge').textContent = ROOMS[room].short;
+  updateClock();
+  renderStudentGrid();
+}
+
+function mergeAllRooms() {
+  // 全教室のデータをマージ（読み取り専用ではなく全操作可能）
+  const rooms = ['amorisan', 'yashiro', 'aokijima'];
+  const merged = { students: [], sessions: [], active: {} };
+  rooms.forEach(r => {
+    const d = loadData(r);
+    merged.students = merged.students.concat(d.students);
+    merged.sessions = merged.sessions.concat(d.sessions.map(s => ({...s, room: r})));
+    Object.assign(merged.active, Object.fromEntries(
+      Object.entries(d.active).map(([k,v]) => [k, v])
+    ));
+  });
+  merged.students.sort((a, b) => a.localeCompare(b, 'ja'));
+  return merged;
+}
+
+function changeRoom() {
+  openPwOverlay('管理者パスワードを入力してください', () => {
+    currentRoom = null;
+    document.getElementById('room-select-screen').style.display = 'flex';
+  });
+}
+
+function openPwOverlay(desc, callback) {
+  pwCallback = callback;
+  document.getElementById('pw-desc').textContent = desc;
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-error').style.display = 'none';
+  document.getElementById('pw-overlay').classList.remove('hidden');
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+
+function closePwOverlay() {
+  document.getElementById('pw-overlay').classList.add('hidden');
+  pwCallback = null;
+}
+
+function checkPassword() {
+  const val = document.getElementById('pw-input').value;
+  if (val === ADMIN_PASSWORD) {
+    document.getElementById('pw-overlay').classList.add('hidden');
+    if (pwCallback) pwCallback();
+    pwCallback = null;
+  } else {
+    document.getElementById('pw-error').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+  }
+}
+
+function openAdminTab() {
+  openPwOverlay('管理者パスワードを入力してください', () => {
+    switchTab('admin');
+  });
+}
+
+function updateRoomLabel() {
+  const el = document.getElementById('current-room-label');
+  if (el && currentRoom) el.textContent = ROOMS[currentRoom]?.name || '—';
+}
+
+// ===== バッジ =====
 function getBadge(ms) {
   const h = ms / 3600000;
   if (h >= 100) return { icon: '🔮', label: '伝説',   bg: '#EEEDFE', color: '#3C3489' };
@@ -778,6 +959,7 @@ function renderAdmin() {
   initDeductForm();
   initLessonForm();
   initManualForm();
+  updateRoomLabel();
   const container = document.getElementById('admin-student-list');
   container.innerHTML = '';
   state.students.forEach((name, i) => {
@@ -1143,10 +1325,18 @@ function confirmReset() {
   renderStudentGrid(); renderAggregate(); renderAdmin();
 }
 
+// 保存済み教室があれば自動的に設定
+const savedRoom = localStorage.getItem(ROOM_KEY);
+if (savedRoom && ROOMS[savedRoom]) {
+  setRoom(savedRoom);
+} else {
+  // 初回：教室選択画面を表示
+  document.getElementById('room-select-screen').style.display = 'flex';
+}
+
 updateClock();
 setInterval(updateClock, 1000);
 setInterval(updateElapsed, 15000);
-renderStudentGrid();
 </script>
 </body>
 </html>
