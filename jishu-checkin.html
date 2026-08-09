@@ -1079,7 +1079,7 @@ async function forceCheckout(name) {
   refreshCurrentTab();
 }
 
-function deleteSession(idx) {
+async function deleteSession(idx) {
   const s = state.sessions[idx];
   if (!s) return;
   const ci = new Date(s.checkIn);
