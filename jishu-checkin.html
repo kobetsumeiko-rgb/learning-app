@@ -1154,7 +1154,9 @@ async function saveBanToRoom(name, banData) {
   const rooms = ['amorisan', 'yashiro', 'aokijima'];
   for (const room of rooms) {
     const roomData = await loadData(room);
+    console.log(`[saveBan] room=${room} students=`, roomData.students);
     if ((roomData.students || []).includes(name)) {
+      console.log(`[saveBan] found ${name} in ${room}`);
       if (!roomData.banned) roomData.banned = {};
       if (banData === null) {
         delete roomData.banned[name];
