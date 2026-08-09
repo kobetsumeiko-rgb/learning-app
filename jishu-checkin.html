@@ -1102,9 +1102,9 @@ function isBanned(name) {
   if (!banned[name]) return false;
   const until = banned[name].until;
   if (until && new Date(until + 'T23:59:59') < new Date()) {
-    // 解除日を過ぎていたら自動解除
+    // 解除日を過ぎていたら自動解除（非同期で保存）
     delete state.banned[name];
-    await saveData();
+    saveData(); // awaitなし：表示には影響しない
     return false;
   }
   return true;
