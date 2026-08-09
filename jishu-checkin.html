@@ -615,18 +615,17 @@ async function loadData(room) {
 
 async function saveData() {
   if (!currentRoom || currentRoom === 'all') return;
-  if (isSaving) return;
-  isSaving = true;
+  // isSavingフラグを廃止し、常に保存を試みる
   try {
-    await fetch(`${WORKER_URL}/checkin/save`, {
+    const res = await fetch(`${WORKER_URL}/checkin/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ room: currentRoom, data: state })
     });
+    const json = await res.json();
+    if (!json.ok) console.error('saveData failed:', json);
   } catch(e) {
     console.error('saveData error:', e);
-  } finally {
-    isSaving = false;
   }
 }
 
