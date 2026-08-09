@@ -615,7 +615,6 @@ async function loadData(room) {
 
 async function saveData() {
   if (!currentRoom || currentRoom === 'all') return;
-  // isSavingフラグを廃止し、常に保存を試みる
   try {
     const res = await fetch(`${WORKER_URL}/checkin/save`, {
       method: 'POST',
@@ -670,6 +669,11 @@ async function setRoom(room) {
   }
   document.getElementById('room-select-screen').style.display = 'none';
   document.getElementById('room-badge').textContent = ROOMS[room].short;
+  // 全教室モード以外では管理タブのみ非表示
+  const adminTab = document.querySelector('.tab-bar .tab:last-child');
+  if (adminTab) adminTab.style.display = room === 'all' ? '' : 'none';
+  // チェックイン・ランキング・記録タブは常に表示
+  document.querySelectorAll('.tab-bar .tab:not(:last-child)').forEach(t => t.style.display = '');
   updateClock();
   renderStudentGrid();
 }
@@ -1145,6 +1149,39 @@ function renderBanList() {
   `).join('');
 }
 
+async function saveBanToRoom(name, banData) {
+  // 生徒がどの教室に属するかを特定して保存
+  const rooms = ['amorisan', 'yashiro', 'aokijima'];
+  for (const room of rooms) {
+    const roomData = await loadData(room);
+    if ((roomData.students || []).includes(name)) {
+      if (!roomData.banned) roomData.banned = {};
+      if (banData === null) {
+        delete roomData.banned[name];
+      } else {
+        roomData.banned[name] = banData;
+      }
+      // 在室中なら強制チェックアウト
+      if (banData && roomData.active[name]) {
+        const now = Date.now();
+        roomData.sessions.push({ name, checkIn: roomData.active[name], checkOut: now, duration: now - roomData.active[name], type: 'study' });
+        delete roomData.active[name];
+      }
+      await fetch(`${WORKER_URL}/checkin/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room, data: roomData })
+      });
+      // stateにも反映
+      if (!state.banned) state.banned = {};
+      if (banData === null) delete state.banned[name];
+      else state.banned[name] = banData;
+      return true;
+    }
+  }
+  return false;
+}
+
 async function banStudent() {
   const name = document.getElementById('ban-name').value;
   const reason = document.getElementById('ban-reason').value.trim();
@@ -1153,15 +1190,8 @@ async function banStudent() {
   if (!confirm(`${name} のチェックインを停止しますか？
 理由：${reason || '未記入'}
 解除予定：${until || '未定'}`)) return;
-  if (!state.banned) state.banned = {};
-  state.banned[name] = { reason, until, bannedAt: new Date().toISOString() };
-  // 在室中なら強制チェックアウト
-  if (state.active[name]) {
-    const now = Date.now();
-    state.sessions.push({ name, checkIn: state.active[name], checkOut: now, duration: now - state.active[name], type: 'study' });
-    delete state.active[name];
-  }
-  await saveData();
+  const banData = { reason, until, bannedAt: new Date().toISOString() };
+  await saveBanToRoom(name, banData);
   document.getElementById('ban-reason').value = '';
   alert(`✅ ${name} のチェックインを停止しました`);
   refreshCurrentTab();
@@ -1170,8 +1200,7 @@ async function banStudent() {
 
 async function unbanStudent(name) {
   if (!confirm(`${name} の停止を解除しますか？`)) return;
-  if (state.banned) delete state.banned[name];
-  await saveData();
+  await saveBanToRoom(name, null);
   alert(`✅ ${name} の停止を解除しました`);
   refreshCurrentTab();
   renderBanList();
