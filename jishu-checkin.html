@@ -682,7 +682,7 @@ async function mergeAllRooms() {
   try {
     const res = await fetch(`${WORKER_URL}/checkin/all`);
     const json = await res.json();
-    const merged = { students: [], sessions: [], active: {} };
+    const merged = { students: [], sessions: [], active: {}, banned: {} };
     const rooms = ['amorisan', 'yashiro', 'aokijima'];
     rooms.forEach(r => {
       const d = json.data[r];
@@ -690,6 +690,7 @@ async function mergeAllRooms() {
       merged.students = merged.students.concat(d.students || []);
       merged.sessions = merged.sessions.concat((d.sessions || []).map(s => ({...s, room: r})));
       Object.assign(merged.active, d.active || {});
+      Object.assign(merged.banned, d.banned || {});
     });
     merged.students.sort((a, b) => a.localeCompare(b, 'ja'));
     return merged;
@@ -1154,9 +1155,7 @@ async function saveBanToRoom(name, banData) {
   const rooms = ['amorisan', 'yashiro', 'aokijima'];
   for (const room of rooms) {
     const roomData = await loadData(room);
-    console.log(`[saveBan] room=${room} students=`, roomData.students);
     if ((roomData.students || []).includes(name)) {
-      console.log(`[saveBan] found ${name} in ${room}`);
       if (!roomData.banned) roomData.banned = {};
       if (banData === null) {
         delete roomData.banned[name];
