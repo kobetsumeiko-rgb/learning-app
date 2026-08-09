@@ -682,6 +682,7 @@ async function mergeAllRooms() {
   try {
     const res = await fetch(`${WORKER_URL}/checkin/all`);
     const json = await res.json();
+    console.log('[mergeAllRooms] raw data:', JSON.stringify(json.data?.amorisan?.banned));
     const merged = { students: [], sessions: [], active: {}, banned: {} };
     const rooms = ['amorisan', 'yashiro', 'aokijima'];
     rooms.forEach(r => {
