@@ -19,6 +19,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 .tab-bar {
   display: flex; background: #fff; border-bottom: 1px solid #e8e8e8;
   padding: 0 16px; position: sticky; top: 53px; z-index: 10;
+  overflow-x: auto;
 }
 .tab {
   padding: 13px 16px; font-size: 14px; cursor: pointer;
@@ -313,6 +314,36 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
   color: #fff; border: none; font-size: 15px; font-weight: 600; cursor: pointer;
 }
 .manual-add-btn:active { opacity: 0.8; }
+
+/* チーム対抗戦 */
+.team-card {
+  background: #fff; border: 1px solid #e8e8e8; border-radius: 14px;
+  padding: 16px; margin-bottom: 10px;
+}
+.team-card .team-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.team-swatch { width: 16px; height: 16px; border-radius: 5px; flex-shrink: 0; }
+.team-card .team-name { font-size: 15px; font-weight: 700; color: #1a1a1a; flex: 1; }
+.team-card .team-score { font-size: 20px; font-weight: 700; color: #1D9E75; }
+.team-card .team-members { font-size: 12px; color: #888; line-height: 1.8; }
+.team-rank-badge {
+  font-size: 13px; font-weight: 700; min-width: 26px; text-align: center; color: #888;
+}
+.grade-select {
+  padding: 5px 8px; border-radius: 6px; border: 1px solid #ddd; font-size: 12px;
+  background: #f5f5f0; color: #1a1a1a;
+}
+.team-tag {
+  font-size: 10px; padding: 1px 7px; border-radius: 10px; font-weight: 600; margin-left: 4px;
+}
+.draft-box {
+  background: #F1EFE8; border: 1px solid #ddd8c8; border-radius: 12px; padding: 16px; margin-bottom: 14px;
+}
+.draft-box p { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 10px; }
+.draft-btn {
+  width: 100%; padding: 12px; border-radius: 10px; background: #1D9E75;
+  color: #fff; border: none; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+.draft-btn.danger { background: #D85A30; }
 </style>
 </head>
 <body>
@@ -352,6 +383,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 <div class="tab-bar">
   <div class="tab active" onclick="switchTab('checkin')">チェックイン</div>
   <div class="tab" onclick="switchTab('ranking')">ランキング</div>
+  <div class="tab" onclick="switchTab('team')">チーム対抗</div>
   <div class="tab" onclick="switchTab('history')">記録</div>
   <div class="tab" onclick="openAdminTab()">管理</div>
 </div>
@@ -381,6 +413,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
     </div>
   </div>
   <div class="rank-list" id="rank-list"></div>
+</div>
+
+<div id="tab-team" class="tab-content">
+  <div class="period-bar">
+    <label>期間</label>
+    <input type="date" id="team-from" onchange="renderTeamTab()">
+    <span class="sep">〜</span>
+    <input type="date" id="team-to" onchange="renderTeamTab()">
+    <div class="preset-btns">
+      <button class="preset-btn" onclick="setPreset('team','week',this)">今週</button>
+      <button class="preset-btn" onclick="setPreset('team','month',this)">今月</button>
+      <button class="preset-btn active" onclick="setPreset('team','season',this)">シーズン全体</button>
+    </div>
+  </div>
+  <div style="padding:14px 16px 0">
+    <p style="font-size:12px;color:#888;line-height:1.6">1日60分以上の自習で1カウント（複数回に分けても合計60分以上でOK／1日1カウントまで）。9/1〜集計。</p>
+  </div>
+  <div class="rank-list" id="team-list"></div>
 </div>
 
 <div id="tab-history" class="tab-content">
@@ -433,6 +483,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
     <div class="admin-section" id="section-active" style="display:none">
       <h3>⚠️ 在室中の修正チェックアウト</h3>
       <div id="active-student-list"></div>
+    </div>
+    <div class="admin-section">
+      <h3>🏆 チーム対抗戦（9月〜）</h3>
+      <div class="draft-box">
+        <p id="draft-status">まだチーム分けが実行されていません。生徒リストの学年を設定してから実行してください。</p>
+        <button class="draft-btn" onclick="runDraft()">📋 8月末実績でチーム分けを実行（6チーム）</button>
+        <button class="draft-btn danger" onclick="resetDraft()" style="margin-top:8px">🗑 チーム分けをリセット</button>
+      </div>
+      <div id="team-admin-list"></div>
     </div>
     <div class="admin-section">
       <h3>⚠️ 累計時間を減算（補正）</h3>
@@ -533,6 +592,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
       <div id="admin-student-list"></div>
       <div class="add-row">
         <input type="text" id="new-student-name" placeholder="生徒名を入力" />
+        <select id="new-student-grade" style="padding:10px;border-radius:10px;border:1px solid #ddd;font-size:14px">
+          <option value="">学年未設定</option>
+          <option value="小1">小1</option><option value="小2">小2</option><option value="小3">小3</option>
+          <option value="小4">小4</option><option value="小5">小5</option><option value="小6">小6</option>
+          <option value="中1">中1</option><option value="中2">中2</option><option value="中3">中3</option>
+          <option value="高1">高1</option><option value="高2">高2</option><option value="高3">高3</option>
+        </select>
         <button onclick="addStudent()">追加</button>
       </div>
     </div>
@@ -572,6 +638,12 @@ const ROOM_KEY = 'juku_room_v1';
 const ADMIN_PASSWORD = '1234'; // ← パスワードはここを変更してください
 const WORKER_URL = 'https://notion-proxy.kobetsu-meiko.workers.dev';
 
+const TEAM_COUNT = 6;
+const TEAM_COLORS = ['#D85A30','#185FA5','#1D9E75','#B98900','#7A5FC7','#C2447A'];
+const TEAM_NAMES = ['赤','青','緑','黄','紫','桃'];
+const DRAFT_CUTOFF = '2026-08-31'; // この日までの実績でチーム分け
+const SEASON_START = '2026-09-01'; // チーム対抗戦カウント開始日
+
 const ROOMS = {
   amorisan: { name: '安茂里駅前教室', short: '安茂里' },
   yashiro:  { name: '屋代教室',       short: '屋代' },
@@ -598,7 +670,10 @@ function defaultData(room) {
   return {
     students: room === 'amorisan' ? [...DEFAULT_STUDENTS_AMORISAN] : [],
     sessions: [],
-    active: {}
+    active: {},
+    grades: {},
+    teams: {},
+    draft: null
   };
 }
 
@@ -606,11 +681,21 @@ async function loadData(room) {
   try {
     const res = await fetch(`${WORKER_URL}/checkin/data?room=${room}`);
     const json = await res.json();
-    if (json.data) return json.data;
+    if (json.data) return normalizeState(json.data, room);
   } catch(e) {
     console.error('loadData error:', e);
   }
   return defaultData(room);
+}
+
+function normalizeState(data, room) {
+  if (!data.grades) data.grades = {};
+  if (!data.teams) data.teams = {};
+  if (!data.draft) data.draft = null;
+  if (!data.students) data.students = room === 'amorisan' ? [...DEFAULT_STUDENTS_AMORISAN] : [];
+  if (!data.sessions) data.sessions = [];
+  if (!data.active) data.active = {};
+  return data;
 }
 
 async function saveData() {
@@ -628,7 +713,7 @@ async function saveData() {
   }
 }
 
-let state = { students: [], sessions: [], active: {} };
+let state = { students: [], sessions: [], active: {}, grades: {}, teams: {}, draft: null };
 let selectedStudent = null;
 let activeTab = 'checkin';
 
@@ -672,7 +757,7 @@ async function setRoom(room) {
   // 全教室モード以外では管理タブのみ非表示
   const adminTab = document.querySelector('.tab-bar .tab:last-child');
   if (adminTab) adminTab.style.display = room === 'all' ? '' : 'none';
-  // チェックイン・ランキング・記録タブは常に表示
+  // チェックイン・ランキング・チーム・記録タブは常に表示
   document.querySelectorAll('.tab-bar .tab:not(:last-child)').forEach(t => t.style.display = '');
   updateClock();
   renderStudentGrid();
@@ -682,7 +767,7 @@ async function mergeAllRooms() {
   try {
     const res = await fetch(`${WORKER_URL}/checkin/all`);
     const json = await res.json();
-    const merged = { students: [], sessions: [], active: {}, banned: {} };
+    const merged = { students: [], sessions: [], active: {}, banned: {}, grades: {}, teams: {}, draft: null };
     const rooms = ['amorisan', 'yashiro', 'aokijima'];
     rooms.forEach(r => {
       const d = json.data[r];
@@ -691,12 +776,14 @@ async function mergeAllRooms() {
       merged.sessions = merged.sessions.concat((d.sessions || []).map(s => ({...s, room: r})));
       Object.assign(merged.active, d.active || {});
       Object.assign(merged.banned, d.banned || {});
+      Object.assign(merged.grades, d.grades || {});
+      Object.assign(merged.teams, d.teams || {});
     });
     merged.students.sort((a, b) => a.localeCompare(b, 'ja'));
     return merged;
   } catch(e) {
     console.error('mergeAllRooms error:', e);
-    return { students: [], sessions: [], active: {} };
+    return { students: [], sessions: [], active: {}, grades: {}, teams: {}, draft: null };
   }
 }
 
@@ -871,17 +958,19 @@ async function doAction() {
 function refreshCurrentTab() {
   if (activeTab === 'checkin') renderStudentGrid(document.getElementById('search-input').value.toLowerCase());
   if (activeTab === 'ranking') renderRanking();
+  if (activeTab === 'team') renderTeamTab();
   if (activeTab === 'history') renderHistory();
   if (activeTab === 'admin') { renderAggregate(); renderAdmin(); }
 }
 
 function switchTab(tab) {
   activeTab = tab;
+  const order = ['checkin','ranking','team','history','admin'];
   document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', ['checkin','ranking','history','admin'][i] === tab);
+    t.classList.toggle('active', order[i] === tab);
   });
   document.querySelectorAll('.tab-content').forEach((c, i) => {
-    c.classList.toggle('active', ['checkin','ranking','history','admin'][i] === tab);
+    c.classList.toggle('active', order[i] === tab);
   });
   refreshCurrentTab();
 }
@@ -898,16 +987,19 @@ function getFilteredSessions(fromId, toId) {
 }
 
 function setPreset(prefix, type, btn) {
-  const tabId = prefix === 'rank' ? 'tab-ranking' : prefix === 'hist' ? 'tab-history' : 'tab-admin';
+  const tabIdMap = { rank: 'tab-ranking', hist: 'tab-history', agg: 'tab-admin', team: 'tab-team' };
+  const tabId = tabIdMap[prefix];
   document.querySelectorAll('#' + tabId + ' .preset-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   const f = document.getElementById(prefix + '-from');
   const t = document.getElementById(prefix + '-to');
   if (type === 'week') { f.value = thisWeekStart(); t.value = todayStr(); }
   else if (type === 'month') { f.value = thisMonthStart(); t.value = todayStr(); }
+  else if (type === 'season') { f.value = SEASON_START; t.value = ''; }
   else { f.value = ''; t.value = ''; }
   if (prefix === 'rank') renderRanking();
   else if (prefix === 'hist') renderHistory();
+  else if (prefix === 'team') renderTeamTab();
   else renderAggregate();
 }
 
@@ -947,6 +1039,160 @@ function renderRanking() {
       <div class="rank-bar-wrap"><div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.round(ms/max*100)}%"></div></div></div>
     `;
     list.appendChild(item);
+  });
+}
+
+// ===== チーム対抗戦 =====
+
+// 60分以上を1カウントとする「有効日カウント」を、生徒ごとに算出する。
+// 同日の複数セッション（type:'study'のみ、開始日基準）の合計が60分以上ならその日1カウント。
+// from/toは 'YYYY-MM-DD'（省略可）。
+function computeDayCounts(sessions, fromDate, toDate) {
+  const byNameDay = {}; // name -> { 'YYYY-MM-DD': totalMs }
+  sessions.forEach(s => {
+    if (s.type !== 'study') return; // 授業・補正は対象外
+    const day = new Date(s.checkIn).toISOString().slice(0, 10);
+    if (fromDate && day < fromDate) return;
+    if (toDate && day > toDate) return;
+    if (!byNameDay[s.name]) byNameDay[s.name] = {};
+    byNameDay[s.name][day] = (byNameDay[s.name][day] || 0) + (s.duration || 0);
+  });
+  const counts = {}; // name -> 有効日数
+  Object.keys(byNameDay).forEach(name => {
+    let c = 0;
+    Object.values(byNameDay[name]).forEach(ms => { if (ms >= 60 * 60000) c++; });
+    counts[name] = c;
+  });
+  return counts;
+}
+
+// 生徒の「回数」実績（8月末までの study セッション件数）を返す。ドラフトの並び替えに使用。
+function computeRawSessionCounts(sessions, toDate) {
+  const counts = {};
+  sessions.forEach(s => {
+    if (s.type !== 'study') return;
+    const day = new Date(s.checkIn).toISOString().slice(0, 10);
+    if (toDate && day > toDate) return;
+    counts[s.name] = (counts[s.name] || 0) + 1;
+  });
+  return counts;
+}
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// スネークドラフトでチーム分けを実行する
+function runDraft() {
+  const missingGrade = state.students.filter(n => !state.grades[n]);
+  if (missingGrade.length) {
+    alert('以下の生徒の学年が未設定です。生徒リストで学年を設定してから実行してください：\n\n' + missingGrade.join('、'));
+    return;
+  }
+  if (!confirm(`8月末（${DRAFT_CUTOFF}）までの自習回数実績をもとに、${TEAM_COUNT}チームへスネークドラフトでチーム分けを実行します。\n\n実績のある生徒は回数の多い順にジグザグ配分。実績0回の生徒は、中3・高3を各チームへ均等配分、それ以外はランダム配分します。\n\nよろしいですか？`)) return;
+
+  const rawCounts = computeRawSessionCounts(state.sessions, DRAFT_CUTOFF);
+  const withCount = [];
+  const zeroCount = [];
+  state.students.forEach(name => {
+    const c = rawCounts[name] || 0;
+    if (c > 0) withCount.push({ name, count: c });
+    else zeroCount.push({ name, grade: state.grades[name] });
+  });
+  withCount.sort((a, b) => b.count - a.count);
+
+  const teams = Array.from({ length: TEAM_COUNT }, () => []);
+
+  // 1) 実績ありの生徒をスネークドラフト
+  let dir = 1, t = 0;
+  withCount.forEach(s => {
+    teams[t].push(s.name);
+    if (dir === 1) { t++; if (t === TEAM_COUNT) { t = TEAM_COUNT - 1; dir = -1; } }
+    else { t--; if (t < 0) { t = 0; dir = 1; } }
+  });
+
+  // 2) 実績0：中3・高3は均等配分（チーム人数が少ない順）、他学年はランダムで均等配分
+  const seniors = shuffleArray(zeroCount.filter(s => s.grade === '中3' || s.grade === '高3'));
+  const others = shuffleArray(zeroCount.filter(s => s.grade !== '中3' && s.grade !== '高3'));
+  function assignByMinTeam(list) {
+    list.forEach(s => {
+      let minIdx = 0;
+      for (let i = 1; i < TEAM_COUNT; i++) if (teams[i].length < teams[minIdx].length) minIdx = i;
+      teams[minIdx].push(s.name);
+    });
+  }
+  assignByMinTeam(seniors);
+  assignByMinTeam(others);
+
+  // 保存
+  const newTeams = {};
+  teams.forEach((members, idx) => members.forEach(name => newTeams[name] = idx));
+  state.teams = newTeams;
+  state.draft = { done: true, at: new Date().toISOString(), cutoff: DRAFT_CUTOFF, teamCount: TEAM_COUNT };
+  saveData();
+  renderAdmin();
+  alert('✅ チーム分けが完了しました');
+}
+
+async function resetDraft() {
+  if (!confirm('チーム分けをリセットしますか？（チーム対抗戦の記録自体は消えません）')) return;
+  state.teams = {};
+  state.draft = null;
+  await saveData();
+  renderAdmin();
+}
+
+// 新規生徒を最少人数チームへ自動配属（ドラフト実行後のみ）
+function autoAssignNewStudent(name) {
+  if (!state.draft || !state.draft.done) return;
+  const teamCounts = Array.from({ length: TEAM_COUNT }, () => 0);
+  Object.values(state.teams).forEach(t => { if (t >= 0 && t < TEAM_COUNT) teamCounts[t]++; });
+  let minIdx = 0;
+  for (let i = 1; i < TEAM_COUNT; i++) if (teamCounts[i] < teamCounts[minIdx]) minIdx = i;
+  state.teams[name] = minIdx;
+}
+
+function renderTeamTab() {
+  const list = document.getElementById('team-list');
+  if (!state.draft || !state.draft.done) {
+    list.innerHTML = '<p class="empty">まだチーム分けが行われていません。<br>管理画面から実行してください。</p>';
+    return;
+  }
+  const from = document.getElementById('team-from')?.value || SEASON_START;
+  const to = document.getElementById('team-to')?.value || '';
+  const dayCounts = computeDayCounts(state.sessions, from, to);
+
+  const teamTotals = Array.from({ length: TEAM_COUNT }, () => ({ score: 0, members: [] }));
+  state.students.forEach(name => {
+    const tIdx = state.teams[name];
+    if (tIdx === undefined) return;
+    const cnt = dayCounts[name] || 0;
+    teamTotals[tIdx].score += cnt;
+    teamTotals[tIdx].members.push({ name, cnt });
+  });
+  teamTotals.forEach(t => t.members.sort((a, b) => b.cnt - a.cnt));
+
+  const order = teamTotals.map((t, i) => ({ ...t, idx: i })).sort((a, b) => b.score - a.score);
+  const medals = ['🥇','🥈','🥉'];
+  list.innerHTML = '';
+  order.forEach((t, rank) => {
+    const card = document.createElement('div');
+    card.className = 'team-card';
+    card.innerHTML = `
+      <div class="team-head">
+        <div class="team-rank-badge">${rank < 3 ? medals[rank] : rank + 1}</div>
+        <div class="team-swatch" style="background:${TEAM_COLORS[t.idx]}"></div>
+        <div class="team-name">${TEAM_NAMES[t.idx]}チーム</div>
+        <div class="team-score">${t.score}<span style="font-size:12px;color:#888;font-weight:500">カウント</span></div>
+      </div>
+      <div class="team-members">${t.members.map(m => `${m.name}（${m.cnt}）`).join('　')}</div>
+    `;
+    list.appendChild(card);
   });
 }
 
@@ -1015,21 +1261,72 @@ function renderAdmin() {
   initLessonForm();
   initManualForm();
   updateRoomLabel();
+  renderDraftAdmin();
   const container = document.getElementById('admin-student-list');
   container.innerHTML = '';
+  const gradeOptions = ['小1','小2','小3','小4','小5','小6','中1','中2','中3','高1','高2','高3'];
   state.students.forEach((name, i) => {
     const total = state.sessions.filter(s => s.name === name).reduce((a, s) => a + (s.duration || 0), 0);
     const act = state.active[name] ? Date.now() - state.active[name] : 0;
     const row = document.createElement('div'); row.className = 'admin-row';
+    const curGrade = state.grades[name] || '';
+    const tIdx = state.teams[name];
+    const teamTag = tIdx !== undefined ? `<span class="team-tag" style="background:${TEAM_COLORS[tIdx]}22;color:${TEAM_COLORS[tIdx]}">${TEAM_NAMES[tIdx]}</span>` : '';
     row.innerHTML = `
       <div class="mini-avatar">${getInitials(name)}</div>
-      <span>${name}</span>
+      <span>${name}${teamTag}</span>
+      <select class="grade-select" onchange="setStudentGrade(${i}, this.value)">
+        <option value="">学年—</option>
+        ${gradeOptions.map(g => `<option value="${g}" ${g === curGrade ? 'selected' : ''}>${g}</option>`).join('')}
+      </select>
       <span class="meta">${formatDurationH(total + act)}</span>
       <button class="edit-btn" onclick="editStudent(${i})" title="名前を編集">✏️</button>
       <button class="del-btn" onclick="removeStudent(${i})" title="削除">×</button>
     `;
     container.appendChild(row);
   });
+}
+
+function renderDraftAdmin() {
+  const statusEl = document.getElementById('draft-status');
+  const listEl = document.getElementById('team-admin-list');
+  if (!statusEl || !listEl) return;
+  if (state.draft && state.draft.done) {
+    statusEl.textContent = `${state.draft.cutoff} までの実績で ${state.draft.teamCount} チームに分け済みです（実行日：${new Date(state.draft.at).toLocaleDateString('ja-JP')}）。`;
+    listEl.innerHTML = '';
+    const teams = Array.from({ length: TEAM_COUNT }, () => []);
+    state.students.forEach(name => {
+      const t = state.teams[name];
+      if (t !== undefined) teams[t].push(name);
+    });
+    teams.forEach((members, idx) => {
+      const div = document.createElement('div');
+      div.className = 'team-card';
+      div.innerHTML = `
+        <div class="team-head">
+          <div class="team-swatch" style="background:${TEAM_COLORS[idx]}"></div>
+          <div class="team-name">${TEAM_NAMES[idx]}チーム（${members.length}人）</div>
+        </div>
+        <div class="team-members">${members.join('　') || '（なし）'}</div>
+      `;
+      listEl.appendChild(div);
+    });
+  } else {
+    const missing = state.students.filter(n => !state.grades[n]).length;
+    statusEl.textContent = missing
+      ? `まだチーム分けが実行されていません。学年未設定の生徒が ${missing} 人います。下の生徒リストで学年を設定してから実行してください。`
+      : 'まだチーム分けが実行されていません。下のボタンから実行できます。';
+    listEl.innerHTML = '';
+  }
+}
+
+async function setStudentGrade(i, grade) {
+  const name = state.students[i];
+  if (!name) return;
+  if (grade) state.grades[name] = grade;
+  else delete state.grades[name];
+  await saveData();
+  renderDraftAdmin();
 }
 
 function renderActiveForAdmin() {
@@ -1424,6 +1721,9 @@ async function editStudent(i) {
     state.active[trimmed] = state.active[oldName];
     delete state.active[oldName];
   }
+  // 学年・チーム情報も引き継ぐ
+  if (state.grades[oldName] !== undefined) { state.grades[trimmed] = state.grades[oldName]; delete state.grades[oldName]; }
+  if (state.teams[oldName] !== undefined) { state.teams[trimmed] = state.teams[oldName]; delete state.teams[oldName]; }
   // 過去の記録を全て置き換え
   state.sessions.forEach(s => { if (s.name === oldName) s.name = trimmed; });
   sortStudents();
@@ -1437,17 +1737,24 @@ function sortStudents() {
 
 async function addStudent() {
   const inp = document.getElementById('new-student-name');
+  const gradeSel = document.getElementById('new-student-grade');
   const name = inp.value.trim();
   if (!name || state.students.includes(name)) return;
   state.students.push(name);
+  if (gradeSel && gradeSel.value) state.grades[name] = gradeSel.value;
+  // ドラフト実施済みなら、新規生徒は最少人数チームへ自動配属
+  autoAssignNewStudent(name);
   sortStudents();
-  await saveData(); inp.value = ''; renderAdmin();
+  await saveData(); inp.value = ''; if (gradeSel) gradeSel.value = ''; renderAdmin();
 }
 
 async function removeStudent(i) {
   const name = state.students[i];
   if (!confirm(name + ' を削除しますか？\n（記録データは残ります）')) return;
-  delete state.active[name]; state.students.splice(i, 1); await saveData(); renderAdmin();
+  delete state.active[name];
+  delete state.grades[name];
+  delete state.teams[name];
+  state.students.splice(i, 1); await saveData(); renderAdmin();
 }
 
 function downloadCSV(rows, filename) {
