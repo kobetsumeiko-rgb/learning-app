@@ -673,7 +673,8 @@ function defaultData(room) {
     active: {},
     grades: {},
     teams: {},
-    draft: null
+    draft: null,
+    realNames: {}
   };
 }
 
@@ -692,6 +693,7 @@ function normalizeState(data, room) {
   if (!data.grades) data.grades = {};
   if (!data.teams) data.teams = {};
   if (!data.draft) data.draft = null;
+  if (!data.realNames) data.realNames = {};
   if (!data.students) data.students = room === 'amorisan' ? [...DEFAULT_STUDENTS_AMORISAN] : [];
   if (!data.sessions) data.sessions = [];
   if (!data.active) data.active = {};
@@ -713,7 +715,7 @@ async function saveData() {
   }
 }
 
-let state = { students: [], sessions: [], active: {}, grades: {}, teams: {}, draft: null };
+let state = { students: [], sessions: [], active: {}, grades: {}, teams: {}, draft: null, realNames: {} };
 let selectedStudent = null;
 let activeTab = 'checkin';
 
@@ -764,7 +766,7 @@ async function mergeAllRooms() {
   try {
     const res = await fetch(`${WORKER_URL}/checkin/all`);
     const json = await res.json();
-    const merged = { students: [], sessions: [], active: {}, banned: {}, grades: {}, teams: {}, draft: null };
+    const merged = { students: [], sessions: [], active: {}, banned: {}, grades: {}, teams: {}, draft: null, realNames: {} };
     const rooms = ['amorisan', 'yashiro', 'aokijima'];
     rooms.forEach(r => {
       const d = json.data[r];
@@ -775,12 +777,13 @@ async function mergeAllRooms() {
       Object.assign(merged.banned, d.banned || {});
       Object.assign(merged.grades, d.grades || {});
       Object.assign(merged.teams, d.teams || {});
+      Object.assign(merged.realNames, d.realNames || {});
     });
     merged.students.sort((a, b) => a.localeCompare(b, 'ja'));
     return merged;
   } catch(e) {
     console.error('mergeAllRooms error:', e);
-    return { students: [], sessions: [], active: {}, grades: {}, teams: {}, draft: null };
+    return { students: [], sessions: [], active: {}, grades: {}, teams: {}, draft: null, realNames: {} };
   }
 }
 
@@ -836,6 +839,10 @@ function getBadge(ms) {
   if (h >= 30)  return { icon: '✨', label: '激レア',  bg: '#E6F1FB', color: '#185FA5' };
   if (h >= 10)  return { icon: '⭐', label: 'レア',    bg: '#FFF9C4', color: '#855c00' };
   return { icon: '🌍', label: 'ノーマル', bg: '#F1EFE8', color: '#444441' };
+}
+
+function escapeAttr(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function getInitials(name) {
@@ -1279,18 +1286,25 @@ function renderAdmin() {
     const total = state.sessions.filter(s => s.name === name).reduce((a, s) => a + (s.duration || 0), 0);
     const act = state.active[name] ? Date.now() - state.active[name] : 0;
     const row = document.createElement('div'); row.className = 'admin-row';
+    row.style.flexWrap = 'wrap';
     const curGrade = state.grades[name] || '';
+    const curRealName = state.realNames[name] || '';
     const tIdx = state.teams[name];
     const teamTag = tIdx !== undefined ? `<span class="team-tag" style="background:${TEAM_COLORS[tIdx]}22;color:${TEAM_COLORS[tIdx]}">${TEAM_NAMES[tIdx]}</span>` : '';
     row.innerHTML = `
       <div class="mini-avatar">${getInitials(name)}</div>
-      <span>${name}${teamTag}</span>
+      <div style="flex:1;min-width:120px">
+        <div>${name}${teamTag}</div>
+        <input type="text" class="realname-input" placeholder="本名（任意・管理者のみ表示）" value="${escapeAttr(curRealName)}"
+          onchange="setRealName(${i}, this.value)"
+          style="margin-top:4px;width:100%;padding:5px 8px;border-radius:6px;border:1px solid #ddd;font-size:12px;color:#888;background:#f5f5f0">
+      </div>
       <select class="grade-select" onchange="setStudentGrade(${i}, this.value)">
         <option value="">学年—</option>
         ${gradeOptions.map(g => `<option value="${g}" ${g === curGrade ? 'selected' : ''}>${g}</option>`).join('')}
       </select>
       <span class="meta">${formatDurationH(total + act)}</span>
-      <button class="edit-btn" onclick="editStudent(${i})" title="名前を編集">✏️</button>
+      <button class="edit-btn" onclick="editStudent(${i})" title="ニックネームを編集">✏️</button>
       <button class="del-btn" onclick="removeStudent(${i})" title="削除">×</button>
     `;
     container.appendChild(row);
@@ -1337,6 +1351,15 @@ async function setStudentGrade(i, grade) {
   else delete state.grades[name];
   await saveData();
   renderDraftAdmin();
+}
+
+async function setRealName(i, realName) {
+  const name = state.students[i];
+  if (!name) return;
+  const trimmed = realName.trim();
+  if (trimmed) state.realNames[name] = trimmed;
+  else delete state.realNames[name];
+  await saveData();
 }
 
 function renderActiveForAdmin() {
@@ -1731,9 +1754,10 @@ async function editStudent(i) {
     state.active[trimmed] = state.active[oldName];
     delete state.active[oldName];
   }
-  // 学年・チーム情報も引き継ぐ
+  // 学年・チーム・本名情報も引き継ぐ
   if (state.grades[oldName] !== undefined) { state.grades[trimmed] = state.grades[oldName]; delete state.grades[oldName]; }
   if (state.teams[oldName] !== undefined) { state.teams[trimmed] = state.teams[oldName]; delete state.teams[oldName]; }
+  if (state.realNames[oldName] !== undefined) { state.realNames[trimmed] = state.realNames[oldName]; delete state.realNames[oldName]; }
   // 過去の記録を全て置き換え
   state.sessions.forEach(s => { if (s.name === oldName) s.name = trimmed; });
   sortStudents();
@@ -1764,6 +1788,7 @@ async function removeStudent(i) {
   delete state.active[name];
   delete state.grades[name];
   delete state.teams[name];
+  delete state.realNames[name];
   state.students.splice(i, 1); await saveData(); renderAdmin();
 }
 
