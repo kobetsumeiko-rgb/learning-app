@@ -754,11 +754,8 @@ async function setRoom(room) {
   }
   document.getElementById('room-select-screen').style.display = 'none';
   document.getElementById('room-badge').textContent = ROOMS[room].short;
-  // 全教室モード以外では管理タブのみ非表示
-  const adminTab = document.querySelector('.tab-bar .tab:last-child');
-  if (adminTab) adminTab.style.display = room === 'all' ? '' : 'none';
-  // チェックイン・ランキング・チーム・記録タブは常に表示
-  document.querySelectorAll('.tab-bar .tab:not(:last-child)').forEach(t => t.style.display = '');
+  // 管理タブは全モードで表示（各教室ログイン時も編集できるようにするため）
+  document.querySelectorAll('.tab-bar .tab').forEach(t => t.style.display = '');
   updateClock();
   renderStudentGrid();
 }
@@ -1254,6 +1251,19 @@ function renderAggregate() {
 }
 
 function renderAdmin() {
+  const warnId = 'all-room-warning';
+  let warnEl = document.getElementById(warnId);
+  if (currentRoom === 'all') {
+    if (!warnEl) {
+      warnEl = document.createElement('div');
+      warnEl.id = warnId;
+      warnEl.style.cssText = 'background:#FFF0EC;border:1px solid #F5A98A;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#D85A30;line-height:1.6;font-weight:600';
+      warnEl.textContent = '⚠️ 「全教室」モードでは、ここでの編集（学年設定・生徒追加・チーム分けなど）は保存されません。編集する場合は一度ログアウトし、対象の教室（安茂里駅前・屋代・青木島）を選び直してから管理画面を開いてください。';
+      document.querySelector('.admin-panel').prepend(warnEl);
+    }
+  } else if (warnEl) {
+    warnEl.remove();
+  }
   renderActiveForAdmin();
   initBanForm();
   renderBanList();
