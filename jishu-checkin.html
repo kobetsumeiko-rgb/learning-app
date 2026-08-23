@@ -786,8 +786,8 @@ async function mergeAllRooms() {
 
 function changeRoom() {
   openPwOverlay('管理者パスワードを入力してください', () => {
-    currentRoom = null;
-    document.getElementById('room-select-screen').style.display = 'flex';
+    localStorage.removeItem(ROOM_KEY);
+    location.reload();
   });
 }
 
