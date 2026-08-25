@@ -494,6 +494,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
       <div id="team-admin-list"></div>
     </div>
     <div class="admin-section">
+      <h3>🎁 表彰・QUOカード集計（9/1〜11/30）</h3>
+      <div class="draft-box">
+        <p>優勝／2位チーム賞、チーム内No.1、全体No.1、自習努力賞（伸び率）の候補を、今の時点までのデータで集計します。シーズン中いつでも実行して途中経過を確認できます。</p>
+        <button class="draft-btn" onclick="renderAwards()">🏅 現時点の表彰候補を集計</button>
+      </div>
+      <div id="award-results"></div>
+    </div>
+    <div class="admin-section">
       <h3>⚠️ 累計時間を減算（補正）</h3>
       <div class="manual-add-box" style="border-color:#F5CFA0;background:#FFF8F0">
         <div class="manual-row">
@@ -643,6 +651,8 @@ const TEAM_COLORS = ['#D85A30','#185FA5','#1D9E75','#B98900','#7A5FC7','#C2447A'
 const TEAM_NAMES = ['赤','青','緑','黄','紫','桃'];
 const DRAFT_CUTOFF = '2026-08-31'; // この日までの実績でチーム分け
 const SEASON_START = '2026-09-01'; // チーム対抗戦カウント開始日
+const SEASON_END = '2026-11-30'; // チーム対抗戦終了日
+const PRIZE_MIN_COUNT = 5; // 優勝・2位チーム賞のカードをもらえる個人の最低自習回数（対抗戦期間中）
 
 const ROOMS = {
   amorisan: { name: '安茂里駅前教室', short: '安茂里' },
@@ -1364,6 +1374,95 @@ function renderDraftAdmin() {
       : 'まだチーム分けが実行されていません。下のボタンから実行できます。';
     listEl.innerHTML = '';
   }
+}
+
+// ===== 表彰・QUOカード集計 =====
+
+function displayNameOf(name) {
+  return state.realNames[name] ? `${name}（${state.realNames[name]}）` : name;
+}
+
+function renderAwards() {
+  const container = document.getElementById('award-results');
+  if (!container) return;
+  if (!state.draft || !state.draft.done) {
+    container.innerHTML = '<p class="empty">先にチーム分けを実行してください。</p>';
+    return;
+  }
+
+  const today = todayStr();
+  const toDate = today < SEASON_END ? today : SEASON_END; // 期間中は「今日まで」、終了後は11/30まで
+  const postCounts = computeDayCounts(state.sessions, SEASON_START, toDate);
+  const preCounts = computeDayCounts(state.sessions, null, '2026-08-31');
+
+  const participants = state.students.filter(n => !state.optOut[n]);
+
+  // チームごとのスコア・メンバー内訳
+  const teamInfo = Array.from({ length: TEAM_COUNT }, () => ({ members: [], score: 0 }));
+  participants.forEach(name => {
+    const tIdx = state.teams[name];
+    if (tIdx === undefined) return;
+    const cnt = postCounts[name] || 0;
+    teamInfo[tIdx].members.push({ name, cnt });
+    teamInfo[tIdx].score += cnt;
+  });
+  teamInfo.forEach(t => t.members.sort((a, b) => b.cnt - a.cnt));
+
+  const teamOrder = teamInfo.map((t, i) => ({ ...t, idx: i })).sort((a, b) => b.score - a.score);
+
+  function teamPrizeBlock(rankLabel, cardAmount, teamData) {
+    if (!teamData) return '';
+    const eligible = teamData.members.filter(m => m.cnt >= PRIZE_MIN_COUNT);
+    const ineligible = teamData.members.filter(m => m.cnt < PRIZE_MIN_COUNT);
+    return `
+      <div class="team-card">
+        <div class="team-head">
+          <div class="team-swatch" style="background:${TEAM_COLORS[teamData.idx]}"></div>
+          <div class="team-name">${rankLabel}：${TEAM_NAMES[teamData.idx]}チーム（合計${teamData.score}カウント）</div>
+          <div class="team-score" style="font-size:14px">${cardAmount}円分</div>
+        </div>
+        <div style="font-size:12px;color:#085041;margin-bottom:4px">✅ カード対象（${PRIZE_MIN_COUNT}回以上）：${eligible.length ? eligible.map(m => `${displayNameOf(m.name)}(${m.cnt})`).join('　') : 'なし'}</div>
+        ${ineligible.length ? `<div style="font-size:12px;color:#D85A30">🚫 対象外（${PRIZE_MIN_COUNT}回未満）：${ineligible.map(m => `${displayNameOf(m.name)}(${m.cnt})`).join('　')}</div>` : ''}
+      </div>`;
+  }
+
+  // チーム内No.1（各チーム1人、0カウントのみのチームは該当者なし）
+  const teamNo1Html = teamInfo.map((t, idx) => {
+    if (!t.members.length || t.members[0].cnt <= 0) {
+      return `<div style="font-size:13px;padding:4px 0">${TEAM_NAMES[idx]}チーム：該当者なし</div>`;
+    }
+    const top = t.members[0];
+    return `<div style="font-size:13px;padding:4px 0"><span class="team-tag" style="background:${TEAM_COLORS[idx]}22;color:${TEAM_COLORS[idx]}">${TEAM_NAMES[idx]}</span> ${displayNameOf(top.name)}（${top.cnt}回）</div>`;
+  }).join('');
+
+  // 全体No.1
+  let overallTop = null;
+  participants.forEach(name => {
+    const cnt = postCounts[name] || 0;
+    if (!overallTop || cnt > overallTop.cnt) overallTop = { name, cnt };
+  });
+
+  // 自習努力賞（伸び率）：9〜11月の回数 − 8月末までの回数
+  let bestGrowth = null;
+  participants.forEach(name => {
+    const pre = preCounts[name] || 0;
+    const post = postCounts[name] || 0;
+    const delta = post - pre;
+    if (!bestGrowth || delta > bestGrowth.delta) bestGrowth = { name, pre, post, delta };
+  });
+
+  container.innerHTML = `
+    <p style="font-size:12px;color:#888;margin:10px 0 6px">集計期間：9/1〜${toDate}${toDate !== SEASON_END ? '（進行中・現時点まで）' : '（最終）'}</p>
+    <h4 style="font-size:13px;color:#444;margin:14px 0 6px">🏆 優勝・2位チーム賞</h4>
+    ${teamPrizeBlock('優勝', '1,000', teamOrder[0])}
+    ${teamPrizeBlock('2位', '500', teamOrder[1])}
+    <h4 style="font-size:13px;color:#444;margin:14px 0 6px">👑 チーム内自習回数No.1賞（各チーム500円分）</h4>
+    ${teamNo1Html}
+    <h4 style="font-size:13px;color:#444;margin:14px 0 6px">🌟 全体自習回数No.1賞（500円分）</h4>
+    <div style="font-size:13px">${overallTop && overallTop.cnt > 0 ? `${displayNameOf(overallTop.name)}（${overallTop.cnt}回）` : '該当者なし'}</div>
+    <h4 style="font-size:13px;color:#444;margin:14px 0 6px">📈 自習努力賞（伸び率・500円分）</h4>
+    <div style="font-size:13px">${bestGrowth && bestGrowth.delta > 0 ? `${displayNameOf(bestGrowth.name)}（8月末まで${bestGrowth.pre}回 → 9〜11月${bestGrowth.post}回／+${bestGrowth.delta}）` : '該当者なし'}</div>
+  `;
 }
 
 async function setStudentGrade(i, grade) {
