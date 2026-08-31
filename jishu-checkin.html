@@ -1469,6 +1469,10 @@ function renderAdmin() {
         <option value="">学年—</option>
         ${gradeOptions.map(g => `<option value="${g}" ${g === curGrade ? 'selected' : ''}>${g}</option>`).join('')}
       </select>
+      <select class="grade-select" onchange="setStudentTeam(${i}, this.value)" ${isOptOut ? 'disabled title="不参加のため設定不可"' : ''}>
+        <option value="">チーム未所属</option>
+        ${TEAM_NAMES.map((tn, ti) => `<option value="${ti}" ${tIdx === ti ? 'selected' : ''}>${tn}チーム</option>`).join('')}
+      </select>
       <span class="meta">${formatDurationH(total + act)}</span>
       <button class="edit-btn" onclick="editStudent(${i})" title="ニックネームを編集">✏️</button>
       <button class="del-btn" onclick="removeStudent(${i})" title="削除">×</button>
@@ -1608,6 +1612,16 @@ async function setStudentGrade(i, grade) {
   renderDraftAdmin();
 }
 
+async function setStudentTeam(i, teamValue) {
+  const name = state.students[i];
+  if (!name) return;
+  if (teamValue === '') delete state.teams[name];
+  else state.teams[name] = parseInt(teamValue, 10);
+  await saveRosterData();
+  renderAdmin();
+  renderDraftAdmin();
+}
+
 async function setRealName(i, realName) {
   const name = state.students[i];
   if (!name) return;
@@ -1626,6 +1640,11 @@ async function setOptOut(i, checked) {
     delete state.teams[name];
   } else {
     delete state.optOut[name];
+    // 不参加→参加に戻った場合、すでにチーム分け実行済みなら
+    // 新規生徒と同じルール（人数最少→得点最少）で自動的に1チームだけ割り当てる
+    if (state.draft && state.draft.done && state.teams[name] === undefined) {
+      autoAssignNewStudent(name);
+    }
   }
   await saveRosterData();
   renderDraftAdmin();
