@@ -742,17 +742,66 @@ function normalizeState(data, room) {
 }
 
 // セッション系（チェックイン・チェックアウト・自習記録）のみ保存。ロースター系のキーには一切触れない。
+// セッション（自習記録）の一意な識別子。新規作成時は id を振るが、
+// id を持たない古いレコード（移行前のデータ）はその内容自体を識別子として使う。
+function sessionIdentity(s) {
+  return s.id || `${s.name}|${s.checkIn}|${s.checkOut}|${s.type}|${s.duration}`;
+}
+function genSessionId() {
+  return 's_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+// 直前にこの端末が「サーバー上でこうだったはず」と認識していた状態（差分検出の基準点）
+let baselineSessionIds = new Set();
+let baselineActiveNames = new Set();
+function setSessionBaseline(sessions, active) {
+  baselineSessionIds = new Set(sessions.map(sessionIdentity));
+  baselineActiveNames = new Set(Object.keys(active || {}));
+}
+
 async function saveSessionData() {
   if (!currentRoom || currentRoom === 'all') return;
   try {
-    const payload = { sessions: state.sessions, active: state.active };
+    const remote = (await fetchRoomData(currentRoom)) || { sessions: [], active: {} };
+    const remoteSessions = remote.sessions || [];
+    const remoteActive = remote.active || {};
+
+    const localSessions = state.sessions;
+    const localIds = new Set(localSessions.map(sessionIdentity));
+
+    // この端末がbaseline以降に「新しく追加した」記録
+    const added = localSessions.filter(s => !baselineSessionIds.has(sessionIdentity(s)));
+    // この端末がbaseline以降に「削除した」記録（手動削除など）
+    const deletedIds = new Set([...baselineSessionIds].filter(id => !localIds.has(id)));
+
+    let merged = remoteSessions.filter(s => !deletedIds.has(sessionIdentity(s)));
+    const mergedIds = new Set(merged.map(sessionIdentity));
+    added.forEach(s => {
+      const id = sessionIdentity(s);
+      if (!mergedIds.has(id)) { merged.push(s); mergedIds.add(id); }
+    });
+
+    // active（在室中）も同様に差分マージ。ローカルで新たにチェックインした人は追加、
+    // チェックアウトした（＝baselineにはあったがローカルには無い）人はremote側からも消す。
+    const mergedActive = { ...remoteActive, ...state.active };
+    baselineActiveNames.forEach(name => {
+      if (!(name in state.active)) delete mergedActive[name];
+    });
+
+    const payload = { sessions: merged, active: mergedActive };
     const res = await fetch(`${WORKER_URL}/checkin/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ room: currentRoom, data: payload })
     });
     const json = await res.json();
-    if (!json.ok) console.error('saveSessionData failed:', json);
+    if (json.ok) {
+      state.sessions = merged;
+      state.active = mergedActive;
+      setSessionBaseline(merged, mergedActive);
+    } else {
+      console.error('saveSessionData failed:', json);
+    }
   } catch(e) {
     console.error('saveSessionData error:', e);
   }
@@ -852,6 +901,7 @@ async function setRoom(room) {
   } else {
     state = await loadData(room);
   }
+  setSessionBaseline(state.sessions, state.active);
   document.getElementById('room-select-screen').style.display = 'none';
   document.getElementById('room-badge').textContent = ROOMS[room].short;
   // 管理タブは常に表示するが、開くにはパスワードが必要（openAdminTab側でチェック）
@@ -1045,7 +1095,7 @@ async function doAction() {
   const name = selectedStudent; if (!name) return;
   const now = Date.now();
   if (state.active[name]) {
-    state.sessions.push({ name, checkIn: state.active[name], checkOut: now, duration: now - state.active[name], type: 'study' });
+    state.sessions.push({ id: genSessionId(), name, checkIn: state.active[name], checkOut: now, duration: now - state.active[name], type: 'study' });
     delete state.active[name];
   } else {
     state.active[name] = now;
@@ -1627,7 +1677,7 @@ async function forceCheckout(name) {
   }
   const duration = coDate.getTime() - ci;
   if (!confirm(`${name}\nチェックイン：${ciDate.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}\nチェックアウト：${timeVal}\n滞在時間：${formatDuration(duration)}\n\nこの内容で記録しますか？`)) return;
-  state.sessions.push({ name, checkIn: ci, checkOut: coDate.getTime(), duration, type: 'study' });
+  state.sessions.push({ id: genSessionId(), name, checkIn: ci, checkOut: coDate.getTime(), duration, type: 'study' });
   delete state.active[name];
   await saveSessionData();
   refreshCurrentTab();
@@ -1815,6 +1865,7 @@ ${dateStr}　${h > 0 ? h+'時間' : ''}${m > 0 ? m+'分' : ''}を減算${reason 
 補正後の累計：${formatDuration(currentMs - duration)}`)) return;
   const baseMs = new Date(date + 'T12:00:00').getTime();
   state.sessions.push({
+    id: genSessionId(),
     name,
     checkIn: baseMs,
     checkOut: baseMs,
@@ -1881,7 +1932,7 @@ ${name}
 ${dateStr}　${h > 0 ? h+'時間' : ''}${m > 0 ? m+'分' : ''}`)) return;
   // 日付の正午を基準時刻として記録
   const baseMs = new Date(date + 'T12:00:00').getTime();
-  state.sessions.push({ name, checkIn: baseMs, checkOut: baseMs + duration, duration, type: 'lesson' });
+  state.sessions.push({ id: genSessionId(), name, checkIn: baseMs, checkOut: baseMs + duration, duration, type: 'lesson' });
   await saveSessionData();
   document.getElementById('lesson-hours').value = 0;
   document.getElementById('lesson-mins').value = 0;
@@ -1945,7 +1996,7 @@ async function addManualSession() {
   const d = new Date(ciMs);
   const dateStr = d.toLocaleDateString('ja-JP', {year:'numeric', month:'numeric', day:'numeric'});
   if (!confirm(`以下の内容で記録を追加しますか？\n\n${name}\n${dateStr}　${ci} → ${co}\n滞在時間：${formatDuration(duration)}`)) return;
-  state.sessions.push({ name, checkIn: ciMs, checkOut: coMs, duration, type: 'study' });
+  state.sessions.push({ id: genSessionId(), name, checkIn: ciMs, checkOut: coMs, duration, type: 'study' });
   await saveSessionData();
   // フォームリセット
   document.getElementById('manual-ci').value = '';
