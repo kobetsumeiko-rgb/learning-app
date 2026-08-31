@@ -355,7 +355,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
   <button class="room-btn" onclick="selectRoom('amorisan')">🏫 安茂里駅前教室</button>
   <button class="room-btn" onclick="selectRoom('yashiro')">🏫 屋代教室</button>
   <button class="room-btn" onclick="selectRoom('aokijima')">🏫 長野青木島教室</button>
-  <button class="room-btn" onclick="selectRoom('all')" style="background:#f0f0ea;color:#888;font-size:15px;padding:14px;margin-top:8px">💻 全教室（管理者用）</button>
+  <button class="room-btn" id="room-btn-all" onclick="selectRoom('all')" style="background:#f0f0ea;color:#888;font-size:15px;padding:14px;margin-top:8px">💻 全教室（管理者用）</button>
 </div>
 
 <!-- パスワード入力画面 -->
@@ -689,15 +689,44 @@ function defaultData(room) {
   };
 }
 
-async function loadData(room) {
+// このアプリのデータは2種類のキーに分けて保存する。
+// ・ロースター系（students/grades/teams/draft/realNames/optOut/banned）：管理画面からしか変更されない
+// ・セッション系（sessions/active）：チェックイン端末から頻繁に変更される
+// 1つのキーにまとめていると、片方の端末が古いコピーを保存し直した際に
+// もう片方の変更（例：管理画面で入力した学年）が消えてしまう事故が起きるため、分離している。
+function rosterRoomKey(room) { return room + '__roster'; }
+
+const ROSTER_FIELDS = ['students', 'grades', 'teams', 'draft', 'realNames', 'optOut', 'banned'];
+const SESSION_FIELDS = ['sessions', 'active'];
+
+async function fetchRoomData(room) {
   try {
-    const res = await fetch(`${WORKER_URL}/checkin/data?room=${room}`);
+    const res = await fetch(`${WORKER_URL}/checkin/data?room=${encodeURIComponent(room)}`);
     const json = await res.json();
-    if (json.data) return normalizeState(json.data, room);
+    return json.data || null;
   } catch(e) {
-    console.error('loadData error:', e);
+    console.error('fetchRoomData error:', room, e);
+    return null;
   }
-  return defaultData(room);
+}
+
+async function loadData(room) {
+  const [sessionData, rosterData] = await Promise.all([
+    fetchRoomData(room),
+    fetchRoomData(rosterRoomKey(room))
+  ]);
+  const combined = {};
+  // ロースター系：新形式のキーがあればそれを優先。無ければ（未移行の古いデータ）旧形式の統合データから拾う
+  ROSTER_FIELDS.forEach(f => {
+    if (rosterData && rosterData[f] !== undefined) combined[f] = rosterData[f];
+    else if (sessionData && sessionData[f] !== undefined) combined[f] = sessionData[f];
+  });
+  // セッション系：常に checkin:{room} 側から
+  SESSION_FIELDS.forEach(f => {
+    if (sessionData && sessionData[f] !== undefined) combined[f] = sessionData[f];
+  });
+  if (!sessionData && !rosterData) return defaultData(room);
+  return normalizeState(combined, room);
 }
 
 function normalizeState(data, room) {
@@ -712,19 +741,76 @@ function normalizeState(data, room) {
   return data;
 }
 
-async function saveData() {
+// セッション系（チェックイン・チェックアウト・自習記録）のみ保存。ロースター系のキーには一切触れない。
+async function saveSessionData() {
   if (!currentRoom || currentRoom === 'all') return;
   try {
+    const payload = { sessions: state.sessions, active: state.active };
     const res = await fetch(`${WORKER_URL}/checkin/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ room: currentRoom, data: state })
+      body: JSON.stringify({ room: currentRoom, data: payload })
     });
     const json = await res.json();
-    if (!json.ok) console.error('saveData failed:', json);
+    if (!json.ok) console.error('saveSessionData failed:', json);
   } catch(e) {
-    console.error('saveData error:', e);
+    console.error('saveSessionData error:', e);
   }
+}
+
+// ロースター系（生徒リスト・学年・チーム・本名・不参加・停止情報）のみ保存。セッション系のキーには一切触れない。
+async function saveRosterData() {
+  if (!currentRoom || currentRoom === 'all') return;
+  try {
+    const payload = {
+      students: state.students,
+      grades: state.grades,
+      teams: state.teams,
+      draft: state.draft,
+      realNames: state.realNames,
+      optOut: state.optOut,
+      banned: state.banned || {}
+    };
+    const res = await fetch(`${WORKER_URL}/checkin/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room: rosterRoomKey(currentRoom), data: payload })
+    });
+    const json = await res.json();
+    if (!json.ok) console.error('saveRosterData failed:', json);
+  } catch(e) {
+    console.error('saveRosterData error:', e);
+  }
+}
+
+// 互換用：両方を保存したい場合（生徒名の変更など、両方のデータに影響する操作）に使う
+async function saveData() {
+  await Promise.all([saveSessionData(), saveRosterData()]);
+}
+
+// 任意のroomに対して、渡された完全なデータをロースター系・セッション系に分けて保存する
+// （banStudent など、currentRoom以外の教室のデータを直接保存する必要がある場面で使用）
+async function saveRoomDataSplit(room, data) {
+  const sessionPayload = { sessions: data.sessions || [], active: data.active || {} };
+  const rosterPayload = {
+    students: data.students || [],
+    grades: data.grades || {},
+    teams: data.teams || {},
+    draft: data.draft || null,
+    realNames: data.realNames || {},
+    optOut: data.optOut || {},
+    banned: data.banned || {}
+  };
+  await Promise.all([
+    fetch(`${WORKER_URL}/checkin/save`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room, data: sessionPayload })
+    }),
+    fetch(`${WORKER_URL}/checkin/save`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room: rosterRoomKey(room), data: rosterPayload })
+    })
+  ]);
 }
 
 let state = { students: [], sessions: [], active: {}, grades: {}, teams: {}, draft: null, realNames: {}, optOut: {} };
@@ -768,7 +854,7 @@ async function setRoom(room) {
   }
   document.getElementById('room-select-screen').style.display = 'none';
   document.getElementById('room-badge').textContent = ROOMS[room].short;
-  // 管理タブは全モードで表示（各教室ログイン時も編集できるようにするため）
+  // 管理タブは常に表示するが、開くにはパスワードが必要（openAdminTab側でチェック）
   document.querySelectorAll('.tab-bar .tab').forEach(t => t.style.display = '');
   updateClock();
   renderStudentGrid();
@@ -776,13 +862,11 @@ async function setRoom(room) {
 
 async function mergeAllRooms() {
   try {
-    const res = await fetch(`${WORKER_URL}/checkin/all`);
-    const json = await res.json();
     const merged = { students: [], sessions: [], active: {}, banned: {}, grades: {}, teams: {}, draft: null, realNames: {}, optOut: {} };
     const rooms = ['amorisan', 'yashiro', 'aokijima'];
-    rooms.forEach(r => {
-      const d = json.data[r];
-      if (!d) return;
+    for (const r of rooms) {
+      const d = await loadData(r);
+      if (!d) continue;
       merged.students = merged.students.concat(d.students || []);
       merged.sessions = merged.sessions.concat((d.sessions || []).map(s => ({...s, room: r})));
       Object.assign(merged.active, d.active || {});
@@ -791,7 +875,7 @@ async function mergeAllRooms() {
       Object.assign(merged.teams, d.teams || {});
       Object.assign(merged.realNames, d.realNames || {});
       Object.assign(merged.optOut, d.optOut || {});
-    });
+    }
     merged.students.sort((a, b) => a.localeCompare(b, 'ja'));
     return merged;
   } catch(e) {
@@ -966,7 +1050,7 @@ async function doAction() {
   } else {
     state.active[name] = now;
   }
-  await saveData();
+  await saveSessionData();
   document.getElementById('modal-overlay').classList.remove('show');
   selectedStudent = null;
   refreshCurrentTab();
@@ -1153,7 +1237,7 @@ function runDraft() {
   teams.forEach((members, idx) => members.forEach(name => newTeams[name] = idx));
   state.teams = newTeams;
   state.draft = { done: true, at: new Date().toISOString(), cutoff: DRAFT_CUTOFF, teamCount: TEAM_COUNT };
-  saveData();
+  saveRosterData();
   renderAdmin();
   alert('✅ チーム分けが完了しました');
 }
@@ -1162,7 +1246,7 @@ async function resetDraft() {
   if (!confirm('チーム分けをリセットしますか？（チーム対抗戦の記録自体は消えません）')) return;
   state.teams = {};
   state.draft = null;
-  await saveData();
+  await saveRosterData();
   renderAdmin();
 }
 
@@ -1470,7 +1554,7 @@ async function setStudentGrade(i, grade) {
   if (!name) return;
   if (grade) state.grades[name] = grade;
   else delete state.grades[name];
-  await saveData();
+  await saveRosterData();
   renderDraftAdmin();
 }
 
@@ -1480,7 +1564,7 @@ async function setRealName(i, realName) {
   const trimmed = realName.trim();
   if (trimmed) state.realNames[name] = trimmed;
   else delete state.realNames[name];
-  await saveData();
+  await saveRosterData();
 }
 
 async function setOptOut(i, checked) {
@@ -1493,7 +1577,7 @@ async function setOptOut(i, checked) {
   } else {
     delete state.optOut[name];
   }
-  await saveData();
+  await saveRosterData();
   renderDraftAdmin();
 }
 
@@ -1545,7 +1629,7 @@ async function forceCheckout(name) {
   if (!confirm(`${name}\nチェックイン：${ciDate.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}\nチェックアウト：${timeVal}\n滞在時間：${formatDuration(duration)}\n\nこの内容で記録しますか？`)) return;
   state.sessions.push({ name, checkIn: ci, checkOut: coDate.getTime(), duration, type: 'study' });
   delete state.active[name];
-  await saveData();
+  await saveSessionData();
   refreshCurrentTab();
 }
 
@@ -1557,7 +1641,7 @@ async function deleteSession(idx) {
              ci.toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'});
   if (!confirm(`この記録を削除しますか？\n${s.name}  ${ds}  ${formatDuration(s.duration)}`)) return;
   state.sessions.splice(idx, 1);
-  await saveData();
+  await saveSessionData();
   refreshCurrentTab();
 }
 
@@ -1574,7 +1658,7 @@ function isBanned(name) {
   if (until && new Date(until + 'T23:59:59') < new Date()) {
     // 解除日を過ぎていたら自動解除（非同期で保存）
     delete state.banned[name];
-    saveData(); // awaitなし：表示には影響しない
+    saveRosterData(); // awaitなし：表示には影響しない
     return false;
   }
   return true;
@@ -1633,11 +1717,7 @@ async function saveBanToRoom(name, banData) {
         roomData.sessions.push({ name, checkIn: roomData.active[name], checkOut: now, duration: now - roomData.active[name], type: 'study' });
         delete roomData.active[name];
       }
-      await fetch(`${WORKER_URL}/checkin/save`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ room, data: roomData })
-      });
+      await saveRoomDataSplit(room, roomData);
       // stateにも反映
       if (!state.banned) state.banned = {};
       if (banData === null) delete state.banned[name];
@@ -1742,7 +1822,7 @@ ${dateStr}　${h > 0 ? h+'時間' : ''}${m > 0 ? m+'分' : ''}を減算${reason 
     type: 'deduct',
     reason: reason || ''
   });
-  await saveData();
+  await saveSessionData();
   document.getElementById('deduct-hours').value = 0;
   document.getElementById('deduct-mins').value = 0;
   document.getElementById('deduct-reason').value = '';
@@ -1802,7 +1882,7 @@ ${dateStr}　${h > 0 ? h+'時間' : ''}${m > 0 ? m+'分' : ''}`)) return;
   // 日付の正午を基準時刻として記録
   const baseMs = new Date(date + 'T12:00:00').getTime();
   state.sessions.push({ name, checkIn: baseMs, checkOut: baseMs + duration, duration, type: 'lesson' });
-  await saveData();
+  await saveSessionData();
   document.getElementById('lesson-hours').value = 0;
   document.getElementById('lesson-mins').value = 0;
   document.getElementById('lesson-preview').style.display = 'none';
@@ -1866,7 +1946,7 @@ async function addManualSession() {
   const dateStr = d.toLocaleDateString('ja-JP', {year:'numeric', month:'numeric', day:'numeric'});
   if (!confirm(`以下の内容で記録を追加しますか？\n\n${name}\n${dateStr}　${ci} → ${co}\n滞在時間：${formatDuration(duration)}`)) return;
   state.sessions.push({ name, checkIn: ciMs, checkOut: coMs, duration, type: 'study' });
-  await saveData();
+  await saveSessionData();
   // フォームリセット
   document.getElementById('manual-ci').value = '';
   document.getElementById('manual-co').value = '';
@@ -1915,7 +1995,7 @@ async function addStudent() {
   // ドラフト実施済みなら、新規生徒は最少人数チームへ自動配属
   autoAssignNewStudent(name);
   sortStudents();
-  await saveData(); inp.value = ''; if (gradeSel) gradeSel.value = ''; renderAdmin();
+  await saveRosterData(); inp.value = ''; if (gradeSel) gradeSel.value = ''; renderAdmin();
 }
 
 async function removeStudent(i) {
@@ -1966,7 +2046,7 @@ function exportAggregateCSV() {
 
 async function confirmReset() {
   if (!confirm('全ての記録をリセットしますか？\nこの操作は元に戻せません。')) return;
-  state.sessions = []; state.active = {}; await saveData();
+  state.sessions = []; state.active = {}; await saveSessionData();
   renderStudentGrid(); renderAggregate(); renderAdmin();
 }
 
