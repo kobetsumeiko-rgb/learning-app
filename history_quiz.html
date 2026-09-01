@@ -89,77 +89,32 @@ header p { font-size: 12px; opacity: 0.65; margin-top: 4px; }
 }
 .qa-answer.show { display: block; }
 
-/* ★ マークボタン */
-.mark-btn {
-  font-size: 18px; background: none; border: none; cursor: pointer;
-  padding: 0 4px; line-height: 1; color: #ccc;
-  transition: color 0.15s, transform 0.1s;
-  vertical-align: middle;
-}
-.mark-btn.marked { color: #f5a623; }
-.mark-btn:active { transform: scale(1.3); }
+/* ★マークボタン */
+.mark-btn { font-size:18px; background:none; border:none; cursor:pointer; padding:0 4px; color:#ccc; transition:color 0.15s, transform 0.1s; vertical-align:middle; }
+.mark-btn.marked { color:#f5a623; }
+.mark-btn:active { transform:scale(1.3); }
+.qa-item.marked-card { border-color:#f5a623; background:#fffdf5; }
+.qa-item.marked-card.essay { border-left-color:#e8a020; }
+.qa-item.speaking { outline:2px solid #2a2560; outline-offset:2px; }
 
-/* マーク済みカードの強調 */
-.qa-item.marked-card { border-color: #f5a623; background: #fffdf5; }
-.qa-item.marked-card.essay { border-left-color: #e8a020; }
+/* フィルター */
+.filter-row { display:flex; gap:8px; margin-bottom:1rem; flex-wrap:wrap; align-items:center; }
+.filter-btn { font-size:12px; padding:4px 12px; border-radius:20px; border:1px solid #ccc; background:#fff; color:#555; cursor:pointer; font-weight:500; transition:background 0.12s, color 0.12s; }
+.filter-btn.active { background:#f5a623; color:#fff; border-color:#f5a623; }
 
-/* 現在読み上げ中カードのハイライト */
-.qa-item.speaking { outline: 2px solid #2a2560; outline-offset: 2px; }
-
-/* フィルター行 */
-.filter-row {
-  display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;
-}
-.filter-btn {
-  font-size: 12px; padding: 4px 12px; border-radius: 20px;
-  border: 1px solid #ccc; background: #fff; color: #555; cursor: pointer; font-weight: 500;
-  transition: background 0.12s, color 0.12s;
-}
-.filter-btn.active { background: #f5a623; color: #fff; border-color: #f5a623; }
-
-/* 音声プレイヤーパネル */
-.audio-panel {
-  background: #fff; border: 1px solid #e0ddd6; border-radius: 12px;
-  padding: 12px 16px; margin-bottom: 1rem;
-}
-.audio-panel-title {
-  font-size: 12px; color: #888; margin-bottom: 8px; font-weight: 500;
-}
-.audio-controls {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-}
-.audio-play-btn {
-  width: 40px; height: 40px; border-radius: 50%;
-  background: #2a2560; color: #fff; border: none; cursor: pointer;
-  font-size: 16px; display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s;
-  flex-shrink: 0;
-}
-.audio-play-btn:hover { background: #1e1a4a; }
-.audio-play-btn:disabled { background: #bbb; cursor: not-allowed; }
-.audio-stop-btn {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: #f5f4f0; color: #555; border: 1px solid #ccc; cursor: pointer;
-  font-size: 14px; display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s;
-  flex-shrink: 0;
-}
-.audio-stop-btn:hover { background: #e0ddd6; }
-.audio-progress {
-  font-size: 12px; color: #555; min-width: 60px;
-}
-.audio-speed-group {
-  display: flex; gap: 4px; margin-left: auto;
-}
-.speed-btn {
-  font-size: 11px; padding: 3px 10px; border-radius: 12px;
-  border: 1px solid #ccc; background: #f5f4f0; color: #555; cursor: pointer; font-weight: 500;
-}
-.speed-btn.active { background: #2a2560; color: #fff; border-color: #2a2560; }
-.audio-status {
-  font-size: 11px; color: #2a2560; margin-top: 6px; min-height: 16px;
-  font-weight: 500;
-}
+/* 音声パネル */
+.audio-panel { background:#fff; border:1px solid #e0ddd6; border-radius:12px; padding:12px 16px; margin-bottom:1rem; }
+.audio-panel-title { font-size:12px; color:#888; margin-bottom:8px; font-weight:500; }
+.audio-controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.audio-play-btn { width:40px; height:40px; border-radius:50%; background:#2a2560; color:#fff; border:none; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:background 0.15s; flex-shrink:0; }
+.audio-play-btn:hover { background:#1e1a4a; }
+.audio-stop-btn { width:32px; height:32px; border-radius:50%; background:#f5f4f0; color:#555; border:1px solid #ccc; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.audio-stop-btn:hover { background:#e0ddd6; }
+.audio-progress { font-size:12px; color:#555; min-width:60px; }
+.audio-speed-group { display:flex; gap:4px; margin-left:auto; }
+.speed-btn { font-size:11px; padding:3px 10px; border-radius:12px; border:1px solid #ccc; background:#f5f4f0; color:#555; cursor:pointer; font-weight:500; }
+.speed-btn.active { background:#2a2560; color:#fff; border-color:#2a2560; }
+.audio-status { font-size:11px; color:#2a2560; margin-top:6px; min-height:16px; font-weight:500; }
 </style>
 </head>
 <body>
@@ -245,8 +200,8 @@ const summaries = [
   },
   {
     title: "⑥ 革命の拡大と国民意識の芽生え",
-    text: "国民公会ではロベスピエールが恐怖政治を行い、その後総裁政府が成立。ナポレオンは1799年に統領政府を樹立しナポレオン法典を制定、1804年に第一帝政を開始。フランス革命の理念は世界に広まった。ナポレオン失脚後はウィーン会議が開かれウィーン体制が成立。ラテンアメリカではクリオーリョを中心に独立運動が起こった。",
-    keywords: ["ロベスピエール","総裁政府","フランス革命","統領政府","ナポレオン法典","第一帝政","大陸封鎖令","ウィーン会議","ウィーン体制","クリオーリョ"]
+    text: "国民公会ではロベスピエールが恐怖政治を行い、その後総裁政府が成立。ナポレオンは1799年に統領政府を樹立しナポレオン法典を制定、1804年に第一帝政を開始。フランス革命の理念は世界に広まった。ナポレオン失脚後はウィーン会議が開かれウィーン体制が成立。ラテンアメリカではクリオーリョを中心に独立運動が起こった。また1830年の七月革命、1848年の二月革命（第二共和政）、三月革命と続き、フランクフルト国民議会でドイツ統一が議論された。1848年は近代ヨーロッパの転換点で、ナショナリズム・国民国家の概念が広まり、ナポレオン3世が第二帝政を開始。普仏戦争の敗北により帝政が崩壊し第三共和政が成立した。イタリアではマッツィーニ・カヴール・ガリバルディらが統一を推進し1861年にイタリア王国が成立。ドイツではビスマルクが普墺・普仏戦争を経て1871年にドイツ帝国を成立させた。ロシアではクリミア戦争敗北を機にアレクサンドル2世が農奴解放令などの「大改革」を行ったが不徹底に終わった。",
+    keywords: ["ロベスピエール","総裁政府","ナポレオン法典","第一帝政","ウィーン体制","クリオーリョ","七月革命","七月王政","二月革命","第二共和政","三月革命","フランクフルト国民議会","ナショナリズム","国民国家","ナポレオン3世","第二帝政","普仏戦争","第三共和政","マッツィーニ","カヴール","ガリバルディ","イタリア王国","ビスマルク","普墺戦争","ドイツ帝国","ヴィルヘルム1世","クリミア戦争","アレクサンドル2世","農奴解放令","東方問題","サンステファノ条約","ベルリン条約"]
   }
 ];
 
@@ -402,6 +357,199 @@ const qaData = [
     // 記述
     { type:"essay", q: "【チャレンジ】フランス人権宣言とナポレオン法典に共通している部分に着目し、ナポレオン法典が制定されたねらいを説明せよ。", a: "フランス人権宣言で財産所有の権利の不可侵が述べられており、ナポレオン法典でも、所有権の絶対を定めている。フランス革命の成果を、法律として定着させることをねらいとしたと考えられる。" },
     { type:"essay", q: "【説明】ナポレオンが果たした歴史的な役割について、近代化の進展という観点から説明せよ。", a: "民法典を制定して革命の成果を明文化し近代社会形成の基礎を固め、対外的に自由や平等といった革命の理念を広めた。その反面、ナポレオンの軍事支配は各地のナショナリズムを呼び起こした。" },
+    // --- 4節：1848年〜近代ヨーロッパの転換点 ---
+    { type:"bold", q: "1830年にフランスで起きた、自由主義的な新国王ルイ＝フィリップを樹立した革命は？", a: "七月革命" },
+    { type:"bold", q: "七月革命後に成立した王政は？", a: "七月王政" },
+    { type:"bold", q: "七月王政のもとで本格化した経済発展とは？", a: "産業革命" },
+    { type:"bold", q: "1848年2月、共和主義者と社会主義者の連合により、フランスで起きた革命は？", a: "二月革命" },
+    { type:"bold", q: "二月革命によって成立した政体は？", a: "第二共和政" },
+    { type:"bold", q: "二月革命がオーストリア・プロイセンにも波及し、ウィーン体制が崩壊するきっかけとなった1848年の革命を総称して何というか？", a: "三月革命" },
+    { type:"bold", q: "1848年、ドイツ統一と憲法制定を議論するために開かれた議会は？", a: "フランクフルト国民議会" },
+    { type:"bold", q: "一つの民族（国民）が一つの国家をつくることを理想とする考え方を何というか？", a: "ナショナリズム" },
+    { type:"bold", q: "一つの民族が一つの国家をつくることを理想とした国家形態を何というか？", a: "国民国家" },
+    { type:"bold", q: "大統領選挙でルイ＝ナポレオンが当選し、1852年に皇帝となって開始した政体は？", a: "フランス第二帝政" },
+    { type:"bold", q: "第二帝政のもとでフランス皇帝となった人物は？", a: "ナポレオン3世" },
+    { type:"bold", q: "普仏戦争の正式名称は？", a: "プロイセン＝フランス戦争" },
+    { type:"bold", q: "普仏戦争後のフランスで成立した政体は？", a: "第三共和政" },
+    { type:"blank", q: "1830年の七月革命後に成立した王政で国王となった人物は？", a: "ルイ＝フィリップ" },
+    { type:"blank", q: "産業革命によって台頭した、七月王政に対立した人々は？", a: "市民や労働者" },
+    { type:"blank", q: "二月革命でウィーン体制崩壊のきっかけとなった、ウィーン民衆の蜂起によって失脚した人物は？", a: "メッテルニヒ" },
+    { type:"blank", q: "フランクフルト国民議会では、何についての議論がなされたか？", a: "ドイツ統一と憲法制定" },
+    { type:"blank", q: "19世紀前半に新たに政治を主導した、一つの国家をつくることを理想とした勢力は？", a: "資本家（ブルジョワジー）" },
+    { type:"blank", q: "ナポレオン3世が積極的に行った外交政策の方向性は？", a: "海外進出（アフリカや東南アジア）" },
+    { type:"blank", q: "普仏戦争敗北後、パリで労働者の政権として成立したが鎮圧された組織は？", a: "パリ＝コミューン" },
+    { type:"essay", q: "【チャレンジ】バルカン半島の民族分布には、バルカン半島以外の民族分布と比べてどのような特徴があるか、説明しよう。", a: "（自分の言葉で記述してください）バルカン半島は、複数の民族が混在して居住しており、国境と民族の境界が一致しない地域が多い。これはヨーロッパの他の地域と比べて、民族が入り組んだ複雑な構成になっているという特徴がある。" },
+    { type:"essay", q: "【説明】1848年を境にヨーロッパでどのような変化が生じたか、説明しよう。", a: "（自分の言葉で記述してください）1848年は近代ヨーロッパの転換点となった。重工業化が進んで資本主義が確立・展開するとともに、労働運動・社会主義運動が各国で強まった。政治を主導する勢力が、貴族などと結んだ旧来の資本家から、国家と産業の発展を目指す新興資本家へと変わっていった。" },
+    // --- 5節：イタリア・ドイツの統一とロシアの近代化 ---
+    { type:"bold", q: "イタリア統一運動を進めた「青年イタリア」を結成した人物は？", a: "マッツィーニ" },
+    { type:"bold", q: "サルデーニャ王国の首相として外交でイタリア統一を主導した人物は？", a: "カヴール" },
+    { type:"bold", q: "南イタリアを征服しサルデーニャ王国に献上した人物は？", a: "ガリバルディ" },
+    { type:"bold", q: "1861年に成立したイタリアの統一国家は？", a: "イタリア王国" },
+    { type:"bold", q: "「鉄血政策」でドイツ統一を主導したプロイセンの首相は？", a: "ビスマルク" },
+    { type:"bold", q: "1866年、プロイセンがオーストリアを破った戦争は？", a: "普墺戦争（プロイセン＝オーストリア戦争）" },
+    { type:"bold", q: "1871年に成立したドイツの統一国家は？", a: "ドイツ帝国" },
+    { type:"bold", q: "ドイツ帝国の初代皇帝は？", a: "ヴィルヘルム1世" },
+    { type:"bold", q: "19世紀半ば、ロシアがイギリス・フランスに敗れた戦争は？", a: "クリミア戦争" },
+    { type:"bold", q: "クリミア戦争敗北後、ロシアの近代化を推進したツァーリは？", a: "アレクサンドル2世" },
+    { type:"bold", q: "1861年、アレクサンドル2世が行った改革で農民を解放した法令は？", a: "農奴解放令" },
+    { type:"bold", q: "ロシアがバルカン半島に進出しようとしたことに起因する外交問題を何というか？", a: "東方問題" },
+    { type:"bold", q: "露土戦争後に結ばれた条約で、ロシアに有利な内容だったが列強の反発を受けた条約は？", a: "サンステファノ条約" },
+    { type:"bold", q: "サンステファノ条約を修正し、バルカン半島の勢力均衡を定めた1878年の国際会議は？", a: "ベルリン条約（ベルリン会議）" },
+    { type:"blank", q: "イタリア統一運動で、サルデーニャ王国がオーストリアから併合した地域は？", a: "ロンバルディア" },
+    { type:"blank", q: "1860年、ガリバルディが征服してサルデーニャに献上した地域は？", a: "南イタリア" },
+    { type:"blank", q: "ドイツ帝国が成立した年は？", a: "1871年" },
+    { type:"blank", q: "普仏戦争でプロイセンに敗れたフランスが割譲した地域は？", a: "アルザス・ロレーヌ" },
+    { type:"blank", q: "ビスマルクが社会主義運動を弾圧するために制定した法律は？", a: "社会主義者鎮圧法" },
+    { type:"blank", q: "ロシアの農奴解放令が「不徹底」と言われた理由は何か？", a: "農民は人格の自由を得たが、土地有償で負担が重く、生活は改善されなかったため" },
+    { type:"essay", q: "【説明】ドイツとロシアの近代国家形成において、それぞれどのような特徴があったか説明しよう。", a: "ドイツは政治面で社会主義運動や労働運動を弾圧する一方で社会保障制度を充実させ、経済面では急速な成長を実現した。ロシアは農奴解放など「大改革」を行ったが不徹底に終わり、農民や労働者の不満が高まったほか、労働運動、社会運動が重なった。" },
+    // --- 2部4節①：産業革命で変わる社会 ---
+    { type:"bold", q: "18世紀のイギリスで、地主が農村の土地を囲い込んで農民を追い出したことで農業が近代化した変化を何というか？", a: "農業革命" },
+    { type:"bold", q: "農業革命のきっかけとなった、地主が農民の土地を囲い込む動きを何というか？", a: "囲い込み" },
+    { type:"bold", q: "18世紀後半にイギリスで始まった、機械化・工場制による生産方式の変革を何というか？", a: "産業革命" },
+    { type:"bold", q: "産業革命のきっかけとなった、イギリスで最初に機械化が進んだ産業は？", a: "綿織物業" },
+    { type:"bold", q: "ワットが改良し、産業革命の動力として普及した機関は？", a: "蒸気機関" },
+    { type:"bold", q: "蒸気機関の普及により鉄道・蒸気船が発達したことを何というか？", a: "交通革命" },
+    { type:"bold", q: "生産手段や資本を所有し、工場経営を行う人々を何というか？", a: "資本家" },
+    { type:"bold", q: "資本家に雇われ、賃金を得て働く人々を何というか？", a: "賃金労働者" },
+    { type:"bold", q: "資本家が生産手段を所有し、市場で利益を追求する経済体制を何というか？", a: "資本主義" },
+    { type:"bold", q: "1832年のイギリスの選挙法改正の背景にある、国家の干渉を排し個人の自由を重視する考え方は？", a: "自由主義" },
+    { type:"bold", q: "労働者が生活や権利を守るために結成した組織を何というか？", a: "労働組合" },
+    { type:"bold", q: "1830年代にイギリスで始まった、労働者が普通選挙権を求めた政治運動は？", a: "チャーティスト運動" },
+    { type:"bold", q: "資本主義に代わり、生産手段の共有による平等な社会を目指す思想を何というか？", a: "社会主義" },
+    { type:"bold", q: "エンゲルスとともに科学的社会主義を確立した人物は？", a: "マルクス" },
+    { type:"bold", q: "マルクスとエンゲルスが1848年に発表した、社会主義の綱領的文書は？", a: "共産党宣言" },
+    { type:"blank", q: "産業革命以前、イギリスが輸入に頼っていた繊維製品は何か？", a: "インドの綿織物" },
+    { type:"blank", q: "蒸気機関を改良し、動力革命をもたらしたイギリスの技術者は？", a: "ワット" },
+    { type:"blank", q: "1832年のイギリスの選挙法改正により、議会に代表を送れるようになったのはどの階層か？", a: "資本家（産業資本家）" },
+    { type:"blank", q: "マルクスとともに「共産党宣言」を著した人物は？", a: "エンゲルス" },
+    { type:"blank", q: "イギリスで1833年に成立し、児童労働を制限した法律は？", a: "工場法" },
+    { type:"essay", q: "【確認】産業革命によって、人々の生活にどのような変化があったか。", a: "急激な都市人口の増加により、路地裏の狭い住宅に暮らさざるをえない労働者が増えた。工場などの排煙などにより、大気が汚染された場所で生活することにもなった。" },
+    { type:"essay", q: "【説明】産業革命のさまざまな変化のなかで、一番重要だと考えるものとその理由を説明しよう。", a: "産業革命によって資本主義社会が形成されたこと。これにより企業を経営する資本家と賃金を得る労働者を中心に社会が運営されるようになった。労働者の貧困や長時間労働など現在の社会につながる諸問題が生じた。" },
+    // --- 2部4節②：イギリスの繁栄と国際分業体制 ---
+    { type:"bold", q: "産業革命を経て世界最大の工業国となったイギリスが呼ばれた名称は？", a: "世界の工場" },
+    { type:"bold", q: "イギリスを中心に、各地域が工業製品・食料・原料の生産を分担する体制を何というか？", a: "国際分業体制" },
+    { type:"bold", q: "1837年に即位し、約60年間イギリスを統治した女王は？", a: "ヴィクトリア女王" },
+    { type:"bold", q: "ヴィクトリア時代に自由党を率いた首相は？", a: "グラッドストン" },
+    { type:"bold", q: "ヴィクトリア時代に保守党を率いた首相は？", a: "ディズレーリ" },
+    { type:"bold", q: "グラッドストンとディズレーリの二大政党による政治体制を何というか？", a: "議会民主主義" },
+    { type:"bold", q: "1877年、ヴィクトリア女王を皇帝として成立したアジアの帝国は？", a: "インド帝国" },
+    { type:"bold", q: "熱帯・亜熱帯地域で、コーヒー・茶・天然ゴムなどを大規模に栽培する農業形態を何というか？", a: "プランテーション" },
+    { type:"bold", q: "特定の農産品の輸出に依存した経済構造を何というか？", a: "モノカルチャー経済" },
+    { type:"blank", q: "イギリスが「世界の工場」と呼ばれるようになったきっかけは何か？", a: "産業革命" },
+    { type:"blank", q: "1870年代にイギリスで整備され、国民への教育を広めた制度は？", a: "初等教育（教育法）" },
+    { type:"blank", q: "国際分業体制のもと、アジア・アフリカなどの植民地が担った役割は？", a: "食料・原料の供給と工業製品の市場" },
+    { type:"blank", q: "カナダ・オーストラリア・南アフリカなど白人入植地に与えられた自治の権限を何というか？", a: "自治領" },
+    { type:"blank", q: "19世紀以降、インドや中国出身の移民が労働力として導入された農業形態は？", a: "プランテーション" },
+    { type:"essay", q: "【説明】国際分業体制の形成は、今の社会にどのような問題を生じさせたと考えるか、説明しよう。", a: "植民地となった熱帯・亜熱帯地域ではプランテーション農業が広がり、本国や欧米への輸出向けの特定の農産品に依存するモノカルチャー経済化が進み、伝統的農業が廃れ、現在も経済的自立が困難となっている。" },
+    // --- 2部4節③：アメリカの拡大と科学技術の発展 ---
+    { type:"bold", q: "1823年にアメリカが発表した、ヨーロッパとアメリカの相互不干渉を宣言した外交方針は？", a: "モンロー宣言" },
+    { type:"bold", q: "アメリカが19世紀に西へ西へと開拓を進めた際の、未開拓地の境界線を何というか？", a: "フロンティア" },
+    { type:"bold", q: "1861〜65年に起きた、奴隷制をめぐる北部と南部の戦争は？", a: "南北戦争" },
+    { type:"bold", q: "1863年にリンカン大統領が発表した宣言は？", a: "奴隷解放宣言" },
+    { type:"bold", q: "南北戦争中にリンカンが結成を支持した政党は？", a: "共和党" },
+    { type:"bold", q: "1862年に制定され、西部に移住した農民に土地を無償で与えた法律は？", a: "ホームステッド法" },
+    { type:"bold", q: "ダイナマイトを発明し、遺産で国際的な賞を設けたスウェーデンの科学者は？", a: "ノーベル" },
+    { type:"bold", q: "19世紀後半に大西洋・太平洋に敷設され、世界の情報網を形成したものは？", a: "海底通信ケーブル" },
+    { type:"bold", q: "1898年、アメリカがフィリピンなどを獲得したきっかけとなった戦争は？", a: "アメリカ＝スペイン戦争（米西戦争）" },
+    { type:"blank", q: "19世紀半ば、カリフォルニアで金が発見されて人々が殺到した出来事を何というか？", a: "ゴールドラッシュ" },
+    { type:"blank", q: "南北戦争で、南部諸州が結成した国家を何というか？", a: "アメリカ連合国" },
+    { type:"blank", q: "南北戦争後も続いた、公共施設などを黒人用と白人用に分ける制度を何というか？", a: "人種隔離（差別）" },
+    { type:"blank", q: "19世紀後半、アメリカの急速な工業化を支えた広大な市場はどこか？", a: "西部" },
+    { type:"blank", q: "ノーベルが発明し、土木・鉱山工事を革新した爆発物は？", a: "ダイナマイト" },
+    { type:"blank", q: "19世紀後半のドイツで、国家が資金を投じて整備した教育機関は？", a: "研究所・理工学部（大学の理工学系）" },
+    { type:"essay", q: "【説明】合衆国の工業大国化の過程と、経済的発展の背景にある社会的な矛盾について、説明しよう。", a: "商工業が盛んであった北部が勝利した南北戦争後、アメリカでは産業革命が急速に進んだ。西部に広大な市場を形成した一方で、解放された黒人奴隷は公共施設を黒人用と白人用に分ける人種隔離を受けたほか、先住民やアジア系移民などに対する差別の問題も生まれた。" },
+    // --- 2部4節④：「西洋の衝撃」と西アジアの変化 ---
+    { type:"bold", q: "19世紀に近代化したヨーロッパ列強がアジアへ進出し、各地に与えた影響を総称して何というか？", a: "西洋の衝撃" },
+    { type:"bold", q: "1839年に始まったオスマン帝国の近代化改革を何というか？", a: "タンジマート" },
+    { type:"bold", q: "1876年に制定された、オスマン帝国のアジア初の憲法は？", a: "ミドハト憲法" },
+    { type:"bold", q: "オスマン帝国の君主の称号は？", a: "スルタン" },
+    { type:"bold", q: "フランス軍撤退後にエジプトの実権を握り、近代的な軍を整備した人物は？", a: "ムハンマド＝アリー" },
+    { type:"bold", q: "1869年にエジプトで開通した、地中海と紅海を結ぶ水路は？", a: "スエズ運河" },
+    { type:"bold", q: "イスラーム世界が団結してヨーロッパに対抗すべきと唱えた思想家は？", a: "アフガーニー" },
+    { type:"bold", q: "アフガーニーが唱えた、イスラーム諸民族の連帯を目指す思想は？", a: "パン＝イスラーム主義" },
+    { type:"bold", q: "19世紀のイランを支配し、ロシアやイギリスの圧力を受けた王朝は？", a: "カージャール朝" },
+    { type:"bold", q: "1905年にイランで起きた、憲法制定と議会開設を求めた革命は？", a: "イラン立憲革命" },
+    { type:"blank", q: "1798年にエジプトに侵攻し、オスマン帝国の弱体化を明らかにした人物は？", a: "ナポレオン" },
+    { type:"blank", q: "タンジマートが目指した、国民の一体化のための考え方は？", a: "オスマン主義（国民統合）" },
+    { type:"blank", q: "ミドハト憲法が停止された年と、停止したスルタンは？", a: "1878年、アブデュルハミト2世" },
+    { type:"blank", q: "1882年、スエズ運河の株式取得などを背景にエジプトを支配下に置いた国は？", a: "イギリス" },
+    { type:"blank", q: "イランがロシアと結んだ不平等な通商条約により、欧米諸国に認められた権利は？", a: "経済的従属（治外法権・関税自主権の喪失）" },
+    { type:"essay", q: "【説明】西アジア諸国の変化について、ヨーロッパ諸国の近代化と比較して共通点と相違点を、それぞれ説明しよう。", a: "西アジア諸国においてもヨーロッパ諸国と同様に、憲法の制定や法治主義など近代化改革が目指されたが、成長した市民層が主導となって改革を進めたヨーロッパと異なり、ヨーロッパという外圧に対抗するために改革が始まった。" },
+    // --- 2部4節⑤：南・東南アジアの植民地化 ---
+    { type:"bold", q: "インドを中心に繁栄し、イギリスの植民地支配によって解体されたイスラーム王朝は？", a: "ムガル帝国" },
+    { type:"bold", q: "イギリスがインド支配のために設立した貿易・統治機関は？", a: "東インド会社" },
+    { type:"bold", q: "東インド会社に雇われたインド人傭兵を何というか？", a: "シパーヒー" },
+    { type:"bold", q: "1857年にシパーヒーが起こし、インド各地に広がった大規模な反乱は？", a: "インド大反乱" },
+    { type:"bold", q: "1877年にイギリスが樹立し、ヴィクトリア女王を皇帝とした植民地国家は？", a: "インド帝国" },
+    { type:"bold", q: "1885年にインドで結成された、独立を目指す政治組織は？", a: "国民会議派" },
+    { type:"bold", q: "1905年にイギリスが行い、民族運動を分断しようとしたインドの分割政策は？", a: "ベンガル分割令" },
+    { type:"bold", q: "ベンガル分割令に反発して掲げられた「自治」を意味するスローガンは？", a: "スワラージ" },
+    { type:"bold", q: "ベンガル分割令に反発して掲げられた「国産品愛用」を意味するスローガンは？", a: "スワデーシー" },
+    { type:"bold", q: "1906年に結成された、インドのムスリムによる政治組織は？", a: "全インド＝ムスリム連盟" },
+    { type:"bold", q: "フランスがベトナム・カンボジア・ラオスを統合して形成した植民地連邦は？", a: "仏領インドシナ連邦" },
+    { type:"bold", q: "欧米式の近代化改革を進め、東南アジアで唯一植民地化を免れたタイの国王は？", a: "チュラロンコーン王" },
+    { type:"blank", q: "1757年、イギリスがフランスを破りインドの支配権を確立した戦いは？", a: "プラッシーの戦い" },
+    { type:"blank", q: "インド大反乱後、インド統治の主体がイギリス政府に移行した際に廃止された機関は？", a: "東インド会社" },
+    { type:"blank", q: "ベンガル分割令に反発した国民会議派が採択した、4つの綱領のうち自治と国産品愛用以外の2つは？", a: "民族教育・英国製品排斥" },
+    { type:"blank", q: "フィリピンがアメリカの植民地となったきっかけは？", a: "アメリカ＝スペイン戦争（米西戦争）" },
+    { type:"blank", q: "植民地化された南・東南アジアで進んだ、特定の輸出作物に依存する経済構造は？", a: "モノカルチャー経済" },
+    { type:"blank", q: "植民地支配により南・東南アジアに導入され、民族意識の高まりにつながったものは？", a: "欧米式の教育" },
+    { type:"essay", q: "【説明】植民地化によって南・東南アジアの社会はどのように変化し、現在の社会にどのような影響を与えたか説明しよう。", a: "南・東南アジアでは、世界市場向けの商品を確保するために、モノカルチャー経済化が進められ、現在でも一次産品が輸出の割合を多く占める国がある。その一方で、欧米式の教育が導入され、民族意識が高まった、といった変化も見られた。" },
+    // --- 2部4節⑥：ヨーロッパの日本接近とアヘン戦争 ---
+    { type:"bold", q: "1825年に幕府が外国船を追い払うために出した法令は？", a: "異国船打払令" },
+    { type:"bold", q: "18世紀末に通商を求めて根室に来航したロシアの使節は？", a: "ラクスマン" },
+    { type:"bold", q: "19世紀初めに長崎に来航し通商を求めたロシアの使節は？", a: "レザノフ" },
+    { type:"bold", q: "1808年、イギリス軍艦が長崎港に侵入した事件は？", a: "フェートン号事件" },
+    { type:"bold", q: "アヘン戦争後の1842年、異国船打払令に代わって出された法令は？", a: "薪水給与令" },
+    { type:"bold", q: "イギリスが清のアヘン輸出禁止に反発して起こした戦争は？", a: "アヘン戦争" },
+    { type:"bold", q: "イギリスがインド産アヘンを清へ、清の茶をイギリスへ輸出する貿易構造を何というか？", a: "三角貿易" },
+    { type:"bold", q: "アヘン戦争後に清とイギリスが結んだ条約は？", a: "南京条約" },
+    { type:"bold", q: "1856年に起きた、イギリスとフランスが清に対して起こした戦争は？", a: "アロー戦争" },
+    { type:"bold", q: "アロー戦争後に結ばれた、外国公使の北京駐在などを認めた条約は？", a: "天津条約" },
+    { type:"bold", q: "天津条約の批准をめぐる紛争後に結ばれた、九龍半島割譲などを定めた条約は？", a: "北京条約" },
+    { type:"bold", q: "アヘン戦争の賠償金負担などに苦しむ農民の支持を得て洪秀全が建てた国は？", a: "太平天国" },
+    { type:"bold", q: "太平天国鎮圧のために各地で組織された義勇軍を何というか？", a: "郷勇（義勇軍）" },
+    { type:"blank", q: "清がアヘンの流入を防ぐために没収・廃棄を行った人物は？", a: "林則徐" },
+    { type:"blank", q: "南京条約で清がイギリスに開港した港の数は？", a: "5港" },
+    { type:"blank", q: "南京条約でイギリスに割譲された地域は？", a: "香港" },
+    { type:"blank", q: "南京条約で定められた、イギリス商人への不平等な司法上の権利は？", a: "領事裁判権" },
+    { type:"blank", q: "太平天国を建国した人物は？", a: "洪秀全" },
+    { type:"blank", q: "アヘン戦争の敗北を受け、幕府が異国船打払令を緩和して出した法令は何年か？", a: "1842年（薪水給与令）" },
+    { type:"essay", q: "【説明】アヘン戦争やアロー戦争により、清とヨーロッパ諸国との貿易や外交関係は、どのように変化したのか、説明しよう。", a: "二つの戦争の結果、清は開港してヨーロッパ諸国と自由貿易を開始した。また欧米式の外交体制の整備を開始し、文物の導入も始めた。" },
+    // --- 2部4節⑦：黒船の来航と日本の対応 ---
+    { type:"bold", q: "1854年、ペリーの来航をきっかけに幕府がアメリカと結んだ条約は？", a: "日米和親条約" },
+    { type:"bold", q: "1858年に幕府がアメリカと結んだ、自由貿易を定めた条約は？", a: "日米修好通商条約" },
+    { type:"bold", q: "日米修好通商条約で日本が認められなかった、自国で関税率を決める権利は？", a: "関税自主権" },
+    { type:"bold", q: "日米修好通商条約で外国人に認められた、日本の法律で裁かれない権利は？", a: "領事裁判権" },
+    { type:"bold", q: "外国勢力を武力で追い払おうとする主張を何というか？", a: "攘夷" },
+    { type:"bold", q: "鎖国をやめて外国と交流・貿易を始めることを何というか？", a: "開国" },
+    { type:"bold", q: "天皇を尊び外国を排除しようとした幕末の政治運動は？", a: "尊王攘夷" },
+    { type:"bold", q: "藩主や大名などが広く意見を出し合って政治を行うべきという考え方は？", a: "公議政体論" },
+    { type:"bold", q: "開国後、幕府や薩長などが軍事力強化と人材育成を中心に進めた改革は？", a: "近代化改革" },
+    { type:"blank", q: "幕府が海外情報を得るためにオランダ商館長に提出させた報告書は？", a: "オランダ風説書" },
+    { type:"blank", q: "1853年、ペリーが来航した場所は？", a: "浦賀" },
+    { type:"blank", q: "日米和親条約で開港した2つの港は？", a: "下田・函館" },
+    { type:"blank", q: "日米修好通商条約で開港した港のうち、江戸に近い港は？", a: "横浜" },
+    { type:"blank", q: "開国後に輸出が急増し、幕末の日本経済を支えた品目は？", a: "生糸" },
+    { type:"blank", q: "開国後に輸入が増加し、国内の綿織物業を圧迫した品目は？", a: "綿織物" },
+    { type:"blank", q: "水戸藩を中心に広まり、尊王攘夷運動の思想的背景となった学問は？", a: "水戸学" },
+    { type:"essay", q: "【説明】ヨーロッパへの対応について、日本と清で異なっている点とその理由を説明しよう。", a: "清は抵抗して戦争を行ったのに対し、日本は開国して欧米を受容した。この違いは、日本はオランダからの情報を得ていたことなど、欧米諸国の軍事力などに対する認識に差があったことによる。" },
+    // --- 2部5章①：新体制の模索と江戸幕府の滅亡 ---
+    { type:"bold", q: "1858年、井伊直弼が尊王攘夷派や反対派を弾圧した事件は？", a: "安政の大獄" },
+    { type:"bold", q: "1860年、井伊直弼が水戸藩士らに暗殺された事件は？", a: "桜田門外の変" },
+    { type:"bold", q: "1866年に薩摩藩と長州藩が坂本龍馬の仲介で結んだ同盟は？", a: "薩長同盟" },
+    { type:"bold", q: "1867年、第15代将軍徳川慶喜が政権を朝廷に返上したことを何というか？", a: "大政奉還" },
+    { type:"bold", q: "大政奉還と同じ1867年、天皇中心の新政府樹立を宣言したことを何というか？", a: "王政復古の大号令" },
+    { type:"bold", q: "1868〜69年、新政府軍と旧幕府軍の間で行われた内戦は？", a: "戊辰戦争" },
+    { type:"bold", q: "諸藩の代表が広く議論して政治を行うべきという考え方は？", a: "公議政体論" },
+    { type:"bold", q: "戊辰戦争において欧米諸国が取った立場は？", a: "局外中立" },
+    { type:"blank", q: "安政の大獄で弾圧の中心となった大老は？", a: "井伊直弼" },
+    { type:"blank", q: "薩長同盟の仲介をした人物は？", a: "坂本龍馬" },
+    { type:"blank", q: "大政奉還を行った第15代将軍は？", a: "徳川慶喜" },
+    { type:"blank", q: "戊辰戦争の最初の戦いで、新政府軍が旧幕府軍を破った戦いは？", a: "鳥羽・伏見の戦い" },
+    { type:"blank", q: "戊辰戦争で旧幕府側を支援した欧米の国は？", a: "フランス" },
+    { type:"blank", q: "戊辰戦争で新政府側を支援した欧米の国は？", a: "イギリス" },
+    { type:"essay", q: "【説明】旧幕府側と新政府側の戦いに、欧米諸国はどのような態度をとったのか、説明しよう。", a: "フランスは旧幕府側、イギリスは新政府側をそれぞれ支援したが、アジア各地での反乱、ヨーロッパ情勢の混乱を背景に、いずれも直接的な軍事介入はおこなわなかった。" },
   ]
 ];
 
@@ -409,119 +557,66 @@ const chapterLabels = ["①江戸社会","②清・アジア","③ヨーロッ�
 const typeLabel = { bold:"太字", blank:"空所", essay:"記述" };
 const typeTagClass = { bold:"tag-blank", blank:"tag-blank", essay:"tag-essay" };
 
-// ========== マーク管理 ==========
+// ===== マーク管理 =====
 let markedSet = new Set(JSON.parse(localStorage.getItem('markedQuestions') || '[]'));
-function saveMarks() {
-  localStorage.setItem('markedQuestions', JSON.stringify([...markedSet]));
-}
+function saveMarks() { localStorage.setItem('markedQuestions', JSON.stringify([...markedSet])); }
 
-// ========== フィルター・章管理 ==========
+// ===== 状態 =====
 let currentChapter = -1;
-let currentFilter = 'all'; // 'all' | 'marked'
+let currentFilter = 'all';
 
-// ========== 音声管理 ==========
-let speechItems = [];       // 現在表示中の問題リスト（{q, a, domIndex}）
-let speechIndex = 0;        // 何問目を読み上げ中か
-let isSpeaking = false;     // 再生中フラグ
-let isPaused = false;       // 一時停止フラグ
-let speechRate = 1.0;       // 読み上げ速度
-let pauseTimer = null;      // 3秒待機タイマー
-let currentUtterance = null;
+// ===== 音声 =====
+let speechItems = [], speechIndex = 0, isSpeaking = false, isPaused = false;
+let speechRate = 1.0, pauseTimer = null;
 
 function stripHtml(html) {
-  const tmp = document.createElement('div');
-  tmp.innerHTML = html;
-  return tmp.textContent || tmp.innerText || '';
+  const d = document.createElement('div'); d.innerHTML = html; return d.textContent || '';
 }
 
 function setSpeed(rate) {
   speechRate = rate;
   document.getElementById('speed-normal').classList.toggle('active', rate === 1.0);
   document.getElementById('speed-half').classList.toggle('active', rate === 0.5);
-  // 再生中なら再起動
-  if (isSpeaking && !isPaused) {
-    const idx = speechIndex;
-    stopAudio();
-    speechIndex = idx;
-    isSpeaking = true;
-    isPaused = false;
-    speakCurrent();
-  }
+  if (isSpeaking && !isPaused) { const idx = speechIndex; stopAudio(); speechIndex = idx; isSpeaking = true; speakCurrent(); }
 }
 
 function buildSpeechItems() {
-  const items = getFilteredItems();
-  speechItems = items.map((item, di) => ({
-    q: stripHtml(item.q),
-    a: stripHtml(item.a),
-    domIndex: di
-  }));
+  speechItems = getFilteredItems().map((item, di) => ({ q: stripHtml(item.q), a: stripHtml(item.a), domIndex: di }));
 }
 
 function togglePlay() {
   if (!isSpeaking && !isPaused) {
-    // 新規再生
-    buildSpeechItems();
-    if (speechItems.length === 0) return;
-    speechIndex = 0;
-    isSpeaking = true;
-    isPaused = false;
-    speakCurrent();
+    buildSpeechItems(); if (!speechItems.length) return;
+    speechIndex = 0; isSpeaking = true; isPaused = false; speakCurrent();
   } else if (isSpeaking && !isPaused) {
-    // 一時停止
-    window.speechSynthesis.cancel();
-    clearTimeout(pauseTimer);
-    isPaused = true;
-    isSpeaking = false;
-    updateAudioUI();
+    window.speechSynthesis.cancel(); clearTimeout(pauseTimer); isPaused = true; isSpeaking = false; updateAudioUI();
   } else if (isPaused) {
-    // 再開（問題の頭から再開）
-    isSpeaking = true;
-    isPaused = false;
-    speakCurrent();
+    isSpeaking = true; isPaused = false; speakCurrent();
   }
 }
 
 function stopAudio() {
-  window.speechSynthesis.cancel();
-  clearTimeout(pauseTimer);
-  isSpeaking = false;
-  isPaused = false;
-  speechIndex = 0;
-  highlightSpeaking(-1);
-  updateAudioUI();
+  window.speechSynthesis.cancel(); clearTimeout(pauseTimer);
+  isSpeaking = false; isPaused = false; speechIndex = 0;
+  highlightSpeaking(-1); updateAudioUI();
 }
 
 function speakCurrent() {
   if (!isSpeaking || speechIndex >= speechItems.length) {
-    // 全問終了
-    stopAudio();
-    document.getElementById('audio-status').textContent = '✅ 読み上げ完了';
-    return;
+    stopAudio(); document.getElementById('audio-status').textContent = '✅ 読み上げ完了'; return;
   }
   const item = speechItems[speechIndex];
-  highlightSpeaking(item.domIndex);
-  updateAudioUI();
-
-  // 問題を読む
-  const uQ = new SpeechSynthesisUtterance(item.q);
-  uQ.lang = 'ja-JP';
-  uQ.rate = speechRate;
-  currentUtterance = uQ;
-  document.getElementById('audio-status').textContent = `Q${speechIndex + 1} 問題を読み上げ中…`;
-
+  highlightSpeaking(item.domIndex); updateAudioUI();
+  const uQ = new SpeechSynthesisUtterance(item.q); uQ.lang = 'ja-JP'; uQ.rate = speechRate;
+  document.getElementById('audio-status').textContent = `Q${speechIndex+1} 問題を読み上げ中…`;
   uQ.onend = () => {
     if (!isSpeaking) return;
-    // 3秒待機してから答えへ
-    document.getElementById('audio-status').textContent = `Q${speechIndex + 1} 考え中… (3秒)`;
+    document.getElementById('audio-status').textContent = `Q${speechIndex+1} 考え中… (3秒)`;
     pauseTimer = setTimeout(() => {
       if (!isSpeaking) return;
-      const uA = new SpeechSynthesisUtterance(item.a);
-      uA.lang = 'ja-JP';
-      uA.rate = speechRate;
-      currentUtterance = uA;
-      document.getElementById('audio-status').textContent = `Q${speechIndex + 1} 答えを読み上げ中…`;
-      // 答えを画面に自動表示
+      const uA = new SpeechSynthesisUtterance(item.a); uA.lang = 'ja-JP'; uA.rate = speechRate;
+      document.getElementById('audio-status').textContent = `Q${speechIndex+1} 答えを読み上げ中…`;
+      // 答えを自動表示
       const ansEl = document.getElementById('ans-' + item.domIndex);
       const ansBtn = ansEl ? ansEl.previousElementSibling : null;
       if (ansEl && !ansEl.classList.contains('show')) {
@@ -529,13 +624,7 @@ function speakCurrent() {
         if (ansBtn && ansBtn.classList.contains('ans-btn')) ansBtn.textContent = '隠す';
         updateScore();
       }
-      uA.onend = () => {
-        if (!isSpeaking) return;
-        speechIndex++;
-        pauseTimer = setTimeout(() => {
-          speakCurrent();
-        }, 800);
-      };
+      uA.onend = () => { if (!isSpeaking) return; speechIndex++; pauseTimer = setTimeout(speakCurrent, 800); };
       window.speechSynthesis.speak(uA);
     }, 3000);
   };
@@ -543,56 +632,37 @@ function speakCurrent() {
 }
 
 function highlightSpeaking(domIndex) {
-  document.querySelectorAll('.qa-item').forEach((el, i) => {
-    el.classList.toggle('speaking', i === domIndex);
-  });
-  if (domIndex >= 0) {
-    const el = document.querySelectorAll('.qa-item')[domIndex];
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+  document.querySelectorAll('.qa-item').forEach((el, i) => el.classList.toggle('speaking', i === domIndex));
+  if (domIndex >= 0) { const el = document.querySelectorAll('.qa-item')[domIndex]; if (el) el.scrollIntoView({ behavior:'smooth', block:'center' }); }
 }
 
 function updateAudioUI() {
   const btn = document.getElementById('audio-play-btn');
-  const progress = document.getElementById('audio-progress');
-  if (isSpeaking && !isPaused) {
-    btn.textContent = '⏸';
-  } else if (isPaused) {
-    btn.textContent = '▶';
-    document.getElementById('audio-status').textContent = '⏸ 一時停止中';
-  } else {
-    btn.textContent = '▶';
-    if (!document.getElementById('audio-status').textContent.includes('完了')) {
-      document.getElementById('audio-status').textContent = '';
-    }
-  }
   const total = speechItems.length || getFilteredItems().length;
-  progress.textContent = isSpeaking ? `${speechIndex + 1} / ${total}` : `－ / ${total}`;
+  if (btn) btn.textContent = (isSpeaking && !isPaused) ? '⏸' : '▶';
+  const prog = document.getElementById('audio-progress');
+  if (prog) prog.textContent = isSpeaking ? `${speechIndex+1} / ${total}` : `－ / ${total}`;
+  const stat = document.getElementById('audio-status');
+  if (stat && isPaused) stat.textContent = '⏸ 一時停止中';
+  else if (stat && !isSpeaking && !stat.textContent.includes('完了')) stat.textContent = '';
 }
 
-// ========== フィルター ==========
+// ===== フィルター =====
 function setFilter(f) {
   currentFilter = f;
   document.getElementById('filter-all').classList.toggle('active', f === 'all');
   document.getElementById('filter-marked').classList.toggle('active', f === 'marked');
-  stopAudio();
-  renderQA(currentChapter);
+  stopAudio(); renderQA(currentChapter);
 }
 
 function getFilteredItems() {
-  const raw = currentChapter === -1 ? qaData.flat() : qaData[currentChapter];
-  if (currentFilter === 'marked') {
-    // グローバルインデックスでフィルタ
-    const flat = qaData.flat();
-    return raw.filter(item => {
-      const gi = flat.indexOf(item);
-      return markedSet.has(gi);
-    });
-  }
+  const flat = qaData.flat();
+  const raw = currentChapter === -1 ? flat : qaData[currentChapter];
+  if (currentFilter === 'marked') return raw.filter(item => markedSet.has(flat.indexOf(item)));
   return raw;
 }
 
-// ========== タブ・チャプター ==========
+// ===== タブ =====
 function showTab(name, btn) {
   document.getElementById('tab-summary').style.display = name === 'summary' ? '' : 'none';
   document.getElementById('tab-qa').style.display = name === 'qa' ? '' : 'none';
@@ -601,59 +671,47 @@ function showTab(name, btn) {
   if (name !== 'qa') stopAudio();
 }
 
+// ===== 要約 =====
 function buildSummaryChips() {
   document.getElementById('summary-chips').innerHTML = summaries.map((s, i) =>
     `<button class="chip${i===0?' active':''}" onclick="selectSummary(${i}, this)">${chapterLabels[i]}</button>`
   ).join('');
 }
-
 function selectSummary(i, btn) {
   document.querySelectorAll('#summary-chips .chip').forEach(c => c.classList.remove('active'));
-  btn.classList.add('active');
-  renderSummary(i);
+  btn.classList.add('active'); renderSummary(i);
 }
-
 function renderSummary(i) {
   const s = summaries[i];
   document.getElementById('summary-content').innerHTML = `
-    <div class="summary-card">
-      <h2>${s.title}</h2>
-      <p class="summary-text">${s.text}</p>
-      <div class="keywords">${s.keywords.map(k=>`<span class="kw">${k}</span>`).join('')}</div>
-    </div>
-  `;
+    <div class="summary-card"><h2>${s.title}</h2>
+    <p class="summary-text">${s.text}</p>
+    <div class="keywords">${s.keywords.map(k=>`<span class="kw">${k}</span>`).join('')}</div></div>`;
 }
 
+// ===== 一問一答 =====
 function buildQAChips() {
   document.getElementById('qa-chips').innerHTML =
     `<button class="chip active" onclick="selectQA(-1, this)">全章</button>` +
-    chapterLabels.map((l, i) =>
-      `<button class="chip" onclick="selectQA(${i}, this)">${l}</button>`
-    ).join('');
+    chapterLabels.map((l, i) => `<button class="chip" onclick="selectQA(${i}, this)">${l}</button>`).join('');
 }
-
 function selectQA(i, btn) {
   document.querySelectorAll('#qa-chips .chip').forEach(c => c.classList.remove('active'));
-  btn.classList.add('active');
-  currentChapter = i;
-  stopAudio();
-  renderQA(i);
+  btn.classList.add('active'); currentChapter = i; stopAudio(); renderQA(i);
 }
 
 function renderQA(chapterIdx) {
+  const mapSrc = document.getElementById('map-img') ? document.getElementById('map-img').src : '';
   const flat = qaData.flat();
   const items = getFilteredItems();
   document.getElementById('total-q').textContent = items.length;
   document.getElementById('shown-q').textContent = 0;
-  // 単元内のマーク数を計算
   const chapterItems = currentChapter === -1 ? flat : qaData[currentChapter];
-  const chapterMarkedCount = chapterItems.filter(item => markedSet.has(flat.indexOf(item))).length;
-  document.getElementById('marked-q').textContent = chapterMarkedCount;
-
-  const mapSrc = document.getElementById('map-img') ? document.getElementById('map-img').src : '';
+  const chapterMarked = chapterItems.filter(item => markedSet.has(flat.indexOf(item))).length;
+  document.getElementById('marked-q').textContent = chapterMarked;
 
   document.getElementById('qa-content').innerHTML = items.map((item, di) => {
-    const gi = flat.indexOf(item); // グローバルインデックス
+    const gi = flat.indexOf(item);
     const isEssay = item.type === 'essay';
     const isMarked = markedSet.has(gi);
     const numCls = isEssay ? 'qa-q-num essay-num' : 'qa-q-num';
@@ -663,34 +721,26 @@ function renderQA(chapterIdx) {
     return `
       <div class="qa-item${isEssay?' essay':''}${isMarked?' marked-card':''}" id="qa-card-${di}">
         <div class="qa-q">
-          <button class="mark-btn${isMarked?' marked':''}" onclick="toggleMark(${gi}, ${di})" title="マーク">⭐</button>
+          <button class="mark-btn${isMarked?' marked':''}" onclick="toggleMark(${gi},${di})" title="マーク">⭐</button>
           <span class="${numCls}">Q${di+1}</span>${tag}${item.q}${mapHtml}
         </div>
         <button class="ans-btn" onclick="toggleAnswer(${di}, this)">答えを見る</button>
         <div class="${ansCls}" id="ans-${di}">${item.a}</div>
       </div>`;
   }).join('');
-
   updateAudioUI();
 }
 
 function toggleMark(gi, di) {
-  if (markedSet.has(gi)) {
-    markedSet.delete(gi);
-  } else {
-    markedSet.add(gi);
-  }
+  if (markedSet.has(gi)) markedSet.delete(gi); else markedSet.add(gi);
   saveMarks();
-  // カードのスタイルだけ更新（再描画なし）
-  const card = document.getElementById('qa-card-' + di);
+  const card = document.getElementById('qa-card-'+di);
   const btn = card ? card.querySelector('.mark-btn') : null;
   if (card) card.classList.toggle('marked-card', markedSet.has(gi));
   if (btn) btn.classList.toggle('marked', markedSet.has(gi));
-  // 単元内マーク数を再計算して表示
   const flat = qaData.flat();
   const chapterItems = currentChapter === -1 ? flat : qaData[currentChapter];
-  const chapterMarkedCount = chapterItems.filter(item => markedSet.has(flat.indexOf(item))).length;
-  document.getElementById('marked-q').textContent = chapterMarkedCount;
+  document.getElementById('marked-q').textContent = chapterItems.filter(item => markedSet.has(flat.indexOf(item))).length;
 }
 
 function toggleAnswer(i, btn) {
@@ -698,18 +748,14 @@ function toggleAnswer(i, btn) {
   btn.textContent = el.classList.toggle('show') ? '隠す' : '答えを見る';
   updateScore();
 }
-
 function updateScore() {
-  document.getElementById('shown-q').textContent =
-    document.querySelectorAll('.qa-answer.show').length;
+  document.getElementById('shown-q').textContent = document.querySelectorAll('.qa-answer.show').length;
 }
-
 function revealAll() {
   document.querySelectorAll('.qa-answer').forEach(el => el.classList.add('show'));
   document.querySelectorAll('.ans-btn').forEach(btn => btn.textContent = '隠す');
   updateScore();
 }
-
 function hideAll() {
   document.querySelectorAll('.qa-answer').forEach(el => el.classList.remove('show'));
   document.querySelectorAll('.ans-btn').forEach(btn => btn.textContent = '答えを見る');
