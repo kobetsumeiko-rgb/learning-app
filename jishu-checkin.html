@@ -771,7 +771,9 @@ function genSessionId() {
 let baselineSessionsById = new Map();
 let baselineActiveNames = new Set();
 function setSessionBaseline(sessions, active) {
-  baselineSessionsById = new Map(sessions.map(s => [sessionIdentity(s), s]));
+  // ディープコピーして保存する（参照のままだと、後で元のオブジェクトを書き換えた際に
+  // baseline側まで一緒に変わってしまい、「変更なし」と誤検知してしまうため）
+  baselineSessionsById = new Map(sessions.map(s => [sessionIdentity(s), JSON.parse(JSON.stringify(s))]));
   baselineActiveNames = new Set(Object.keys(active || {}));
 }
 
@@ -825,11 +827,14 @@ async function saveSessionData() {
       state.sessions = merged;
       state.active = mergedActive;
       setSessionBaseline(merged, mergedActive);
+      return true;
     } else {
       console.error('saveSessionData failed:', json);
+      return false;
     }
   } catch(e) {
     console.error('saveSessionData error:', e);
+    return false;
   }
 }
 
@@ -1715,10 +1720,14 @@ async function fixSessionNames() {
   if (!targets.length) { alert(`「${oldName}」という名前の記録は見つかりませんでした`); return; }
   if (!confirm(`「${oldName}」の記録 ${targets.length}件を「${newName}」に修正します。よろしいですか？`)) return;
   targets.forEach(s => { s.name = newName; });
-  await saveSessionData();
+  const ok = await saveSessionData();
   document.getElementById('fixname-old').value = '';
   document.getElementById('fixname-new').value = '';
-  alert(`✅ ${targets.length}件の記録を「${newName}」に修正しました`);
+  if (ok) {
+    alert(`✅ ${targets.length}件の記録を「${newName}」に修正しました`);
+  } else {
+    alert('⚠️ 保存に失敗しました。通信状況を確認して、もう一度お試しください。');
+  }
   refreshCurrentTab();
 }
 
