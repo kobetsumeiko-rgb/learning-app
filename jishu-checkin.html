@@ -485,6 +485,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
       <div id="active-student-list"></div>
     </div>
     <div class="admin-section">
+      <h3>🔧 自習記録の名前を一括修正</h3>
+      <div class="manual-add-box" style="border-color:#F5CFA0;background:#FFF8F0">
+        <p style="font-size:12px;color:#888;margin-bottom:10px">生徒リストの名前は変わったのに、過去の自習記録だけ古い名前のまま残ってしまった場合に使います。</p>
+        <div class="manual-row">
+          <label>記録上の古い名前</label>
+          <input type="text" id="fixname-old" placeholder="例：米澤 咲希子" style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid #ddd;font-size:14px">
+        </div>
+        <div class="manual-row">
+          <label>正しい名前</label>
+          <input type="text" id="fixname-new" placeholder="例：さっちゃん" style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid #ddd;font-size:14px">
+        </div>
+        <button class="manual-add-btn" onclick="fixSessionNames()" style="background:#D85A30">この内容で記録の名前を修正</button>
+      </div>
+    </div>
+    <div class="admin-section">
       <h3>🏆 チーム対抗戦（9月〜）</h3>
       <div class="draft-box">
         <p id="draft-status">まだチーム分けが実行されていません。生徒リストの学年を設定してから実行してください。</p>
@@ -751,11 +766,12 @@ function genSessionId() {
   return 's_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
 }
 
-// 直前にこの端末が「サーバー上でこうだったはず」と認識していた状態（差分検出の基準点）
-let baselineSessionIds = new Set();
+// 直前にこの端末が「サーバー上でこうだったはず」と認識していた状態（差分検出の基準点）。
+// 中身（session本体）まで覚えておくことで、「同じ記録の中身が書き換わった」（＝改名など）も検出できる。
+let baselineSessionsById = new Map();
 let baselineActiveNames = new Set();
 function setSessionBaseline(sessions, active) {
-  baselineSessionIds = new Set(sessions.map(sessionIdentity));
+  baselineSessionsById = new Map(sessions.map(s => [sessionIdentity(s), s]));
   baselineActiveNames = new Set(Object.keys(active || {}));
 }
 
@@ -766,19 +782,29 @@ async function saveSessionData() {
     const remoteSessions = remote.sessions || [];
     const remoteActive = remote.active || {};
 
-    const localSessions = state.sessions;
-    const localIds = new Set(localSessions.map(sessionIdentity));
+    const remoteMap = new Map(remoteSessions.map(s => [sessionIdentity(s), s]));
+    const localMap = new Map(state.sessions.map(s => [sessionIdentity(s), s]));
+    const allIds = new Set([...remoteMap.keys(), ...localMap.keys(), ...baselineSessionsById.keys()]);
 
-    // この端末がbaseline以降に「新しく追加した」記録
-    const added = localSessions.filter(s => !baselineSessionIds.has(sessionIdentity(s)));
-    // この端末がbaseline以降に「削除した」記録（手動削除など）
-    const deletedIds = new Set([...baselineSessionIds].filter(id => !localIds.has(id)));
-
-    let merged = remoteSessions.filter(s => !deletedIds.has(sessionIdentity(s)));
-    const mergedIds = new Set(merged.map(sessionIdentity));
-    added.forEach(s => {
-      const id = sessionIdentity(s);
-      if (!mergedIds.has(id)) { merged.push(s); mergedIds.add(id); }
+    const merged = [];
+    allIds.forEach(id => {
+      const inBaseline = baselineSessionsById.has(id);
+      const inLocal = localMap.has(id);
+      const inRemote = remoteMap.has(id);
+      if (inLocal && !inBaseline) {
+        // この端末が新しく追加した記録
+        merged.push(localMap.get(id));
+      } else if (!inLocal && inBaseline) {
+        // この端末が削除した記録（remoteにあっても除外する）
+        return;
+      } else if (inLocal && inBaseline) {
+        const changed = JSON.stringify(localMap.get(id)) !== JSON.stringify(baselineSessionsById.get(id));
+        // 中身が書き換わっていれば（改名・補正など）ローカルを優先。変化がなければ他端末の最新（remote）を優先
+        merged.push(changed || !inRemote ? localMap.get(id) : remoteMap.get(id));
+      } else if (inRemote) {
+        // 他端末が新しく追加した記録（このクライアントは関与していない）
+        merged.push(remoteMap.get(id));
+      }
     });
 
     // active（在室中）も同様に差分マージ。ローカルで新たにチェックインした人は追加、
@@ -1091,7 +1117,7 @@ function closeModal(e) {
   selectedStudent = null;
 }
 
-async function doAction() {
+function doAction() {
   const name = selectedStudent; if (!name) return;
   const now = Date.now();
   if (state.active[name]) {
@@ -1100,10 +1126,11 @@ async function doAction() {
   } else {
     state.active[name] = now;
   }
-  await saveSessionData();
+  // 画面は即座に切り替える。サーバーへの保存は裏側で行い、待たせない。
   document.getElementById('modal-overlay').classList.remove('show');
   selectedStudent = null;
   refreshCurrentTab();
+  saveSessionData();
 }
 
 function refreshCurrentTab() {
@@ -1678,6 +1705,21 @@ function renderActiveForAdmin() {
     `;
     container.appendChild(div);
   });
+}
+
+async function fixSessionNames() {
+  const oldName = document.getElementById('fixname-old').value.trim();
+  const newName = document.getElementById('fixname-new').value.trim();
+  if (!oldName || !newName) { alert('古い名前と正しい名前の両方を入力してください'); return; }
+  const targets = state.sessions.filter(s => s.name === oldName);
+  if (!targets.length) { alert(`「${oldName}」という名前の記録は見つかりませんでした`); return; }
+  if (!confirm(`「${oldName}」の記録 ${targets.length}件を「${newName}」に修正します。よろしいですか？`)) return;
+  targets.forEach(s => { s.name = newName; });
+  await saveSessionData();
+  document.getElementById('fixname-old').value = '';
+  document.getElementById('fixname-new').value = '';
+  alert(`✅ ${targets.length}件の記録を「${newName}」に修正しました`);
+  refreshCurrentTab();
 }
 
 async function forceCheckout(name) {
