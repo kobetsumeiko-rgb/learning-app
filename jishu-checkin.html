@@ -839,27 +839,103 @@ async function saveSessionData() {
 }
 
 // ロースター系（生徒リスト・学年・チーム・本名・不参加・停止情報）のみ保存。セッション系のキーには一切触れない。
+// ロースター系（生徒リスト・学年・チーム・本名・不参加・停止情報）用の差分マージ保存。
+// セッション系と同じ考え方：前回保存した時点の内容（baseline）をディープコピーで持っておき、
+// 「追加・削除・変更」を検知して、他端末（例：スマホ）の変更を消さずに重ね合わせる。
+let baselineRoster = null;
+
+function captureRosterSnapshot() {
+  return JSON.parse(JSON.stringify({
+    students: state.students,
+    grades: state.grades,
+    teams: state.teams,
+    draft: state.draft,
+    realNames: state.realNames,
+    optOut: state.optOut,
+    banned: state.banned || {}
+  }));
+}
+
+function setRosterBaseline() {
+  baselineRoster = captureRosterSnapshot();
+}
+
+// {name: value} 形式の項目（grades/teams/realNames/optOut/banned）を差分マージする
+function mergeDictField(remoteObj, localObj, baselineObj) {
+  remoteObj = remoteObj || {};
+  localObj = localObj || {};
+  baselineObj = baselineObj || {};
+  const result = { ...remoteObj };
+  const allKeys = new Set([...Object.keys(remoteObj), ...Object.keys(localObj), ...Object.keys(baselineObj)]);
+  allKeys.forEach(key => {
+    const inBaseline = Object.prototype.hasOwnProperty.call(baselineObj, key);
+    const inLocal = Object.prototype.hasOwnProperty.call(localObj, key);
+    if (inLocal && !inBaseline) {
+      result[key] = localObj[key]; // この端末が新しく追加・設定した
+    } else if (!inLocal && inBaseline) {
+      delete result[key]; // この端末が削除・解除した
+    } else if (inLocal && inBaseline) {
+      const changed = JSON.stringify(localObj[key]) !== JSON.stringify(baselineObj[key]);
+      if (changed) result[key] = localObj[key]; // この端末で変更された
+      // 変更がなければ remote（他端末の最新）をそのまま採用
+    }
+  });
+  return result;
+}
+
+// 生徒リスト（名前の配列）を差分マージする
+function mergeStudentsList(remoteList, localList, baselineList) {
+  remoteList = remoteList || []; localList = localList || []; baselineList = baselineList || [];
+  const localSet = new Set(localList);
+  const baselineSet = new Set(baselineList);
+  const added = localList.filter(n => !baselineSet.has(n));
+  const removed = baselineList.filter(n => !localSet.has(n));
+  let merged = remoteList.filter(n => !removed.includes(n));
+  added.forEach(n => { if (!merged.includes(n)) merged.push(n); });
+  merged.sort((a, b) => a.localeCompare(b, 'ja'));
+  return merged;
+}
+
 async function saveRosterData() {
-  if (!currentRoom || currentRoom === 'all') return;
+  if (!currentRoom || currentRoom === 'all') return false;
   try {
-    const payload = {
-      students: state.students,
-      grades: state.grades,
-      teams: state.teams,
-      draft: state.draft,
-      realNames: state.realNames,
-      optOut: state.optOut,
-      banned: state.banned || {}
+    const remote = (await fetchRoomData(rosterRoomKey(currentRoom))) || {};
+    const baseline = baselineRoster || {};
+    const local = captureRosterSnapshot();
+
+    const merged = {
+      students: mergeStudentsList(remote.students, local.students, baseline.students),
+      grades: mergeDictField(remote.grades, local.grades, baseline.grades),
+      teams: mergeDictField(remote.teams, local.teams, baseline.teams),
+      realNames: mergeDictField(remote.realNames, local.realNames, baseline.realNames),
+      optOut: mergeDictField(remote.optOut, local.optOut, baseline.optOut),
+      banned: mergeDictField(remote.banned, local.banned, baseline.banned),
+      draft: JSON.stringify(local.draft) !== JSON.stringify(baseline.draft || null) ? local.draft : (remote.draft !== undefined ? remote.draft : local.draft)
     };
+
     const res = await fetch(`${WORKER_URL}/checkin/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ room: rosterRoomKey(currentRoom), data: payload })
+      body: JSON.stringify({ room: rosterRoomKey(currentRoom), data: merged })
     });
     const json = await res.json();
-    if (!json.ok) console.error('saveRosterData failed:', json);
+    if (json.ok) {
+      state.students = merged.students;
+      state.grades = merged.grades;
+      state.teams = merged.teams;
+      state.realNames = merged.realNames;
+      state.optOut = merged.optOut;
+      state.banned = merged.banned;
+      state.draft = merged.draft;
+      setRosterBaseline();
+      return true;
+    } else {
+      console.error('saveRosterData failed:', json);
+      return false;
+    }
   } catch(e) {
     console.error('saveRosterData error:', e);
+    return false;
   }
 }
 
@@ -933,6 +1009,7 @@ async function setRoom(room) {
     state = await loadData(room);
   }
   setSessionBaseline(state.sessions, state.active);
+  setRosterBaseline();
   document.getElementById('room-select-screen').style.display = 'none';
   document.getElementById('room-badge').textContent = ROOMS[room].short;
   // 管理タブは常に表示するが、開くにはパスワードが必要（openAdminTab側でチェック）
