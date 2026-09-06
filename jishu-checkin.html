@@ -801,8 +801,14 @@ async function saveSessionData() {
         return;
       } else if (inLocal && inBaseline) {
         const changed = JSON.stringify(localMap.get(id)) !== JSON.stringify(baselineSessionsById.get(id));
-        // 中身が書き換わっていれば（改名・補正など）ローカルを優先。変化がなければ他端末の最新（remote）を優先
-        merged.push(changed || !inRemote ? localMap.get(id) : remoteMap.get(id));
+        if (changed) {
+          // 中身が書き換わっていれば（改名・補正など）ローカルを優先
+          merged.push(localMap.get(id));
+        } else if (inRemote) {
+          // 変更なし→他端末の最新（remote）を採用
+          merged.push(remoteMap.get(id));
+        }
+        // 変更なし かつ remoteにも無い → 他端末で削除された記録なので、復活させずそのまま除外する
       } else if (inRemote) {
         // 他端末が新しく追加した記録（このクライアントは関与していない）
         merged.push(remoteMap.get(id));
