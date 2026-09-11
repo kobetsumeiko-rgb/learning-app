@@ -679,6 +679,7 @@ const ROOMS = {
 let currentRoom = null;  // 'amorisan' | 'yashiro' | 'aokijima' | 'all'
 let pwCallback = null;   // パスワード確認後に実行する関数
 let isSaving = false;    // 保存中フラグ
+let isAdminUnlocked = false; // 管理者パスワードを入力済みか（記録タブの削除ボタン・減算表示の可否に使う）
 
 // デフォルトの生徒リスト（教室ごとに初回のみ使用）
 const DEFAULT_STUDENTS_AMORISAN = [
@@ -1081,6 +1082,7 @@ function checkPassword() {
 
 function openAdminTab() {
   openPwOverlay('管理者パスワードを入力してください', () => {
+    isAdminUnlocked = true;
     switchTab('admin');
   });
 }
@@ -1229,6 +1231,7 @@ function refreshCurrentTab() {
 
 function switchTab(tab) {
   activeTab = tab;
+  if (tab !== 'admin') isAdminUnlocked = false; // 管理タブを離れたら自動的にロックし直す
   const order = ['checkin','ranking','team','history','admin'];
   document.querySelectorAll('.tab').forEach((t, i) => {
     t.classList.toggle('active', order[i] === tab);
@@ -1476,7 +1479,8 @@ function renderTeamTab() {
 }
 
 function renderHistory() {
-  const sessions = getFilteredSessions('hist-from', 'hist-to');
+  const sessions = getFilteredSessions('hist-from', 'hist-to')
+    .filter(s => isAdminUnlocked || s.type !== 'deduct'); // 減算補正は管理者以外には見せない
   const sorted = [...sessions].sort((a, b) => b.checkOut - a.checkOut).slice(0, 100);
   const list = document.getElementById('history-list');
   list.innerHTML = '';
@@ -1502,7 +1506,8 @@ function renderHistory() {
       dotColor = '#1D9E75';
       durLabel = formatDuration(s.duration);
     }
-    item.innerHTML = `<div class="dot" style="background:${dotColor}"></div><div class="h-name">${s.name}${typeLabel}</div><div class="h-date">${ds}</div><div class="h-dur">${durLabel}</div><button class="h-del" onclick="deleteSession(${idx})" title="この記録を削除">×</button>`;
+    const delBtn = isAdminUnlocked ? `<button class="h-del" onclick="deleteSession(${idx})" title="この記録を削除">×</button>` : '';
+    item.innerHTML = `<div class="dot" style="background:${dotColor}"></div><div class="h-name">${s.name}${typeLabel}</div><div class="h-date">${ds}</div><div class="h-dur">${durLabel}</div>${delBtn}`;
     list.appendChild(item);
   });
 }
