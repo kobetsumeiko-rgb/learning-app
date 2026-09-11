@@ -769,12 +769,12 @@ function genSessionId() {
 // 直前にこの端末が「サーバー上でこうだったはず」と認識していた状態（差分検出の基準点）。
 // 中身（session本体）まで覚えておくことで、「同じ記録の中身が書き換わった」（＝改名など）も検出できる。
 let baselineSessionsById = new Map();
-let baselineActiveNames = new Set();
+let baselineActive = {};
 function setSessionBaseline(sessions, active) {
   // ディープコピーして保存する（参照のままだと、後で元のオブジェクトを書き換えた際に
   // baseline側まで一緒に変わってしまい、「変更なし」と誤検知してしまうため）
   baselineSessionsById = new Map(sessions.map(s => [sessionIdentity(s), JSON.parse(JSON.stringify(s))]));
-  baselineActiveNames = new Set(Object.keys(active || {}));
+  baselineActive = JSON.parse(JSON.stringify(active || {}));
 }
 
 async function saveSessionData() {
@@ -815,12 +815,10 @@ async function saveSessionData() {
       }
     });
 
-    // active（在室中）も同様に差分マージ。ローカルで新たにチェックインした人は追加、
-    // チェックアウトした（＝baselineにはあったがローカルには無い）人はremote側からも消す。
-    const mergedActive = { ...remoteActive, ...state.active };
-    baselineActiveNames.forEach(name => {
-      if (!(name in state.active)) delete mergedActive[name];
-    });
+    // active（在室中）も、grades等と同じ3-way差分マージにする。
+    // これにより、他端末がすでにチェックアウト（削除）させた生徒を、
+    // 何も知らない別端末の無関係な保存操作でうっかり復活させてしまう事故を防ぐ。
+    const mergedActive = mergeDictField(remoteActive, state.active, baselineActive);
 
     const payload = { sessions: merged, active: mergedActive };
     const res = await fetch(`${WORKER_URL}/checkin/save`, {
@@ -1786,6 +1784,11 @@ function renderActiveForAdmin() {
         <div class="ci-time">チェックイン ${ciStr}</div>
       </div>
       <div class="row-bottom">
+        <label>チェックイン時刻</label>
+        <input type="time" id="fix-ci-time-${safeId}" value="${ciStr}">
+        <button onclick="fixCheckinTime('${name}')" style="background:#185FA5">CI修正</button>
+      </div>
+      <div class="row-bottom" style="margin-top:6px">
         <label>チェックアウト時刻</label>
         <input type="time" id="force-time-${safeId}" value="${nowStr}">
         <button onclick="forceCheckout('${name}')">修正CO</button>
@@ -1811,6 +1814,27 @@ async function fixSessionNames() {
   } else {
     alert('⚠️ 保存に失敗しました。通信状況を確認して、もう一度お試しください。');
   }
+  refreshCurrentTab();
+}
+
+async function fixCheckinTime(name) {
+  const safeId = name.replace(/\s/g, '-');
+  const timeVal = document.getElementById('fix-ci-time-' + safeId)?.value;
+  if (!timeVal) return;
+  const ci = state.active[name];
+  if (!ci) return;
+  const ciDate = new Date(ci);
+  const [h, m] = timeVal.split(':').map(Number);
+  const newCiDate = new Date(ciDate);
+  newCiDate.setHours(h, m, 0, 0);
+  if (newCiDate.getTime() >= Date.now()) {
+    alert('チェックイン時刻は、現在時刻より前にしてください。');
+    return;
+  }
+  const oldStr = ciDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+  if (!confirm(`${name}\nチェックイン時刻を ${oldStr} → ${timeVal} に修正しますか？\n（在室中のまま、開始時刻だけを直します）`)) return;
+  state.active[name] = newCiDate.getTime();
+  await saveSessionData();
   refreshCurrentTab();
 }
 
