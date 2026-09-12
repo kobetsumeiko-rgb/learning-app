@@ -611,6 +611,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
       </div>
     </div>
     <div class="admin-section">
+      <h3>🎁 バッジ景品の配布管理</h3>
+      <p style="font-size:12px;color:#888;margin-bottom:10px">生徒が到達した各ランクについて、景品を渡したかどうかをチェックできます。</p>
+      <div id="badge-admin-list"></div>
+    </div>
+    <div class="admin-section">
       <h3>生徒リスト</h3>
       <div id="admin-student-list"></div>
       <div class="add-row">
@@ -701,7 +706,8 @@ function defaultData(room) {
     teams: {},
     draft: null,
     realNames: {},
-    optOut: {}
+    optOut: {},
+    badgesGiven: {}
   };
 }
 
@@ -712,7 +718,7 @@ function defaultData(room) {
 // もう片方の変更（例：管理画面で入力した学年）が消えてしまう事故が起きるため、分離している。
 function rosterRoomKey(room) { return room + '__roster'; }
 
-const ROSTER_FIELDS = ['students', 'grades', 'teams', 'draft', 'realNames', 'optOut', 'banned'];
+const ROSTER_FIELDS = ['students', 'grades', 'teams', 'draft', 'realNames', 'optOut', 'banned', 'badgesGiven'];
 const SESSION_FIELDS = ['sessions', 'active'];
 
 async function fetchRoomData(room) {
@@ -857,6 +863,7 @@ function captureRosterSnapshot() {
     draft: state.draft,
     realNames: state.realNames,
     optOut: state.optOut,
+    badgesGiven: state.badgesGiven || {},
     banned: state.banned || {}
   }));
 }
@@ -914,6 +921,7 @@ async function saveRosterData() {
       teams: mergeDictField(remote.teams, local.teams, baseline.teams),
       realNames: mergeDictField(remote.realNames, local.realNames, baseline.realNames),
       optOut: mergeDictField(remote.optOut, local.optOut, baseline.optOut),
+      badgesGiven: mergeDictField(remote.badgesGiven, local.badgesGiven, baseline.badgesGiven),
       banned: mergeDictField(remote.banned, local.banned, baseline.banned),
       draft: JSON.stringify(local.draft) !== JSON.stringify(baseline.draft || null) ? local.draft : (remote.draft !== undefined ? remote.draft : local.draft)
     };
@@ -930,6 +938,7 @@ async function saveRosterData() {
       state.teams = merged.teams;
       state.realNames = merged.realNames;
       state.optOut = merged.optOut;
+      state.badgesGiven = merged.badgesGiven;
       state.banned = merged.banned;
       state.draft = merged.draft;
       setRosterBaseline();
@@ -959,6 +968,7 @@ async function saveRoomDataSplit(room, data) {
     teams: data.teams || {},
     draft: data.draft || null,
     realNames: data.realNames || {},
+    badgesGiven: data.badgesGiven || {},
     optOut: data.optOut || {},
     banned: data.banned || {}
   };
@@ -974,7 +984,7 @@ async function saveRoomDataSplit(room, data) {
   ]);
 }
 
-let state = { students: [], sessions: [], active: {}, grades: {}, teams: {}, draft: null, realNames: {}, optOut: {} };
+let state = { students: [], sessions: [], active: {}, grades: {}, teams: {}, draft: null, realNames: {}, optOut: {}, badgesGiven: {} };
 let selectedStudent = null;
 let activeTab = 'checkin';
 
@@ -1025,7 +1035,7 @@ async function setRoom(room) {
 
 async function mergeAllRooms() {
   try {
-    const merged = { students: [], sessions: [], active: {}, banned: {}, grades: {}, teams: {}, draft: null, realNames: {}, optOut: {} };
+    const merged = { students: [], sessions: [], active: {}, banned: {}, grades: {}, teams: {}, draft: null, realNames: {}, optOut: {}, badgesGiven: {} };
     const rooms = ['amorisan', 'yashiro', 'aokijima'];
     for (const r of rooms) {
       const d = await loadData(r);
@@ -1038,12 +1048,13 @@ async function mergeAllRooms() {
       Object.assign(merged.teams, d.teams || {});
       Object.assign(merged.realNames, d.realNames || {});
       Object.assign(merged.optOut, d.optOut || {});
+      Object.assign(merged.badgesGiven, d.badgesGiven || {});
     }
     merged.students.sort((a, b) => a.localeCompare(b, 'ja'));
     return merged;
   } catch(e) {
     console.error('mergeAllRooms error:', e);
-    return { students: [], sessions: [], active: {}, grades: {}, teams: {}, draft: null, realNames: {}, optOut: {} };
+    return { students: [], sessions: [], active: {}, grades: {}, teams: {}, draft: null, realNames: {}, optOut: {}, badgesGiven: {} };
   }
 }
 
@@ -1093,6 +1104,14 @@ function updateRoomLabel() {
 }
 
 // ===== バッジ =====
+// バッジ景品の対象となる段階（時間のしきい値とラベル）。ノーマルは対象外。
+const BADGE_TIERS = [
+  { hours: 10, label: 'レア' },
+  { hours: 30, label: '激レア' },
+  { hours: 50, label: '超激レア' },
+  { hours: 100, label: '伝説' }
+];
+
 function getBadge(ms) {
   const h = ms / 3600000;
   if (h >= 100) return { icon: '🔮', label: '伝説',   bg: '#EEEDFE', color: '#3C3489' };
@@ -1559,6 +1578,7 @@ function renderAdmin() {
   initManualForm();
   updateRoomLabel();
   renderDraftAdmin();
+  renderBadgeAdmin();
   const container = document.getElementById('admin-student-list');
   container.innerHTML = '';
   const gradeOptions = ['小1','小2','小3','小4','小5','小6','中1','中2','中3','高1','高2','高3'];
@@ -1597,6 +1617,59 @@ function renderAdmin() {
     `;
     container.appendChild(row);
   });
+}
+
+// ===== バッジ景品の配布管理 =====
+
+function renderBadgeAdmin() {
+  const container = document.getElementById('badge-admin-list');
+  if (!container) return;
+  container.innerHTML = '';
+  // 誰かしら1段階でも到達している生徒だけ表示する
+  const rows = state.students.map(name => {
+    const totalMs = state.sessions.filter(s => s.name === name).reduce((a, s) => a + (s.duration || 0), 0)
+                  + (state.active[name] ? Date.now() - state.active[name] : 0);
+    const hours = totalMs / 3600000;
+    const reached = BADGE_TIERS.filter(t => hours >= t.hours);
+    return { name, hours, reached };
+  }).filter(r => r.reached.length > 0);
+
+  if (!rows.length) {
+    container.innerHTML = '<p style="font-size:13px;color:#aaa">まだレア以上に到達した生徒はいません</p>';
+    return;
+  }
+
+  rows.sort((a, b) => b.hours - a.hours);
+  rows.forEach(r => {
+    const given = (state.badgesGiven && state.badgesGiven[r.name]) || {};
+    const row = document.createElement('div');
+    row.className = 'admin-row';
+    row.style.flexWrap = 'wrap';
+    row.innerHTML = `
+      <div class="mini-avatar">${getInitials(r.name)}</div>
+      <div style="flex:1;min-width:160px">
+        <div style="font-weight:600;font-size:14px;color:#1a1a1a">${displayNameOf(r.name)}（${r.hours.toFixed(1)}h）</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">
+          ${r.reached.map(t => `
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#444;cursor:pointer">
+              <input type="checkbox" ${given[t.label] ? 'checked' : ''} onchange="toggleBadgeGiven('${r.name}', '${t.label}', this.checked)">
+              ${t.label}
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+async function toggleBadgeGiven(name, tierLabel, checked) {
+  if (!state.badgesGiven) state.badgesGiven = {};
+  if (!state.badgesGiven[name]) state.badgesGiven[name] = {};
+  if (checked) state.badgesGiven[name][tierLabel] = true;
+  else delete state.badgesGiven[name][tierLabel];
+  await saveRosterData();
+  renderBadgeAdmin();
 }
 
 function renderDraftAdmin() {
@@ -2207,6 +2280,7 @@ async function editStudent(i) {
   if (state.teams[oldName] !== undefined) { state.teams[trimmed] = state.teams[oldName]; delete state.teams[oldName]; }
   if (state.realNames[oldName] !== undefined) { state.realNames[trimmed] = state.realNames[oldName]; delete state.realNames[oldName]; }
   if (state.optOut[oldName] !== undefined) { state.optOut[trimmed] = state.optOut[oldName]; delete state.optOut[oldName]; }
+  if (state.badgesGiven[oldName] !== undefined) { state.badgesGiven[trimmed] = state.badgesGiven[oldName]; delete state.badgesGiven[oldName]; }
   // 過去の記録を全て置き換え
   state.sessions.forEach(s => { if (s.name === oldName) s.name = trimmed; });
   sortStudents();
@@ -2239,6 +2313,7 @@ async function removeStudent(i) {
   delete state.teams[name];
   delete state.realNames[name];
   delete state.optOut[name];
+  delete state.badgesGiven[name];
   state.students.splice(i, 1); await saveData(); renderAdmin();
 }
 
