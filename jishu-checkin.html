@@ -375,6 +375,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 <div class="top-bar">
   <h1>📚 自習室</h1>
   <div style="display:flex;align-items:center;gap:8px">
+    <button id="admin-lock-btn" onclick="lockAdmin()" style="display:none;background:#FFF0EC;color:#D85A30;border:1px solid #F5A98A;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer">🔒 ロックする</button>
     <span class="room-badge" id="room-badge">—</span>
     <span class="clock" id="clock">--:--</span>
   </div>
@@ -1094,8 +1095,20 @@ function checkPassword() {
 function openAdminTab() {
   openPwOverlay('管理者パスワードを入力してください', () => {
     isAdminUnlocked = true;
+    updateAdminLockButton();
     switchTab('admin');
   });
+}
+
+function lockAdmin() {
+  isAdminUnlocked = false;
+  updateAdminLockButton();
+  refreshCurrentTab();
+}
+
+function updateAdminLockButton() {
+  const btn = document.getElementById('admin-lock-btn');
+  if (btn) btn.style.display = isAdminUnlocked ? '' : 'none';
 }
 
 function updateRoomLabel() {
@@ -1250,7 +1263,6 @@ function refreshCurrentTab() {
 
 function switchTab(tab) {
   activeTab = tab;
-  if (tab !== 'admin') isAdminUnlocked = false; // 管理タブを離れたら自動的にロックし直す
   const order = ['checkin','ranking','team','history','admin'];
   document.querySelectorAll('.tab').forEach((t, i) => {
     t.classList.toggle('active', order[i] === tab);
