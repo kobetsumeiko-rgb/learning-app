@@ -354,7 +354,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
   <p>この端末の教室を選択してください</p>
   <button class="room-btn" onclick="selectRoom('amorisan')">🏫 安茂里駅前教室</button>
   <button class="room-btn" onclick="selectRoom('yashiro')">🏫 屋代教室</button>
-  <button class="room-btn" onclick="selectRoom('aokijima')">🏫 長野青木島教室</button>
+  <button class="room-btn" onclick="selectRoom('aokijima')">🏫 稲里下氷鉋教室</button>
   <button class="room-btn" id="room-btn-all" onclick="selectRoom('all')" style="background:#f0f0ea;color:#888;font-size:15px;padding:14px;margin-top:8px">💻 全教室（管理者用）</button>
 </div>
 
@@ -678,7 +678,7 @@ const PRIZE_MIN_COUNT = 5; // 優勝・2位チーム賞のカードをもらえ�
 const ROOMS = {
   amorisan: { name: '安茂里駅前教室', short: '安茂里' },
   yashiro:  { name: '屋代教室',       short: '屋代' },
-  aokijima: { name: '長野青木島教室', short: '青木島' },
+  aokijima: { name: '稲里下氷鉋教室', short: '稲里' },
   all:      { name: '全教室（管理者）', short: '全教室' }
 };
 
@@ -1576,7 +1576,7 @@ function renderAdmin() {
       warnEl = document.createElement('div');
       warnEl.id = warnId;
       warnEl.style.cssText = 'background:#FFF0EC;border:1px solid #F5A98A;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#D85A30;line-height:1.6;font-weight:600';
-      warnEl.textContent = '⚠️ 「全教室」モードでは、ここでの編集（学年設定・生徒追加・チーム分けなど）は保存されません。編集する場合は一度ログアウトし、対象の教室（安茂里駅前・屋代・青木島）を選び直してから管理画面を開いてください。';
+      warnEl.textContent = '⚠️ 「全教室」モードでは、ここでの編集（学年設定・生徒追加・チーム分けなど）は保存されません。編集する場合は一度ログアウトし、対象の教室（安茂里駅前・屋代・稲里下氷鉋）を選び直してから管理画面を開いてください。';
       document.querySelector('.admin-panel').prepend(warnEl);
     }
   } else if (warnEl) {
