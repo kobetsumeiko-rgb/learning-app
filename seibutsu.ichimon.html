@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>体内環境の恒常性 一問一答</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: one centered study card, controls below, filter bar above — a lab notebook page */
+:root{
+  --bg:#EEF2EF; --paper:#FFFFFF; --ink:#1B2A26; --muted:#5E6F69; --line:#D4DDD8;
+  --accent:#1E6E5F; --accent-soft:#E1EFEA; --mark:#B4483A; --mark-soft:#F6E6E2; --ok:#2F7D4F;
+  --display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121A18; --paper:#1B2522; --ink:#E4ECE8; --muted:#97A8A2; --line:#2E3B37;
+  --accent:#5FBFA8; --accent-soft:#1F3631; --mark:#E3897B; --mark-soft:#3A2622; --ok:#6CC08E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121A18; --paper:#1B2522; --ink:#E4ECE8; --muted:#97A8A2; --line:#2E3B37;
+  --accent:#5FBFA8; --accent-soft:#1F3631; --mark:#E3897B; --mark-soft:#3A2622; --ok:#6CC08E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-direction:column;gap:4px}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--accent);font-weight:700}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(22px,5vw,30px);line-height:1.35;margin:0;text-wrap:balance}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--paper);font-weight:700}
+.chip:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.spacer{flex:1}
+.progress{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.track{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.fill{height:100%;background:var(--accent);width:0;transition:width .25s}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px 22px 20px;display:flex;flex-direction:column;gap:16px}
+.qhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.qno{font-family:var(--display);font-weight:800;font-size:28px;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
+.tag{font-size:12px;font-weight:700;padding:2px 9px;border-radius:4px;background:var(--accent-soft);color:var(--accent);letter-spacing:.05em}
+.tag.think{background:var(--mark-soft);color:var(--mark)}
+.flag{font-size:12px;color:var(--mark);font-weight:700;margin-left:auto}
+.qtext{font-size:18px;font-weight:500;margin:0;white-space:pre-line}
+.choices{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.choices li{display:flex;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:15px}
+.choices li b{color:var(--muted);font-weight:700;flex:none}
+.choices li.right{border-color:var(--ok);background:var(--accent-soft)}
+.choices li.right b{color:var(--ok)}
+.answer{border-top:2px dashed var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px}
+.lbl{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.ans{font-family:var(--display);font-weight:800;font-size:22px;line-height:1.5;color:var(--ok);margin:0}
+.fb{background:var(--bg);border-radius:8px;padding:12px 14px;font-size:15px;margin:0}
+.btn{font:inherit;font-weight:700;font-size:16px;padding:13px 18px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;flex:1;min-width:0}
+.btn.primary{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.btn.again{color:var(--mark);border-color:var(--mark)}
+.btn.got{color:var(--ok);border-color:var(--ok)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.nav{display:flex;gap:10px}
+.nav .btn{font-weight:500;font-size:14px;padding:9px 12px}
+.hint{font-size:12px;color:var(--muted);text-align:center}
+.done{text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+.done .big{font-family:var(--display);font-size:42px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;line-height:1.2}
+.toggle{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer}
+@media (prefers-reduced-motion:reduce){.fill{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">生物基礎 ｜ 一問一答</div>
+    <h1>体内環境の恒常性</h1>
+  </header>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="出題範囲">
+      <button class="chip" id="f-all" data-f="all" aria-pressed="true">全30問</button>
+      <button class="chip" id="f-basic" data-f="basic" aria-pressed="false">基本 1–20</button>
+      <button class="chip" id="f-think" data-f="think" aria-pressed="false">思考 21–30</button>
+      <button class="chip" id="f-review" data-f="review" aria-pressed="false">要復習 <span id="revCount">0</span></button>
+    </div>
+    <span class="spacer"></span>
+    <label class="toggle"><input type="checkbox" id="optShuffle"> シャッフル</label>
+    <label class="toggle"><input type="checkbox" id="optChoices"> 選択肢も表示</label>
+  </div>
+
+  <div class="progress"><span id="pos">1 / 30</span><div class="track"><div class="fill" id="fill"></div></div></div>
+
+  <section class="card" id="card"></section>
+
+  <div class="nav">
+    <button class="btn" id="prev">← 前の問題</button>
+    <button class="btn" id="next">次の問題 →</button>
+  </div>
+  <div class="hint">スペースキーで答えを表示 ／ ← → で移動</div>
+</div>
+
+<script>
+const Q=[
+{q:"体液のうち、細胞を取り巻く液体で血漿が毛細血管から滲み出たものを何というか。",c:["組織液","リンパ液","原尿","髄液"],a:"組織液",f:"血管から組織の細胞間に滲み出た血漿成分を組織液と呼びます。"},
+{q:"恒常性（ホメオスタシス）の調節中枢となる間脳の領域はどこか。",c:["視床下部","大脳皮質","小脳","延髄"],a:"視床下部",f:"間脳の視床下部は、自律神経系やホルモン分泌を統括する恒常性維持の中枢です。"},
+{q:"心臓の脈拍（拍動）の周期を決定する「ペースメーカー」が存在する部位はどこか。",c:["右心房の洞房結節","右心室の心室筋","左心房の有様部","左心室の洞房結節"],a:"右心房の洞房結節",f:"右心房の壁にある洞房結節（ペースメーカー）が自発的に刺激を発生させます。"},
+{q:"交感神経の節前繊維・節後繊維末端から分泌される神経伝達物質の組み合わせとして正しいものはどれか。",c:["節前：アセチルコリン / 節後：ノルアドレナリン","節前：ノルアドレナリン / 節後：アセチルコリン","節前：アセチルコリン / 節後：アセチルコリン","節前：ノルアドレナリン / 節後：アドレナリン"],a:"節前：アセチルコリン / 節後：ノルアドレナリン",f:"交感神経の節前繊維末端はアセチルコリン、節後繊維末端はノルアドレナリンを分泌します（副交感神経は両方アセチルコリン）。"},
+{q:"血液凝固の過程で、フィブリノゲンをフィブリンに変化させる物質はどれか。",c:["トロンビン","トロンボプラスチン","プロトロンビン","プラスミン"],a:"トロンビン",f:"トロンビンという酵素の働きにより、水溶性のフィブリノゲンが不溶性のフィブリンに重合します。"},
+{q:"血液凝固を起こりにくくするため、クエン酸ナトリウムを加える主な目的はどれか。",c:["カルシウムイオン（Ca²⁺）の除去","フィブリノゲンの分解","血小板の破壊阻害","トロンビンの活性化"],a:"カルシウムイオン（Ca²⁺）の除去",f:"クエン酸ナトリウムはカルシウムイオンと結合して除去するため、血液凝固反応が進行しなくなります。"},
+{q:"腎小体（腎臓の単位構造の一部）を構成する組み合わせとして正しいものはどれか。",c:["糸球体 と ボーマン嚢","糸球体 と 細尿管","ボーマン嚢 と 集合管","腎小体 と 細尿管"],a:"糸球体 と ボーマン嚢",f:"腎小体（マルピーギ小体）は「糸球体」とそれを包む「ボーマン嚢」から構成されます。"},
+{q:"健康な人の腎臓において、血漿から原尿へ「ろ過」されない成分はどれか。",c:["タンパク質","グルコース","尿素","ナトリウムイオン"],a:"タンパク質",f:"タンパク質などの高分子物質は糸球体の壁を通過できないため、ろ過されません。"},
+{q:"腎臓の細尿管および集合管において、水の再吸収を促進するホルモンはどれか。",c:["バソプレシン","鉱質コルチコイド","糖質コルチコイド","チロキシン"],a:"バソプレシン",f:"脳下垂体後葉から分泌されるバソプレシンは、集合管等での水の再吸収を促進します。"},
+{q:"副腎皮質刺激ホルモン（ACTH）を分泌する器官はどこか。",c:["脳下垂体前葉","脳下垂体後葉","視床下部","副腎皮質"],a:"脳下垂体前葉",f:"脳下垂体前葉から分泌され、副腎皮質からの糖質コルチコイド分泌を促します。"},
+{q:"血糖値を「低下」させる唯一のホルモンと、その分泌場所の正しい組み合わせはどれか。",c:["インスリン ― すい臓ランゲルハンス島B細胞（β細胞）","インスリン ― すい臓ランゲルハンス島A細胞（α細胞）","グルカゴン ― すい臓ランゲルハンス島A細胞（α細胞）","アドレナリン ― 副腎髄質"],a:"インスリン ― すい臓ランゲルハンス島B細胞（β細胞）",f:"血糖値を下げる唯一のホルモンはインスリンで、すい臓ランゲルハンス島のB細胞から分泌されます。"},
+{q:"血糖値を「上昇」させるホルモンのうち、タンパク質から糖への糖新生を促進するものはどれか。",c:["糖質コルチコイド","グルカゴン","アドレナリン","成長ホルモン"],a:"糖質コルチコイド",f:"副腎皮質から分泌される糖質コルチコイドは、タンパク質や脂質からの糖新生を促進します。"},
+{q:"鉱質コルチコイドの主な作用として正しいものはどれか。",c:["細尿管でのNa⁺の再吸収促進とK⁺の排出促進","細尿管での水の再吸収抑制","肝臓でのグリコーゲン分解促進","全身の細胞代謝の活性化"],a:"細尿管でのNa⁺の再吸収促進とK⁺の排出促進",f:"鉱質コルチコイド（アルドステロン）は、腎臓細尿管でのナトリウムイオン再吸収を促進します。"},
+{q:"甲状腺ホルモンである「チロキシン」の構成成分として必須の無機塩類はどれか。",c:["ヨウ素","鉄","カルシウム","マグネシウム"],a:"ヨウ素",f:"チロキシンはヨウ素を含有するホルモンで、細胞の代謝を促進します。"},
+{q:"体温が低下したときの身体反応として「誤っているもの」はどれか。",c:["皮膚の毛細血管が拡張する","立毛筋が収縮する","チロキシンの分泌が増加する","交感神経の活動が高まる"],a:"皮膚の毛細血管が拡張する",f:"体温低下時は、放熱を防ぐために皮膚の血管は「収縮」します。"},
+{q:"ヒトの血液中に含まれる血球の中で、核を持たないものの組み合わせはどれか。",c:["赤血球 と 血小板","赤血球 と 白血球","白血球 と 血小板","赤血球・白血球・血小板のすべて"],a:"赤血球 と 血小板",f:"ヒトの成熟した赤血球と血小板には核がありません（白血球には核が存在します）。"},
+{q:"血液凝固反応において、最終的に固まる血栓を分解・溶解する現象を何というか。",c:["線溶（フィブリン溶解）","溶血","凝集","抗原抗体反応"],a:"線溶（フィブリン溶解）",f:"血管が修復された後、プラスミンという酵素によりフィブリン血栓が分解される現象を線溶といいます。"},
+{q:"心臓の部屋とそこにつながる血管の組み合わせとして正しいものはどれか。",c:["左心室 ― 大動脈","右心室 ― 大静脈","左心房 ― 肺動脈","右心房 ― 肺静脈"],a:"左心室 ― 大動脈",f:"左心室からは強固な心筋により全身へ送り出す「大動脈」が伸びています。"},
+{q:"ホルモン分泌の過不足が、分泌元を刺激する上位の器官へ伝わり分泌量が調整される仕組みを何というか。",c:["フィードバック調整","拮抗作用","目標細胞刺激作用","神経分泌"],a:"フィードバック調整",f:"最終的な結果や生成物が、その生成プロセスの初期段階へ影響を与える調節機構をフィードバックといいます。"},
+{q:"自律神経系の最高中枢および二重支配（多くの器官に交感・副交感の双方が分布すること）の説明として正しいものはどれか。",c:["交感神経と副交感神経は同じ器官に対して互いに逆の作用（拮抗作用）を示す","交感神経と副交感神経は常に同じ方向に器官を刺激する","間脳視床下部は交感神経のみを支配し、副交感神経は中脳が支配する","立毛筋や皮膚の血管には副交感神経のみが密に分布している"],a:"交感神経と副交感神経は同じ器官に対して互いに逆の作用（拮抗作用）を示す",f:"自律神経系は原則として同じ器官に交感・副交感の両方が到達し、互いに反対の作用（拮抗作用）を及ぼします。"},
+{q:"イヌを用いた実験で、ある物質X（血漿中の濃度 0.1 mg/mL）はろ過されたあと全量が再吸収されず、濃縮もされずに尿中へ排出された（尿中濃度 12 mg/mL）。1分間に形成される原尿量（原尿生成速度）として最も適切なものはどれか。ただし、1分間に排出された尿量は 1 mL とする。",c:["120 mL/分","12 mL/分","1.2 mL/分","1200 mL/分"],a:"120 mL/分",f:"再吸収も分泌もされない物質Xの（尿中濃度 × 尿量）＝ 原尿中の物質Xの量 となります。12 mg/mL × 1 mL/分 ＝ 12 mg/分。これが血漿濃度 0.1 mg/mL から由来するため、原尿量 ＝ 12 ÷ 0.1 ＝ 120 mL/分。"},
+{q:"1分間に排出される尿量が 1 mL、原尿生成速度が 120 mL/分であるとき、水全体の再吸収率は約何％か。",c:["約 99.2 %","約 98.0 %","約 90.0 %","約 99.9 %"],a:"約 99.2 %",f:"1分間に120 mL作られる原尿のうち、尿となるのは1 mLなので、再吸収される水は119 mL。再吸収率 ＝（119 ÷ 120）× 100 ≒ 99.16… ≒ 99.2%"},
+{q:"ある人が健康体であるとき、血漿・原尿・尿における「グルコース」と「尿素」の濃度の変化に関する考察として最も適切なものはどれか。",c:["グルコースは原尿中にろ過されるが細尿管で100%再吸収され、尿中濃度は 0 になる。","尿素は大きすぎて糸球体でろ過されず、血漿中にとどまるため尿中には存在しない。","グルコースはろ過されないため、原尿中の濃度は 0 である。","尿素は細尿管で100%再吸収されるため、濃縮率は 1 未満になる。"],a:"グルコースは原尿中にろ過されるが細尿管で100%再吸収され、尿中濃度は 0 になる。",f:"グルコースは小分子のため糸球体でろ過されますが、細尿管で全量が再吸収されるため正常な尿には含まれません。"},
+{q:"健康なヒトが大量の純水（真水）を短時間に摂取した。このとき体内で起こる自律神経・ホルモンの変化と体液調節の応答として正しいものはどれか。",c:["体液の浸透圧が低下し、視床下部がこれを感知してバソプレシンの分泌が抑制され、尿量が増加する。","体液の浸透圧が上昇し、バソプレシンの分泌が促進されて水が保持される。","体液の浸透圧低下により、鉱質コルチコイドの分泌が極度に高まり水の排出が止まる。","副交感神経が刺激され、腎臓への血流量が遮断されて尿生成が停止する。"],a:"体液の浸透圧が低下し、視床下部がこれを感知してバソプレシンの分泌が抑制され、尿量が増加する。",f:"水分の過剰摂取により体液浸透圧（濃度）が低下すると、バソプレシン分泌が抑えられ、水の再吸収が減って薄い尿が多量に出ます。"},
+{q:"実験において、甲状腺を摘出したラットAと、正常なラットBに、それぞれ同量の「甲状腺刺激ホルモン（TSH）」を投与した。予想される結果とその理由の組み合わせとして正しいものはどれか。",c:["ラットAではチロキシンは分泌されず代謝も上がらない。ラットBではチロキシン分泌が増加し代謝が上がる。","ラットA・Bともにチロキシン分泌が著しく増加する。","ラットAではチロキシン過剰となりフィードバックによりTSHが即座に無効化される。","ラットBでは甲状腺が退化し、チロキシン分泌量がゼロになる。"],a:"ラットAではチロキシンは分泌されず代謝も上がらない。ラットBではチロキシン分泌が増加し代謝が上がる。",f:"TSHは甲状腺に働きかけてチロキシンを出させるホルモンです。甲状腺自体を摘出しているラットAでは標的器官が存在しないため作用しません。"},
+{q:"すい臓のランゲルハンス島B細胞が破壊される病気（1型糖尿病）の患者において、食事直後に見られる体内状態の説明として正しいものはどれか。",c:["インスリンが分泌されないため、血液中のグルコースの細胞への取り込みや合成が遅れ、高血糖状態が続く。","グルカゴンが過剰分泌され、血糖値が著しく低下して低血糖ショックを起こす。","糖質コルチコイドの作用が完全に阻害され、尿中にタンパク質が多量に漏れ出る。","肝臓でのグリコーゲン合成が極度に促進される。"],a:"インスリンが分泌されないため、血液中のグルコースの細胞への取り込みや合成が遅れ、高血糖状態が続く。",f:"B細胞破壊によりインスリンが欠乏すると、食事で得たブドウ糖を細胞が取り込めず、グリコーゲンへの合成も進まないため高血糖が持続します。"},
+{q:"血管系に関する以下の実験記述のうち、正しく解釈されているものはどれか。\n「肝門脈を流れる血液と、肝静脈を流れる血液の成分比較」",c:["食直後は、消化管から吸収された養分を含むため「肝門脈」の方が「肝静脈」よりグルコース濃度が高いことが多い。","空腹時は、肝臓での分解が進むため「肝門脈」の方が「肝静脈」よりも常にグルコース濃度が高い。","食直後・空腹時を問わず、尿素濃度は常に「肝門脈」の方が「肝静脈」より高い。","酸素濃度は常に「肝静脈」の方が「大静脈」より低い。"],a:"食直後は、消化管から吸収された養分を含むため「肝門脈」の方が「肝静脈」よりグルコース濃度が高いことが多い。",f:"食直後は小腸から吸収された糖が肝門脈を通って肝臓に入るため、肝門脈の血糖値が高くなります（肝臓でグリコーゲンに蓄えられ、肝静脈へは一定濃度で調整されて出ていきます）。"},
+{q:"血液凝固に関する実験で、試験管A〜Cに全血を入れ、以下の条件で放置した。血液凝固が「起こらない」試験管の組み合わせはどれか。\n[A] クエン酸ナトリウムを加えた試験管\n[B] ヘパリンを加えた試験管\n[C] 5℃の氷水中で冷却し、ガラス棒でフィブリン糸をからめ取った試験管",c:["A, B, C のすべてで凝固が阻害または完了して固まらない","A と B のみ","B と C のみ","A のみ"],a:"A, B, C のすべて",f:"AはCa²⁺脱離、Bはトロンビン作用阻害（抗トロンビン）、Cはフィブリン糸除去と低温による酵素反応抑制のため、いずれも最終的に血の塊（脱血小板血栓・凝固塊）として固まらなくなります。"},
+{q:"交感神経が優位に働いている状態（激しい運動時やストレス時）における体内の変化として、誤っている組み合わせはどれか。",c:["気管支が収縮し、消化管運動が促進される","心拍数が増加し、立毛筋が収縮する","血糖値が上昇し、瞳孔が拡大する","皮膚の血管が収縮し、立毛筋が収縮する"],a:"気管支が収縮し、消化管運動が促進される",f:"交感神経優位時は、空気を取り込むため気管支は「拡張」し、エネルギー消費を優先するため消化管運動は「抑制」されます。"},
+{q:"視床下部―脳下垂体前葉―甲状腺のフィードバック系において、血中の「チロキシン濃度が異常に高くなった」場合、体内で起こる変化として最も適切なものはどれか。",c:["視床下部からの放出ホルモンおよび脳下垂体前葉からのTSHの分泌が「抑制」される（負のフィードバック）。","脳下垂体前葉が刺激され、TSHの分泌量がさらに「増加」する（正のフィードバック）。","甲状腺自体が即座に交感神経を直接刺激して、血圧を降下させる。","副腎皮質からの糖質コルチコイド分泌が完全に停止する。"],a:"視床下部からの放出ホルモンおよび脳下垂体前葉からのTSHの分泌が「抑制」される（負のフィードバック）。",f:"チロキシンが高濃度になると、上位の中枢（視床下部・脳下垂体前葉）に働きかけて刺激ホルモン（TSH等）の分泌を抑える「負のフィードバック」が機能します。"}
+];
+Q.forEach((x,i)=>{x.n=i+1;x.think=i>=20});
+
+const KEY="seibutsu-homeostasis-v1";
+let marks={};
+try{marks=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){marks={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(marks))}catch(e){}}
+
+let filter="all",order=[],idx=0,shown=false,doneShown=false;
+const $=id=>document.getElementById(id);
+const optShuffle=$("optShuffle"),optChoices=$("optChoices");
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+function build(){
+  let list=Q.filter(x=>filter==="all"||(filter==="basic"&&!x.think)||(filter==="think"&&x.think)||(filter==="review"&&marks[x.n]==="again"));
+  if(optShuffle.checked){list=list.slice();for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]]}}
+  order=list;idx=0;shown=false;doneShown=false;render();
+}
+function updateCount(){$("revCount").textContent=Object.values(marks).filter(v=>v==="again").length}
+
+function render(){
+  updateCount();
+  const card=$("card");
+  const total=order.length;
+  $("pos").textContent=total?`${Math.min(idx+1,total)} / ${total}`:"0 / 0";
+  $("fill").style.width=total?((doneShown?total:idx)/total*100)+"%":"0";
+  $("prev").disabled=idx===0&&!doneShown;$("next").disabled=doneShown||!total;
+  if(!total){card.innerHTML=`<div class="done"><div class="lbl">要復習</div><p style="margin:0">「もう一度」を押した問題がここに集まります。<br>今は復習が必要な問題はありません。</p></div>`;return}
+  if(doneShown){
+    const got=order.filter(x=>marks[x.n]==="got").length, again=order.filter(x=>marks[x.n]==="again").length;
+    card.innerHTML=`<div class="done"><div class="lbl">おつかれさま</div><div class="big">${got} / ${total}</div><p style="margin:0">覚えた ${got}問 ・ もう一度 ${again}問</p>
+      <div class="row" style="width:100%"><button class="btn" id="restart">最初からやり直す</button>${again?`<button class="btn primary" id="goReview">要復習だけ解く</button>`:""}</div></div>`;
+    $("restart").onclick=build;
+    if(again)$("goReview").onclick=()=>setFilter("review");
+    return;
+  }
+  const x=order[idx];
+  const m=marks[x.n];
+  const choices=optChoices.checked?`<ol class="choices">${x.c.map((c,i)=>`<li class="${shown&&c===x.c[x.c.indexOf(x.a)]||shown&&x.n===28&&i===0?"right":""}"><b>${"アイウエ"[i]}</b><span>${esc(c)}</span></li>`).join("")}</ol>`:"";
+  card.innerHTML=`
+    <div class="qhead"><span class="qno">問${x.n}</span><span class="tag ${x.think?"think":""}">${x.think?"思考・発展":"基本・標準"}</span>${m==="again"?`<span class="flag">要復習</span>`:""}</div>
+    <p class="qtext">${esc(x.q)}</p>
+    ${choices}
+    ${shown?`<div class="answer"><div class="lbl">正解</div><p class="ans">${esc(x.a)}</p><div class="lbl">フィードバック</div><p class="fb">${esc(x.f)}</p></div>
+      <div class="row"><button class="btn again" id="again">もう一度</button><button class="btn got" id="got">覚えた</button></div>`
+      :`<div class="row"><button class="btn primary" id="show">答えを見る</button></div>`}`;
+  if(shown){$("again").onclick=()=>grade("again");$("got").onclick=()=>grade("got")}
+  else $("show").onclick=reveal;
+}
+function reveal(){shown=true;render()}
+function grade(v){const x=order[idx];marks[x.n]=v;save();next()}
+function next(){if(!order.length)return;if(idx<order.length-1){idx++;shown=false}else doneShown=true;render()}
+function prev(){if(doneShown){doneShown=false;shown=false}else if(idx>0){idx--;shown=false}render()}
+function setFilter(f){filter=f;document.querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed",b.dataset.f===f));build()}
+
+document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>setFilter(b.dataset.f));
+$("next").onclick=next;$("prev").onclick=prev;
+optShuffle.onchange=build;optChoices.onchange=render;
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT")return;
+  if(e.key===" "){e.preventDefault();if(!shown&&!doneShown&&order.length)reveal()}
+  else if(e.key==="ArrowRight")next();else if(e.key==="ArrowLeft")prev();
+});
+build();
+</script>
+</body>
+</html>
