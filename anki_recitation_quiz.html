@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>暗唱テスト練習 - A family from Thailand</title>
+<title>暗唱テスト練習 - Marie Louise</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -12,13 +12,12 @@ body{font-family:sans-serif;background:#f5f5f0;min-height:100vh;padding:2rem 1re
 h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
 .subtitle{font-size:14px;color:#888;margin-bottom:1.5rem}
 
-/* 音声コントロール */
 .audio-bar{display:flex;align-items:center;gap:10px;background:#f0f7ff;border:1px solid #cde3f6;border-radius:10px;padding:10px 14px;margin-bottom:1.5rem;flex-wrap:wrap}
-.audio-bar .play-btn{width:40px;height:40px;border-radius:50%;border:none;background:#185fa5;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
-.audio-bar .play-btn:hover{background:#1049818}
-.audio-bar .play-btn.playing{background:#E24B4A}
-.audio-bar .stop-btn{width:36px;height:36px;border-radius:50%;border:1px solid #cde3f6;background:#fff;color:#185fa5;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.audio-bar .stop-btn:hover{background:#e6f1fb}
+.play-btn{width:40px;height:40px;border-radius:50%;border:none;background:#185fa5;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.play-btn:hover{background:#0e3f70}
+.play-btn.playing{background:#E24B4A}
+.stop-btn{width:36px;height:36px;border-radius:50%;border:1px solid #cde3f6;background:#fff;color:#185fa5;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stop-btn:hover{background:#e6f1fb}
 .speed-btns{display:flex;gap:6px;flex-wrap:wrap}
 .speed-btn{padding:5px 12px;border:1px solid #cde3f6;border-radius:6px;background:#fff;color:#185fa5;font-size:13px;cursor:pointer;transition:all .15s}
 .speed-btn:hover{background:#e6f1fb}
@@ -32,6 +31,7 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
 .lbtn.active{background:#e6f1fb;color:#185fa5;border-color:#378add}
 .lbtn.final{border-color:#BA7517;color:#854F0B;background:#FAEEDA}
 .lbtn.final.active{background:#EF9F27;color:#fff;border-color:#EF9F27}
+
 .passage{font-size:17px;line-height:2.4;color:#1a1a1a;background:#f8f8f6;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
 .blank-input{display:inline-block;border:none;border-bottom:2px solid #378add;background:transparent;color:#185fa5;font-size:17px;font-family:sans-serif;text-align:center;outline:none;padding:0 2px;min-width:40px;vertical-align:baseline}
 .blank-input.correct{border-bottom-color:#1D9E75;color:#0F6E56}
@@ -40,6 +40,7 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
 .final-mode .blank-input.correct{border-bottom-color:#1D9E75;color:#0F6E56}
 .final-mode .blank-input.wrong{border-bottom-color:#E24B4A;color:#A32D2D}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
 .actions{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
 .btn{padding:8px 20px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#333;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px}
 .btn:hover{background:#f0f0f0}
@@ -53,9 +54,8 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
 <body>
 <div class="wrap">
   <h1>暗唱テスト練習</h1>
-  <p class="subtitle">A family from Thailand（教科書 Unit 3）</p>
+  <p class="subtitle">Marie Louise: A Helper in Hard Times</p>
 
-  <!-- 音声コントロール -->
   <div class="audio-bar">
     <span class="audio-label">🔊 音声</span>
     <button class="play-btn" id="playBtn" onclick="togglePlay()" title="再生/一時停止">
@@ -73,7 +73,7 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
   </div>
 
   <div class="level-btns">
-    <button class="lbtn" onclick="setLevel(10,this)">Lv.1　10空欄</button>
+    <button class="lbtn active" onclick="setLevel(10,this)">Lv.1　10空欄</button>
     <button class="lbtn" onclick="setLevel(20,this)">Lv.2　20空欄</button>
     <button class="lbtn" onclick="setLevel(30,this)">Lv.3　30空欄</button>
     <button class="lbtn" onclick="setLevel(40,this)">Lv.4　40空欄</button>
@@ -81,11 +81,12 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
     <button class="lbtn" onclick="setLevel(60,this)">Lv.6　60空欄</button>
     <button class="lbtn" onclick="setLevel(70,this)">Lv.7　70空欄</button>
     <button class="lbtn" onclick="setLevel(80,this)">Lv.8　80空欄</button>
-    <button class="lbtn" onclick="setLevel(90,this)">Lv.9　90空欄</button>
-    <button class="lbtn" onclick="setLevel(136,this)">Lv.10　全空欄</button>
+    <button class="lbtn" onclick="setLevel(999,this)">Lv.9　全空欄</button>
     <button class="lbtn final" onclick="setFinal(this)">🏆 FINAL　段落頭のみ</button>
   </div>
+
   <div class="passage" id="passage"></div>
+
   <div class="actions">
     <button class="btn primary" onclick="checkAll()"><i class="ti ti-check"></i> 全部チェック</button>
     <button class="btn" onclick="revealAll()"><i class="ti ti-eye"></i> 答えを見る</button>
@@ -96,17 +97,42 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
 </div>
 
 <script>
-// ===== 英文テキスト =====
-const fullPassageText = `Japan is a perfect destination for family vacations. First, the Japanese hospitality is wonderful. When we visited hotels, restaurants, and tourist attractions, the staff were always warm and friendly. Additionally, Japan is a very safe country. One evening, we went to a local festival. Our children walked around without any worries about safety. Our son bought a snow cone by himself while we played a shooting game. Finally, people keep public places such as parks and streets clean. Everything was so clean and organized that we were really impressed. One day, when we were waiting for our Shinkansen, the cleaning staff suddenly arrived. We were surprised that they cleaned the whole train in such a short time. We are very glad that we visited this country. Our children will never forget this wonderful week in Japan.`;
+// ===== 音声テキスト =====
+const fullPassageText = `What would you do if you lost everything in a war? Louise did not give up, and she always helped others. I believe she is a true helper in hard times. In the textbook, she lived in a terrible refugee camp in the Congo. Even there, she worked as an interpreter for a Japanese doctor with her Japanese dictionary and saved many refugees. Moreover, after the nuclear disaster in Fukushima in 2011, though she was told to leave Fukushima, she decided to stay there. She visited people who lost their homes and served them Rwandan coffee. Her kindness impressed me. Like her, I want to be someone who helps others when they are in trouble.`;
+
+// ===== 文章データ =====
+// 段落区切り：段落0=文0-2, 段落1=文3-4, 段落2=文5-6, 段落3=文7-8
+const paragraphs = [[0,1,2],[3,4],[5,6],[7,8]];
+
+const sentences = [
+  {words:["What","would","you","do","if","you","lost","everything","in","a","war","?"]},
+  {words:["Louise","did","not","give","up",",","and","she","always","helped","others","."]},
+  {words:["I","believe","she","is","a","true","helper","in","hard","times","."]},
+  {words:["In","the","textbook",",","she","lived","in","a","terrible","refugee","camp","in","the","Congo","."]},
+  {words:["Even","there",",","she","worked","as","an","interpreter","for","a","Japanese","doctor","with","her","Japanese","dictionary","and","saved","many","refugees","."]},
+  {words:["Moreover",",","after","the","nuclear","disaster","in","Fukushima","in","2011",",","though","she","was","told","to","leave","Fukushima",",","she","decided","to","stay","there","."]},
+  {words:["She","visited","people","who","lost","their","homes","and","served","them","Rwandan","coffee","."]},
+  {words:["Her","kindness","impressed","me","."]},
+  {words:["Like","her",",","I","want","to","be","someone","who","helps","others","when","they","are","in","trouble","."]}
+];
+
+const stopWords = /^(a|an|the|to|of|in|by|as|we|our|and|or|for|so|that|was|is|are|were|they|them|when|one|two|but|its|it|had|has|be|do|did|not|no|on|at|if|up|my|me|he|she|him|her|his|you|your|who|how|any|all|can|even|there|after|though|like|want|her)$/i;
+
+const wordOnly = [];
+sentences.forEach(s => s.words.forEach(w => { if(!/^[?.!,]$/.test(w)) wordOnly.push(w); }));
+const TOTAL_WORDS = wordOnly.length;
+
+let currentLevel = 10;
+let isFinal = false;
+let blankedIndices = new Set();
 
 // ===== 音声 =====
 let currentRate = 1.0;
 let isPlaying = false;
-let currentUtterance = null;
 
 function getEnglishVoice(){
   const voices = speechSynthesis.getVoices();
-  return voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('samantha'))
+  return voices.find(v => v.lang === 'en-US' && v.name.toLowerCase().includes('samantha'))
     || voices.find(v => v.lang === 'en-US')
     || voices.find(v => v.lang.startsWith('en'))
     || null;
@@ -116,10 +142,7 @@ function setSpeed(rate, el){
   currentRate = rate;
   document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  if(isPlaying){
-    stopAudio();
-    startAudio();
-  }
+  if(isPlaying){ stopAudio(); startAudio(); }
 }
 
 function startAudio(){
@@ -130,7 +153,6 @@ function startAudio(){
   utter.pitch = 1.0;
   const voice = getEnglishVoice();
   if(voice) utter.voice = voice;
-
   utter.onstart = () => {
     isPlaying = true;
     document.getElementById('audioStatus').textContent = '再生中...';
@@ -138,22 +160,13 @@ function startAudio(){
     btn.innerHTML = '<i class="ti ti-player-pause"></i>';
     btn.classList.add('playing');
   };
-  utter.onend = () => {
+  utter.onend = utter.onerror = () => {
     isPlaying = false;
     document.getElementById('audioStatus').textContent = '停止中';
     const btn = document.getElementById('playBtn');
     btn.innerHTML = '<i class="ti ti-player-play"></i>';
     btn.classList.remove('playing');
-    currentUtterance = null;
   };
-  utter.onerror = () => {
-    isPlaying = false;
-    document.getElementById('audioStatus').textContent = 'エラー';
-    const btn = document.getElementById('playBtn');
-    btn.innerHTML = '<i class="ti ti-player-play"></i>';
-    btn.classList.remove('playing');
-  };
-  currentUtterance = utter;
   speechSynthesis.speak(utter);
 }
 
@@ -184,43 +197,13 @@ function stopAudio(){
   const btn = document.getElementById('playBtn');
   btn.innerHTML = '<i class="ti ti-player-play"></i>';
   btn.classList.remove('playing');
-  currentUtterance = null;
 }
 
-// voices が非同期ロードの場合に備えて
-if(speechSynthesis.onvoiceschanged !== undefined){
+if(typeof speechSynthesis.onvoiceschanged !== 'undefined'){
   speechSynthesis.onvoiceschanged = () => {};
 }
 
-// ===== 問題 =====
-const paragraphs = [[0,1,2],[3,4,5,6],[7,8,9,10],[11,12]];
-
-const sentences = [
-  {words:["Japan","is","a","perfect","destination","for","family","vacations","."]},
-  {words:["First",",","the","Japanese","hospitality","is","wonderful","."]},
-  {words:["When","we","visited","hotels",",","restaurants",",","and","tourist","attractions",",","the","staff","were","always","warm","and","friendly","."]},
-  {words:["Additionally",",","Japan","is","a","very","safe","country","."]},
-  {words:["One","evening",",","we","went","to","a","local","festival","."]},
-  {words:["Our","children","walked","around","without","any","worries","about","safety","."]},
-  {words:["Our","son","bought","a","snow","cone","by","himself","while","we","played","a","shooting","game","."]},
-  {words:["Finally",",","people","keep","public","places","such","as","parks","and","streets","clean","."]},
-  {words:["Everything","was","so","clean","and","organized","that","we","were","really","impressed","."]},
-  {words:["One","day",",","when","we","were","waiting","for","our","Shinkansen",",","the","cleaning","staff","suddenly","arrived","."]},
-  {words:["We","were","surprised","that","they","cleaned","the","whole","train","in","such","a","short","time","."]},
-  {words:["We","are","very","glad","that","we","visited","this","country","."]},
-  {words:["Our","children","will","never","forget","this","wonderful","week","in","Japan","."]}
-];
-
-const stopWords = /^(a|an|the|to|of|in|by|as|we|our|and|or|for|so|that|was|is|are|were|they|them|when|one|two|but|its|it|had|has|be|do|did|not|no|on|at|if|up|my|me|he|she|him|her|his|you|your|who|how|any|all|can)$/i;
-
-const wordOnly = [];
-sentences.forEach(s => s.words.forEach(w => { if(!/^[.,]$/.test(w)) wordOnly.push(w); }));
-const TOTAL_WORDS = wordOnly.length;
-
-let currentLevel = 10;
-let isFinal = false;
-let blankedIndices = new Set();
-
+// ===== 段落先頭単語インデックス =====
 function getParagraphFirstWordIndices(){
   const result = new Set();
   let wi = 0;
@@ -228,7 +211,7 @@ function getParagraphFirstWordIndices(){
     const isParagraphFirst = paragraphs.some(p => p[0] === si);
     let firstFound = false;
     s.words.forEach(w => {
-      if(!/^[.,]$/.test(w)){
+      if(!/^[?.!,]$/.test(w)){
         if(!firstFound){ firstFound = true; if(isParagraphFirst) result.add(wi); }
         wi++;
       }
@@ -237,6 +220,7 @@ function getParagraphFirstWordIndices(){
   return result;
 }
 
+// ===== 空欄選択 =====
 function pickIndices(n){
   const clamped = Math.min(n, TOTAL_WORDS);
   let priorities = [...Array(TOTAL_WORDS).keys()].filter(i => wordOnly[i].length > 2 && !stopWords.test(wordOnly[i]));
@@ -249,13 +233,40 @@ function pickIndices(n){
   return result;
 }
 
+// ===== HTML生成 =====
+function buildHTML(blanked, finalMode){
+  let wordIdx = 0;
+  let html = '';
+  sentences.forEach((s, si) => {
+    s.words.forEach(w => {
+      if(/^[?.!,]$/.test(w)){
+        html = html.trimEnd() + w + ' ';
+      } else {
+        const idx = wordIdx;
+        if(blanked.has(idx)){
+          const len = Math.max(w.length * 11, 44);
+          html += `<input class="blank-input" data-answer="${w}" data-idx="${idx}" style="width:${len}px" placeholder="___" onkeydown="handleKey(event,${idx})"> `;
+        } else {
+          html += finalMode ? `<strong>${w}</strong> ` : w + ' ';
+        }
+        wordIdx++;
+      }
+    });
+    if(si < sentences.length - 1) html += '<br>';
+  });
+  return html;
+}
+
 function setLevel(n, el){
   isFinal = false;
   currentLevel = n;
   document.querySelectorAll('.lbtn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('passage').classList.remove('final-mode');
-  render();
+  blankedIndices = pickIndices(n);
+  document.getElementById('passage').innerHTML = buildHTML(blankedIndices, false);
+  document.getElementById('correct-count').textContent = '-';
+  document.getElementById('total-count').textContent = blankedIndices.size;
 }
 
 function setFinal(el){
@@ -263,63 +274,9 @@ function setFinal(el){
   document.querySelectorAll('.lbtn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('passage').classList.add('final-mode');
-  renderFinal();
-}
-
-function render(){
-  blankedIndices = pickIndices(currentLevel);
-  const passage = document.getElementById('passage');
-  let wordIdx = 0;
-  let html = '';
-  sentences.forEach((s, si) => {
-    s.words.forEach(w => {
-      if(/^[.,]$/.test(w)){
-        html += w + ' ';
-      } else {
-        const idx = wordIdx;
-        if(blankedIndices.has(idx)){
-          const len = Math.max(w.length * 11, 44);
-          html += `<input class="blank-input" data-answer="${w}" data-idx="${idx}" style="width:${len}px" placeholder="___" onkeydown="handleKey(event,${idx})"> `;
-        } else {
-          html += w + ' ';
-        }
-        wordIdx++;
-      }
-    });
-    if(si < sentences.length - 1) html += '<br>';
-  });
-  passage.innerHTML = html;
-  document.getElementById('correct-count').textContent = '-';
-  document.getElementById('total-count').textContent = Math.min(currentLevel, TOTAL_WORDS);
-}
-
-function renderFinal(){
-  const paraFirstIndices = getParagraphFirstWordIndices();
-  blankedIndices = new Set();
-  for(let i = 0; i < TOTAL_WORDS; i++){
-    if(!paraFirstIndices.has(i)) blankedIndices.add(i);
-  }
-  const passage = document.getElementById('passage');
-  let wordIdx = 0;
-  let html = '';
-  sentences.forEach((s, si) => {
-    s.words.forEach(w => {
-      if(/^[.,]$/.test(w)){
-        html += w + ' ';
-      } else {
-        const idx = wordIdx;
-        if(blankedIndices.has(idx)){
-          const len = Math.max(w.length * 11, 44);
-          html += `<input class="blank-input" data-answer="${w}" data-idx="${idx}" style="width:${len}px" placeholder="___" onkeydown="handleKey(event,${idx})"> `;
-        } else {
-          html += `<strong>${w}</strong> `;
-        }
-        wordIdx++;
-      }
-    });
-    if(si < sentences.length - 1) html += '<br>';
-  });
-  passage.innerHTML = html;
+  const paraFirst = getParagraphFirstWordIndices();
+  blankedIndices = new Set([...Array(TOTAL_WORDS).keys()].filter(i => !paraFirst.has(i)));
+  document.getElementById('passage').innerHTML = buildHTML(blankedIndices, true);
   document.getElementById('correct-count').textContent = '-';
   document.getElementById('total-count').textContent = blankedIndices.size;
 }
@@ -351,18 +308,18 @@ function checkAll(){
 function revealAll(){
   document.querySelectorAll('.blank-input').forEach(input => {
     input.value = input.dataset.answer;
-    input.classList.add('correct');
-    input.classList.remove('wrong');
+    input.classList.add('correct'); input.classList.remove('wrong');
   });
   document.getElementById('correct-count').textContent = document.querySelectorAll('.blank-input').length;
 }
 
 function resetAll(){
-  if(isFinal) renderFinal();
-  else render();
+  if(isFinal) setFinal(document.querySelector('.lbtn.final'));
+  else setLevel(currentLevel, document.querySelector('.lbtn.active'));
 }
 
-setLevel(10, document.querySelector('.lbtn'));
+// 初期表示
+setLevel(10, document.querySelector('.lbtn.active'));
 </script>
 </body>
 </html>
