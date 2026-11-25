@@ -32,7 +32,14 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
 .lbtn.final{border-color:#BA7517;color:#854F0B;background:#FAEEDA}
 .lbtn.final.active{background:#EF9F27;color:#fff;border-color:#EF9F27}
 
-.passage{font-size:17px;line-height:2.4;color:#1a1a1a;background:#f8f8f6;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.title-area{font-size:17px;font-weight:700;background:#f8f8f6;border-radius:12px 12px 0 0;padding:1rem 1.5rem 0.5rem;border-bottom:1px dashed #ddd;margin-bottom:0;color:#1a1a1a}
+.passage{font-size:17px;line-height:2.4;color:#1a1a1a;background:#f8f8f6;border-radius:0 0 12px 12px;padding:1rem 1.5rem 1.5rem;margin-bottom:1.5rem}
+.title-blank{display:inline-block;border:none;border-bottom:2px solid #378add;background:transparent;color:#185fa5;font-size:17px;font-family:sans-serif;font-weight:700;text-align:center;outline:none;padding:0 2px;min-width:40px;vertical-align:baseline}
+.title-blank.correct{border-bottom-color:#1D9E75;color:#0F6E56}
+.title-blank.wrong{border-bottom-color:#E24B4A;color:#A32D2D;animation:shake .3s}
+.final-mode .title-blank{border-bottom-color:#BA7517;color:#854F0B}
+.final-mode .title-blank.correct{border-bottom-color:#1D9E75;color:#0F6E56}
+.final-mode .title-blank.wrong{border-bottom-color:#E24B4A;color:#A32D2D}
 .blank-input{display:inline-block;border:none;border-bottom:2px solid #378add;background:transparent;color:#185fa5;font-size:17px;font-family:sans-serif;text-align:center;outline:none;padding:0 2px;min-width:40px;vertical-align:baseline}
 .blank-input.correct{border-bottom-color:#1D9E75;color:#0F6E56}
 .blank-input.wrong{border-bottom-color:#E24B4A;color:#A32D2D;animation:shake .3s}
@@ -55,6 +62,7 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
 <div class="wrap">
   <h1>暗唱テスト練習</h1>
   <p class="subtitle">Marie Louise: A Helper in Hard Times</p>
+  <div id="title-area" class="title-area"></div>
 
   <div class="audio-bar">
     <span class="audio-label">🔊 音声</span>
@@ -100,6 +108,12 @@ h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:0.25rem}
 // ===== 音声テキスト =====
 const fullPassageText = `What would you do if you lost everything in a war? Louise did not give up, and she always helped others. I believe she is a true helper in hard times. In the textbook, she lived in a terrible refugee camp in the Congo. Even there, she worked as an interpreter for a Japanese doctor with her Japanese dictionary and saved many refugees. Moreover, after the nuclear disaster in Fukushima in 2011, though she was told to leave Fukushima, she decided to stay there. She visited people who lost their homes and served them Rwandan coffee. Her kindness impressed me. Like her, I want to be someone who helps others when they are in trouble.`;
 
+// ===== タイトルデータ =====
+// "Marie Louise: A Helper in Hard Times"
+const titleWords = ["Marie","Louise","A","Helper","in","Hard","Times"];
+// コロンは区切り文字として別管理
+// 表示: Marie Louise: A Helper in Hard Times
+
 // ===== 文章データ =====
 // 段落区切り：段落0=文0-2, 段落1=文3-4, 段落2=文5-6, 段落3=文7-8
 const paragraphs = [[0,1,2],[3,4],[5,6],[7,8]];
@@ -118,7 +132,12 @@ const sentences = [
 
 const stopWords = /^(a|an|the|to|of|in|by|as|we|our|and|or|for|so|that|was|is|are|were|they|them|when|one|two|but|its|it|had|has|be|do|did|not|no|on|at|if|up|my|me|he|she|him|her|his|you|your|who|how|any|all|can|even|there|after|though|like|want|her)$/i;
 
-const wordOnly = [];
+// タイトル単語数
+const TITLE_COUNT = titleWords.length; // 7語
+// タイトル単語インデックス: 0〜6
+// 本文単語インデックス: 7〜
+
+const wordOnly = [...titleWords];
 sentences.forEach(s => s.words.forEach(w => { if(!/^[?.!,]$/.test(w)) wordOnly.push(w); }));
 const TOTAL_WORDS = wordOnly.length;
 
@@ -205,8 +224,9 @@ if(typeof speechSynthesis.onvoiceschanged !== 'undefined'){
 
 // ===== 段落先頭単語インデックス =====
 function getParagraphFirstWordIndices(){
-  const result = new Set();
-  let wi = 0;
+  // タイトル最初の単語 (index 0: "Marie") を含む
+  const result = new Set([0]);
+  let wi = TITLE_COUNT; // 本文はTITLE_COUNTから始まる
   sentences.forEach((s, si) => {
     const isParagraphFirst = paragraphs.some(p => p[0] === si);
     let firstFound = false;
@@ -233,9 +253,29 @@ function pickIndices(n){
   return result;
 }
 
-// ===== HTML生成 =====
+// ===== タイトルHTML生成 =====
+function buildTitleHTML(blanked, finalMode){
+  // "Marie Louise: A Helper in Hard Times"
+  // titleWords = ["Marie","Louise","A","Helper","in","Hard","Times"]
+  // コロンはLouiseの後に挿入
+  let html = '';
+  titleWords.forEach((w, i) => {
+    const idx = i; // タイトル単語のグローバルインデックスはそのまま0〜6
+    if(blanked.has(idx)){
+      const len = Math.max(w.length * 11, 44);
+      html += `<input class="title-blank blank-input" data-answer="${w}" data-idx="${idx}" style="width:${len}px" placeholder="___" onkeydown="handleKey(event,${idx})"> `;
+    } else {
+      html += finalMode ? `<strong>${w}</strong> ` : w + ' ';
+    }
+    // "Louise"の後にコロン
+    if(i === 1) html = html.trimEnd() + ': ';
+  });
+  return html;
+}
+
+// ===== 本文HTML生成 =====
 function buildHTML(blanked, finalMode){
-  let wordIdx = 0;
+  let wordIdx = TITLE_COUNT; // 本文はTITLE_COUNTから
   let html = '';
   sentences.forEach((s, si) => {
     s.words.forEach(w => {
@@ -257,28 +297,31 @@ function buildHTML(blanked, finalMode){
   return html;
 }
 
+function renderAll(blanked, finalMode){
+  document.getElementById('title-area').className = 'title-area' + (finalMode ? ' final-mode' : '');
+  document.getElementById('title-area').innerHTML = buildTitleHTML(blanked, finalMode);
+  document.getElementById('passage').className = 'passage' + (finalMode ? ' final-mode' : '');
+  document.getElementById('passage').innerHTML = buildHTML(blanked, finalMode);
+  document.getElementById('correct-count').textContent = '-';
+  document.getElementById('total-count').textContent = blanked.size;
+}
+
 function setLevel(n, el){
   isFinal = false;
   currentLevel = n;
   document.querySelectorAll('.lbtn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('passage').classList.remove('final-mode');
   blankedIndices = pickIndices(n);
-  document.getElementById('passage').innerHTML = buildHTML(blankedIndices, false);
-  document.getElementById('correct-count').textContent = '-';
-  document.getElementById('total-count').textContent = blankedIndices.size;
+  renderAll(blankedIndices, false);
 }
 
 function setFinal(el){
   isFinal = true;
   document.querySelectorAll('.lbtn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('passage').classList.add('final-mode');
   const paraFirst = getParagraphFirstWordIndices();
   blankedIndices = new Set([...Array(TOTAL_WORDS).keys()].filter(i => !paraFirst.has(i)));
-  document.getElementById('passage').innerHTML = buildHTML(blankedIndices, true);
-  document.getElementById('correct-count').textContent = '-';
-  document.getElementById('total-count').textContent = blankedIndices.size;
+  renderAll(blankedIndices, true);
 }
 
 function handleKey(e, idx){
@@ -310,7 +353,7 @@ function revealAll(){
     input.value = input.dataset.answer;
     input.classList.add('correct'); input.classList.remove('wrong');
   });
-  document.getElementById('correct-count').textContent = document.querySelectorAll('.blank-input').length;
+  document.getElementById('correct-count').textContent = blankedIndices.size;
 }
 
 function resetAll(){
